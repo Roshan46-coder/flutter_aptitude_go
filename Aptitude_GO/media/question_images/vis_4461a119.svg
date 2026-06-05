@@ -1,0 +1,21 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+    <text x="10" y="20" font-weight="bold">Percentage of Students in Different Streams (Total = 2000)</text>
+    <!-- Pie Chart approximation -->
+    <circle cx="200" cy="150" r="100" fill="none" stroke="black" stroke-width="2"/>
+    <!-- Wedges (lines joining center to edge) -->
+    <line x1="200" y1="150" x2="200" y2="50" stroke="black" stroke-width="1"/>
+    <line x1="200" y1="150" x2="286.6" y2="200" stroke="black" stroke-width="1"/>
+    <line x1="200" y1="150" x2="113.4" y2="200" stroke="black" stroke-width="1"/>
+    <line x1="200" y1="150" x2="100" y2="150" stroke="black" stroke-width="1"/>
+    
+    <text x="230" y="120">Science</text>
+    <text x="240" y="140">35%</text>
+    
+    <text x="150" y="210">Arts</text>
+    <text x="155" y="225">25%</text>
+    
+    <text x="120" y="120">Comm</text>
+    <text x="125" y="135">30%</text>
+    
+    <text x="190" y="90">IT 10%</text>
+</svg>

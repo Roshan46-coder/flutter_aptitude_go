@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <a href="{% url 'recruiter_events' %}" style="text-decoration: none; color: #64748b; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            ← Back to Dashboard
+        </a>
+        <h1 style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Create New Event</h1>
+    </div>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.title.id_for_label }}">Event Title</label>
+                {{ form.title }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.category.id_for_label }}">Category</label>
+                {{ form.category }}
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Students can filter events by this category.</p>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">Description</label>
+                {{ form.description }}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label for="{{ form.start_time.id_for_label }}">Start Time</label>
+                    {{ form.start_time }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.event_duration.id_for_label }}">Duration (Minutes)</label>
+                    {{ form.event_duration }}
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label for="{{ form.total_questions.id_for_label }}">Total Questions Needed</label>
+                    {{ form.total_questions }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.time_limit_seconds.id_for_label }}">Time Limit (Seconds)</label>
+                    {{ form.time_limit_seconds }}
+                </div>
+            </div>
+
+            <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1.1rem; border-top: 1px solid #e5e7eb; padding-top: 1.5rem;">Participation Criteria</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label for="{{ form.threshold_type.id_for_label }}">Threshold Type</label>
+                    {{ form.threshold_type }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.threshold_value.id_for_label }}">Threshold Value</label>
+                    {{ form.threshold_value }}
+                    <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">For Level: Min Level required. For Time: Max participants.</p>
+                </div>
+            </div>
+
+            {% if form.errors %}
+            <div style="background: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
+            <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn">Create & Add Questions →</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+

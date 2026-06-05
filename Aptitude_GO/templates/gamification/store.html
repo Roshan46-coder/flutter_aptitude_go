@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 3rem;">
+    <h1
+        style="font-size: 2.5rem; margin-bottom: 0.5rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        Item Shop</h1>
+    <p style="color: #64748b; font-size: 1.1rem;">Customize your profile and boost your progress.</p>
+
+    <div
+        style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(251, 191, 36, 0.1); padding: 0.75rem 1.5rem; border-radius: 50px; border: 1px solid rgba(251, 191, 36, 0.3); margin-top: 1.5rem;">
+        <span style="font-size: 1.25rem;">💰</span>
+        <span style="font-weight: 800; color: #d97706; font-size: 1.25rem;">{{ user.coins }} Coins</span>
+    </div>
+</div>
+
+{% if messages %}
+<div style="max-width: 600px; margin: 0 auto 2rem;">
+    {% for message in messages %}
+    <div
+        style="padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem; text-align: center; font-weight: 600;
+        {% if message.tags == 'success' %}background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;{% else %}background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 2rem;">
+    {% for item in items %}
+    <div class="card store-card">
+        <div style="text-align: center;">
+            <div class="item-visual">
+                {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                {% else %}
+                <span style="font-size: 3rem;">
+                    {% if item.item_type == 'LIFE_REFILL' %}💖
+                    {% elif item.item_type == 'FRAME' %}🖼️
+                    {% elif item.item_type == 'AVATAR' %}👤
+                    {% else %}🎁{% endif %}
+                </span>
+                {% endif %}
+            </div>
+            <h3 style="margin: 0 0 0.5rem 0; color: var(--text-color);">{{ item.name }}</h3>
+            <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 1.5rem; min-height: 2.7em;">{{ item.description
+                }}</p>
+        </div>
+
+        <div style="text-align: center;">
+            <div style="font-weight: 800; color: #d97706; margin-bottom: 1rem; font-size: 1.1rem;">
+                {{ item.cost }} <span style="font-size: 0.9em; font-weight: 600;">Coins</span>
+            </div>
+
+            {% if item.id in inventory_ids and item.item_type != 'LIFE_REFILL' %}
+            <button class="btn"
+                style="width: 100%; background: #f1f5f9; color: #94a3b8; cursor: default; pointer-events: none; box-shadow: none; border: 1px solid #e2e8f0;">
+                Owned
+            </button>
+            {% else %}
+            <form action="{% url 'buy_item' item.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn"
+                    style="width: 100%; {% if user.coins < item.cost %}opacity: 0.5; pointer-events: none; filter: grayscale(1);{% endif %}">
+                    Purchase
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1/-1; text-align: center; padding: 4rem;">
+        <p>No items in the store yet.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .store-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .store-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        border-color: rgba(245, 158, 11, 0.3);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .item-visual {
+        height: 120px;
+        background: radial-gradient(circle at center, #fffbeb 0%, #fef3c7 100%);
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed rgba(245, 158, 11, 0.2);
+    }
+
+    .item-visual img {
+        max-height: 90px;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    }
+</style>
+{% endblock %}

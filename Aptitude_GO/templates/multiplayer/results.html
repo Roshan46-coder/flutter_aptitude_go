@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .results-container {
+        max-width: 800px;
+        margin: 3rem auto;
+        padding: 2rem;
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        text-align: center;
+        animation: slideUp 0.5s ease-out;
+    }
+    
+    .match-status {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .status-victory {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+    }
+    
+    .status-defeat {
+        background: linear-gradient(135deg, #ef4444, #b91c1c);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .status-draw {
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .players-grid {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 2rem;
+        align-items: center;
+        margin: 3rem 0;
+    }
+
+    .player-result {
+        padding: 2rem;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.5);
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    [data-theme="dark"] .player-result {
+        background: rgba(15, 23, 42, 0.5);
+    }
+
+    .player-result.winner {
+        border-color: #f59e0b;
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+        background: rgba(245, 158, 11, 0.05);
+    }
+
+    .avatar-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: bold;
+        color: white;
+        background: var(--primary-gradient);
+    }
+
+    .score-display {
+        font-size: 3rem;
+        font-weight: 900;
+        line-height: 1;
+        margin: 1rem 0;
+        color: var(--text-color);
+    }
+
+    .vs-badge {
+        font-size: 2rem;
+        font-weight: 900;
+        color: #ef4444;
+        background: #fee2e2;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+
+    .winnings {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #10b981;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+        padding: 1rem;
+        background: #dcfce3;
+        border-radius: 12px;
+        border: 1px solid #86efac;
+    }
+    
+    [data-theme="dark"] .winnings {
+        background: rgba(16, 185, 129, 0.1);
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+    
+    .refund {
+        color: #3b82f6;
+        background: #dbeafe;
+        border-color: #93c5fd;
+    }
+    
+    [data-theme="dark"] .refund {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="results-container">
+    {% if is_winner %}
+        <h1 class="match-status status-victory">VICTORY!</h1>
+        <p style="color: #64748b; font-size: 1.1rem;">You dominated the {{ match.topic }} arena.</p>
+    {% elif is_tie %}
+        <h1 class="match-status status-draw">DRAW!</h1>
+        <p style="color: #64748b; font-size: 1.1rem;">It was a perfect tie in accuracy and time!</p>
+    {% else %}
+        <h1 class="match-status status-defeat">DEFEAT</h1>
+        <p style="color: #64748b; font-size: 1.1rem;">Better luck next time.</p>
+    {% endif %}
+
+    <div class="players-grid">
+        <!-- You -->
+        <div class="player-result {% if is_winner %}winner{% endif %}">
+            <div class="avatar-large">
+                {% if request.user.avatar %}
+                    <img src="{{ request.user.avatar.url }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                {% else %}
+                    {{ request.user.username.0|upper }}
+                {% endif %}
+            </div>
+            <h3>You</h3>
+            <div class="score-display">{{ my_score }}</div>
+            <div style="font-size: 0.9rem; color: #64748b;">Correct Answers</div>
+            {% if my_player.status == 'forfeit' %}
+                 <div style="color: #ef4444; font-weight: bold; margin-top: 1rem;">Disqualified</div>
+            {% endif %}
+        </div>
+
+        <div class="vs-badge">VS</div>
+
+        <!-- Opponent -->
+        <div class="player-result {% if not is_winner and not is_tie %}winner{% endif %}">
+            <div class="avatar-large" style="background: #ef4444;">
+                {% if opponent.avatar %}
+                     <!-- Assuming we passed avatar URL if available, else initial -->
+                     <img src="{{ opponent.avatar.url }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                {% else %}
+                    {{ opponent.username.0|upper }}
+                {% endif %}
+            </div>
+            <h3>{{ opponent.username }}</h3>
+            <div class="score-display">{{ opponent_score }}</div>
+            <div style="font-size: 0.9rem; color: #64748b;">Correct Answers</div>
+            {% if opponent_player.status == 'forfeit' or opponent_player.status == 'disconnected' %}
+                 <div style="color: #ef4444; font-weight: bold; margin-top: 1rem;">Forfeited</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if is_winner %}
+        <div class="winnings">
+            💰 +40 Coins
+        </div>
+    {% elif is_tie %}
+        <div class="winnings refund">
+            💰 +20 Coins (Refunded)
+        </div>
+    {% endif %}
+
+    <div style="margin-top: 3rem; display: flex; gap: 1rem; justify-content: center;">
+        <a href="{% url 'multiplayer:topic_select' %}" class="btn">Play Again</a>
+        <a href="{% url 'arena_home' %}" class="btn btn-secondary">Back to Arena</a>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,22 @@
+<svg width="400" height="200" xmlns="http://www.w3.org/2000/svg">
+       <text x="10" y="20">Which complex figure hides the target shape?</text>
+       
+       <!-- Target -->
+       <text x="10" y="50">Target:</text>
+       <polyline points="20,70 50,70 50,100" fill="none" stroke="black" stroke-width="4" />
+       
+       <!-- Options -->
+       <text x="120" y="50">A</text>
+       <rect x="110" y="60" width="40" height="40" fill="none" stroke="black" />
+       <line x1="110" y1="60" x2="150" y2="100" stroke="black" />
+       
+       <text x="180" y="50">B</text>
+       <rect x="170" y="60" width="40" height="40" fill="none" stroke="black" />
+       <polyline points="170,80 190,80 190,100" fill="none" stroke="black" stroke-width="4" />
+       
+       <text x="240" y="50">C</text>
+       <circle cx="250" cy="80" r="20" fill="none" stroke="black" />
+       
+       <text x="300" y="50">D</text>
+       <polygon points="310,100 330,60 350,100" fill="none" stroke="black" />
+    </svg>

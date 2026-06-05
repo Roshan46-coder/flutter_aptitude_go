@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 4rem auto; text-align: center;">
+    <div class="card">
+        <h1>Test Complete!</h1>
+
+        <div style="font-size: 4rem; font-weight: 800; color: var(--primary-color);">
+            {{ score }} / {{ total }}
+        </div>
+        <p style="color: #6b7280; margin-bottom: 2rem;">Your Score</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+            <div style="background: #eef2ff; padding: 1rem; border-radius: 8px;">
+                <div style="color: var(--primary-color); font-weight: 700;">+{{ exp }} EXP</div>
+                <div style="font-size: 0.8rem;">Experience Gained</div>
+            </div>
+            <div style="background: #fffbeb; padding: 1rem; border-radius: 8px;">
+                <div style="color: var(--accent-color); font-weight: 700;">+{{ coins }} Coins</div>
+                <div style="font-size: 0.8rem;">Coins Earned</div>
+            </div>
+        </div>
+
+        {% if leveled_up %}
+        <div
+            style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; animation: pulse 2s infinite;">
+            <h2 style="margin: 0;">LEVEL UP!</h2>
+            <p>You reached Level {{ new_level }}</p>
+        </div>
+        {% endif %}
+
+        <div style="text-align: left; margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--text-color);">Review</h3>
+            {% for item in results_details %}
+            <div
+                style="background: var(--bg-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; border-left: 4px solid {% if item.is_correct %}#10b981{% else %}#ef4444{% endif %}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <p style="font-weight: 600; margin-bottom: 1rem; color: var(--text-color); white-space: pre-wrap;">
+                    <span>{{ forloop.counter }}.</span>
+                    <span>{{ item.question.text|safe }}</span>
+                </p>
+
+                {% if item.is_coding %}
+                <!-- Coding Problem Result -->
+                <div style="margin-bottom: 0.5rem;">
+                    <span style="color: #64748b; font-weight: 600;">💻 Your Answer:</span>
+                    {% if item.user_code %}
+                    <pre
+                        style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; font-family: 'Courier New', Consolas, monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre-wrap;">{{ item.user_code }}</pre>
+                    {% else %}
+                    <span style="color: #ef4444; font-style: italic;"> Not attempted</span>
+                    {% endif %}
+                </div>
+
+                {% if item.explanation %}
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.1);">
+                    <strong style="color: #10b981;">✅ Reference Solution:</strong>
+                    <pre
+                        style="background: #0f172a; color: #86efac; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; font-family: 'Courier New', Consolas, monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre-wrap;">{{ item.explanation|safe }}</pre>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <!-- MCQ Result -->
+                <div style="font-size: 0.95rem; margin-bottom: 0.5rem;">
+                    <span style="color: #64748b;">Your Answer:</span>
+                    <span style="font-weight: 600; color: {% if item.is_correct %}#10b981{% else %}#ef4444{% endif %};">
+                        {{ item.selected_option.text|default:"Skipped" }}
+                    </span>
+                </div>
+
+                {% if not item.is_correct %}
+                <div style="font-size: 0.95rem; margin-bottom: 0.5rem;">
+                    <span style="color: #64748b;">Correct Answer:</span>
+                    <span style="font-weight: 600; color: #10b981;">
+                        {{ item.correct_option.text }}
+                    </span>
+                </div>
+                {% endif %}
+
+                {% if item.explanation %}
+                <div
+                    style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.1); font-size: 0.9rem; color: #64748b;">
+                    <strong>💡 Explanation:</strong> {{ item.explanation|safe }}
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <a href="{% url 'practice_dashboard' %}" class="btn">Take Another Test</a>
+    </div>
+</div>
+
+<style>
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+        }
+
+        70% {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+        }
+
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+        }
+    }
+</style>
+{% endblock %}

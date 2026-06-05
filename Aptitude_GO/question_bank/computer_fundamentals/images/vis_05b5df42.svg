@@ -1,0 +1,32 @@
+<svg width="350" height="150" xmlns="http://www.w3.org/2000/svg">
+    <!-- Deadlock visual -->
+    <circle cx="80" cy="50" r="30" fill="white" stroke="blue" stroke-width="3"/>
+    <text x="75" y="55">P1</text>
+    
+    <rect x="230" y="30" width="50" height="40" fill="white" stroke="red" stroke-width="3"/>
+    <text x="240" y="55">R1</text>
+    
+    <circle cx="255" cy="120" r="30" fill="white" stroke="blue" stroke-width="3"/>
+    <text x="245" y="125">P2</text>
+    
+    <rect x="55" y="100" width="50" height="40" fill="white" stroke="red" stroke-width="3"/>
+    <text x="65" y="125">R2</text>
+    
+    <path d="M 110,50 L 220,50" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="140" y="40" font-size="12">Requests</text>
+    
+    <path d="M 230,70 L 100,110" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="140" y="105" font-size="12">Holds</text>
+    
+    <path d="M 240,120 L 110,120" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="145" y="135" font-size="12">Requests</text>
+
+    <path d="M 70,100 L 70,80" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="80" y="90" font-size="12">Holds</text>
+    
+    <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L0,6 L9,3 z" fill="black" />
+        </marker>
+    </defs>
+</svg>

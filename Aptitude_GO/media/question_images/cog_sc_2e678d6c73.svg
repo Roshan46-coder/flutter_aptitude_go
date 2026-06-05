@@ -1,0 +1,7 @@
+<svg width="250" height="80" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="40.0,10.0 65.98076211353316,54.99999999999999 14.019237886466847,55.000000000000014" fill="none" stroke="black" stroke-width="2"/>
+        <text x="85" y="45" font-size="20">+</text>
+        <polygon points="130.0,10.0 155.98076211353316,54.99999999999999 104.01923788646684,55.000000000000014" fill="none" stroke="black" stroke-width="2"/>
+        <text x="175" y="45" font-size="20">=</text>
+        <text x="210" y="45" font-size="30">?</text>
+    </svg>

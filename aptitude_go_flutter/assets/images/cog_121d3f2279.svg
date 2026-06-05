@@ -1,0 +1,13 @@
+<svg width="300" height="150" xmlns="http://www.w3.org/2000/svg">
+        <line x1="150" y1="10" x2="150" y2="140" stroke="dashed" stroke-width="1" stroke-dasharray="5,5" stroke="gray"/>
+        
+        <g transform="translate(75, 75) rotate(270) scale(1, 1)">
+            <polygon points="-20,-30 0,-30 0,10 30,10 30,30 -20,30" fill="orange" stroke="black" stroke-width="2"/>
+        </g>
+        
+        
+        <g transform="translate(225, 75) rotate(360) scale(-1, 1)">
+            <polygon points="-20,-30 0,-30 0,10 30,10 30,30 -20,30" fill="orange" stroke="black" stroke-width="2"/>
+        </g>
+        
+    </svg>

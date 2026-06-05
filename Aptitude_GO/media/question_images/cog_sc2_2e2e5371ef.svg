@@ -1,0 +1,19 @@
+<svg width="250" height="80" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="10" width="30" height="60" fill="white" stroke="black" stroke-width="2" rx="3"/>
+        <line x1="10" y1="40" x2="40" y2="40" stroke="black"/>
+        <circle cx="15" cy="15" r="3" fill="black"/><circle cx="35" cy="35" r="3" fill="black"/>
+        
+        
+        <rect x="60" y="10" width="30" height="60" fill="white" stroke="black" stroke-width="2" rx="3"/>
+        <line x1="60" y1="40" x2="90" y2="40" stroke="black"/>
+        <circle cx="65" cy="15" r="3" fill="black"/><circle cx="85" cy="15" r="3" fill="black"/><circle cx="65" cy="35" r="3" fill="black"/><circle cx="85" cy="35" r="3" fill="black"/>
+        <circle cx="65" cy="45" r="3" fill="black"/><circle cx="85" cy="45" r="3" fill="black"/><circle cx="75" cy="55" r="3" fill="black"/><circle cx="65" cy="65" r="3" fill="black"/><circle cx="85" cy="65" r="3" fill="black"/>
+        
+        <rect x="110" y="10" width="30" height="60" fill="white" stroke="black" stroke-width="2" rx="3"/>
+        <line x1="110" y1="40" x2="140" y2="40" stroke="black"/>
+        <circle cx="115" cy="15" r="3" fill="black"/><circle cx="135" cy="15" r="3" fill="black"/><circle cx="115" cy="25" r="3" fill="black"/><circle cx="135" cy="25" r="3" fill="black"/><circle cx="115" cy="35" r="3" fill="black"/><circle cx="135" cy="35" r="3" fill="black"/>
+        <circle cx="115" cy="45" r="3" fill="black"/><circle cx="125" cy="55" r="3" fill="black"/><circle cx="135" cy="65" r="3" fill="black"/>
+        
+        <rect x="160" y="10" width="30" height="60" fill="none" stroke="black" stroke-dasharray="4" rx="3"/>
+        <text x="170" y="45" font-size="20">?</text>
+    </svg>

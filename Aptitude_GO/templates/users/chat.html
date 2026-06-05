@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 2rem auto; height: calc(100vh - 140px); display: flex; flex-direction: column;">
+    <!-- Chat Header -->
+    <div class="card"
+        style="padding: 1rem 2rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="{% url 'inbox' %}" style="text-decoration: none; color: #6b7280; font-size: 1.5rem;">←</a>
+            <div
+                style="width: 48px; height: 48px; background: #e0e7ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; color: var(--primary-color);">
+                {% if other_user.avatar %}
+                <img src="{{ other_user.avatar.url }}"
+                    style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                {% else %}
+                {{ other_user.username.0|upper }}
+                {% endif %}
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.25rem;">{{ other_user.username }}</h2>
+                <div style="font-size: 0.85rem; color: #10b981;">Online</div>
+            </div>
+        </div>
+        <a href="{% url 'user_profile' other_user.username %}" class="btn btn-secondary"
+            style="padding: 0.5rem 1rem;">View Profile</a>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="card" style="flex-grow: 1; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+        <!-- Messages -->
+        <div id="messages-container" style="flex-grow: 1; overflow-y: auto; padding: 1.5rem; background: #f8fafc;">
+            {% for message in messages %}
+            <div
+                style="display: flex; margin-bottom: 1rem; {% if message.sender == user %}justify-content: flex-end;{% endif %}">
+                <div class="message-bubble {% if message.sender == user %}sent{% else %}received{% endif %}">
+                    <div style="margin-bottom: 0.2rem;">{{ message.content }}</div>
+                    <div style="font-size: 0.7rem; opacity: 0.8; text-align: right;">{{ message.timestamp|date:"H:i" }}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; color: #9ca3af; margin-top: 2rem;">
+                No messages yet. Start the conversation!
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area" style="padding: 1.5rem; background: white; border-top: 1px solid #e2e8f0;">
+            <form id="chat-form" method="post" action="{% url 'send_message' conversation.id %}"
+                style="display: flex; gap: 1rem;">
+                {% csrf_token %}
+                <input type="text" name="content" id="message-input" placeholder="Type a message..." required>
+                <button type="submit" class="btn">Send</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .message-bubble {
+        max-width: 70%;
+        padding: 0.8rem 1.2rem;
+        border-radius: 12px;
+        position: relative;
+    }
+
+    .message-bubble.sent {
+        background: var(--primary-color);
+        color: white;
+        border-bottom-right-radius: 2px;
+    }
+
+    .message-bubble.received {
+        background: white;
+        color: var(--text-color);
+        border-bottom-left-radius: 2px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="dark"] #messages-container {
+        background: #0f172a !important;
+        /* Force override inline style */
+    }
+
+    [data-theme="dark"] .input-area {
+        background: #1e293b !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    [data-theme="dark"] .message-bubble.received {
+        background: #334155;
+        color: #f1f5f9;
+        box-shadow: none;
+    }
+</style>
+
+<script>
+    const container = document.getElementById('messages-container');
+    container.scrollTop = container.scrollHeight;
+
+    document.getElementById('chat-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const input = document.getElementById('message-input');
+        const content = input.value;
+        const form = this;
+
+        if (!content.trim()) return;
+
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Append message
+                    const msgDiv = document.createElement('div');
+                    msgDiv.style.cssText = 'display: flex; margin-bottom: 1rem; justify-content: flex-end;';
+                    msgDiv.innerHTML = `
+                    <div class="message-bubble sent">
+                        <div style="margin-bottom: 0.2rem;">${data.content}</div>
+                        <div style="font-size: 0.7rem; opacity: 0.8; text-align: right;">${data.timestamp}</div>
+                    </div>
+                `;
+                    container.appendChild(msgDiv);
+                    container.scrollTop = container.scrollHeight;
+                    input.value = '';
+
+                    // Remove empty state if exists
+                    const emptyState = container.querySelector('.text-center');
+                    if (emptyState) emptyState.remove();
+                }
+            });
+    });
+</script>
+{% endblock %}

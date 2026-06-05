@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <a href="{% url 'event_list' %}" style="text-decoration: none; color: #64748b; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+        ← Back to Events
+    </a>
+
+    {% if messages %}
+    <div style="margin-bottom: 2rem;">
+        {% for message in messages %}
+        <div style="padding: 1rem; border-radius: 12px; margin-bottom: 1rem; {% if message.tags == 'error' %}background: #fee2e2; color: #991b1b;{% else %}background: #dcfce7; color: #166534;{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="card" style="text-align: center; padding: 3rem;">
+        {% if is_registered %}
+             <div style="background: #dcfce7; color: #166534; display: inline-block; padding: 4px 16px; border-radius: 20px; font-weight: 700; margin-bottom: 1.5rem;">
+                ✓ REGISTERED
+            </div>
+        {% endif %}
+        
+        <h1 style="margin-bottom: 1rem; font-size: 2.5rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{{ event.title }}</h1>
+        <p style="font-size: 1.1rem; color: #64748b; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">{{ event.description }}</p>
+
+        <div style="display: flex; gap: 2rem; justify-content: center; margin-bottom: 3rem;">
+            <div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-color);">{{ event.start_time|date:"M d, H:i" }}</div>
+                <div style="font-size: 0.9rem; color: #64748b;">Start Time</div>
+            </div>
+            <div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-color);">{{ event.total_questions }}</div>
+                <div style="font-size: 0.9rem; color: #64748b;">Questions</div>
+            </div>
+            <div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-color);">{{ event.duration_minutes }}m</div>
+                <div style="font-size: 0.9rem; color: #64748b;">Total Duration</div>
+            </div>
+        </div>
+
+        {% if not is_registered %}
+            {% if event.is_live or event.is_upcoming %}
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" name="register" class="btn" style="font-size: 1.25rem; padding: 1rem 3rem;">Register Now</button>
+            </form>
+            <p style="margin-top: 1rem; color: #64748b; font-size: 0.9rem;">
+                {% if event.threshold_type == 'LEVEL' %}
+                Requirement: Level {{ event.threshold_value }}+
+                {% endif %}
+            </p>
+            {% else %}
+            <button class="btn" disabled style="background: #94a3b8; cursor: not-allowed;">Event Ended</button>
+            {% endif %}
+
+        {% else %}
+            <!-- Countdown / Start Logic -->
+            <div id="countdown-container">
+                <h3 style="margin-bottom: 1rem;">Event Starts In:</h3>
+                <div id="countdown" style="font-size: 3rem; font-weight: 800; font-family: monospace; color: var(--primary-color);">00:00:00</div>
+            </div>
+
+            <div id="start-btn-container" style="display: none; margin-top: 2rem;">
+                {% if registration.completed_at %}
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 2rem; border-radius: 12px; max-width: 500px; margin: 0 auto;">
+                    <h3 style="color: #166534; margin-bottom: 0.5rem;">Event Completed!</h3>
+                    <p style="color: #15803d; margin-bottom: 0.5rem;">You have already submitted your response.</p>
+                    {% if registration.score is not None %}
+                    <div style="font-size: 2rem; font-weight: 800; color: var(--primary-color); margin-top: 1rem;">
+                        Score: {{ registration.score }} / {{ event.total_questions }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p style="color: #166534; font-weight: 600; margin-bottom: 1rem;">The event is live! Good luck.</p>
+                <a href="{% url 'take_event' event.id %}" class="btn" style="background: #10b981; font-size: 1.25rem; padding: 1rem 3rem; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">START TEST</a>
+                {% endif %}
+            </div>
+            
+            <script>
+                const startTime = new Date("{{ event.start_time.isoformat }}").getTime();
+                const endTime = new Date("{{ event.end_time.isoformat }}").getTime();
+                
+                function updateCountdown() {
+                    const now = new Date().getTime();
+                    const distance = startTime - now;
+                    
+                    if (distance < 0) {
+                        // Event Started
+                        if (now < endTime) {
+                            document.getElementById('countdown-container').style.display = 'none';
+                            document.getElementById('start-btn-container').style.display = 'block';
+                        } else {
+                            document.getElementById('countdown').innerHTML = "EVENT ENDED";
+                        }
+                        return;
+                    }
+                    
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    
+                    document.getElementById('countdown').innerHTML = 
+                        (days > 0 ? days + "d " : "") + 
+                        (hours < 10 ? "0" + hours : hours) + ":" + 
+                        (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+                        (seconds < 10 ? "0" + seconds : seconds);
+                }
+                
+                setInterval(updateCountdown, 1000);
+                updateCountdown();
+            </script>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

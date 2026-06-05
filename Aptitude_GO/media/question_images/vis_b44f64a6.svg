@@ -1,0 +1,36 @@
+<svg width="250" height="350" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="125" cy="30" rx="40" ry="20" fill="none" stroke="black" stroke-width="2"/>
+    <text x="110" y="35">Start</text>
+    <line x1="125" y1="50" x2="125" y2="80" stroke="black" stroke-width="2"/>
+    
+    <rect x="85" y="80" width="80" height="40" fill="none" stroke="black" stroke-width="2"/>
+    <text x="105" y="105">x = 3</text>
+    <line x1="125" y1="120" x2="125" y2="150" stroke="black" stroke-width="2"/>
+    
+    <polygon points="125,150 185,180 125,210 65,180" fill="none" stroke="black" stroke-width="2"/>
+    <text x="110" y="185">x > 5?</text>
+    
+    <!-- True -->
+    <line x1="185" y1="180" x2="210" y2="180" stroke="black" stroke-width="2"/>
+    <line x1="210" y1="180" x2="210" y2="210" stroke="black" stroke-width="2"/>
+    <text x="190" y="175">Yes</text>
+    <path d="M 180,210 L 230,210 L 240,240 L 190,240 Z" fill="none" stroke="black" stroke-width="2"/>
+    <text x="195" y="230">Print A</text>
+    
+    <!-- False -->
+    <line x1="65" y1="180" x2="40" y2="180" stroke="black" stroke-width="2"/>
+    <line x1="40" y1="180" x2="40" y2="210" stroke="black" stroke-width="2"/>
+    <text x="50" y="175">No</text>
+    <path d="M 10,210 L 60,210 L 70,240 L 20,240 Z" fill="none" stroke="black" stroke-width="2"/>
+    <text x="25" y="230">Print B</text>
+    
+    <!-- Merge -->
+    <line x1="40" y1="240" x2="40" y2="280" stroke="black" stroke-width="2"/>
+    <line x1="40" y1="280" x2="125" y2="280" stroke="black" stroke-width="2"/>
+    <line x1="210" y1="240" x2="210" y2="280" stroke="black" stroke-width="2"/>
+    <line x1="210" y1="280" x2="125" y2="280" stroke="black" stroke-width="2"/>
+    <line x1="125" y1="280" x2="125" y2="300" stroke="black" stroke-width="2"/>
+    
+    <ellipse cx="125" cy="320" rx="40" ry="20" fill="none" stroke="black" stroke-width="2"/>
+    <text x="115" y="325">End</text>
+</svg>

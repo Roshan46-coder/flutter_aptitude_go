@@ -1,0 +1,19 @@
+<svg width="200" height="250" xmlns="http://www.w3.org/2000/svg">
+        <rect x="75" y="25" width="50" height="50" fill="white" stroke="black" stroke-width="2"/>
+        <text x="100" y="55" font-size="24" text-anchor="middle">▲</text>
+        
+        <rect x="25" y="75" width="50" height="50" fill="white" stroke="black" stroke-width="2"/>
+        <text x="50" y="105" font-size="24" text-anchor="middle">◼</text>
+        
+        <rect x="75" y="75" width="50" height="50" fill="white" stroke="black" stroke-width="2"/>
+        <text x="100" y="105" font-size="24" text-anchor="middle">✖</text>
+        
+        <rect x="125" y="75" width="50" height="50" fill="white" stroke="black" stroke-width="2"/>
+        <text x="150" y="105" font-size="24" text-anchor="middle">✦</text>
+        
+        <rect x="75" y="125" width="50" height="50" fill="white" stroke="black" stroke-width="2"/>
+        <text x="100" y="155" font-size="24" text-anchor="middle">●</text>
+        
+        <rect x="75" y="175" width="50" height="50" fill="white" stroke="black" stroke-width="2"/>
+        <text x="100" y="205" font-size="24" text-anchor="middle">★</text>
+    </svg>

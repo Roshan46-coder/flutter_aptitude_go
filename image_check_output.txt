@@ -1,0 +1,62 @@
+Category: quantitative-aptitude, Question ID: 196
+Text: Find the length of the diagonal of a rectangle whose sides are 12 cm and 8 cm.<br><img src='images/vis_59bf7d3f.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 197
+Text: Find the length of the diagonal of a rectangle whose sides are 16 cm and 12 cm.<br><img src='images/vis_6d9869f9.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 198
+Text: Find the length of the diagonal of a rectangle whose sides are 20 cm and 15 cm.<br><img src='images/vis_2ffc90b3.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 199
+Text: Find the length of the diagonal of a rectangle whose sides are 16 cm and 12 cm.<br><img src='images/vis_31f730a0.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 200
+Text: Find the length of the diagonal of a rectangle whose sides are 12 cm and 15 cm.<br><img src='images/vis_7e9e400e.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 201
+Text: Find the length of the diagonal of a rectangle whose sides are 10 cm and 9 cm.<br><img src='images/vis_80852246.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 202
+Text: Find the length of the diagonal of a rectangle whose sides are 12 cm and 8 cm.<br><img src='images/vis_90b9ea97.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 203
+Text: Find the length of the diagonal of a rectangle whose sides are 12 cm and 9 cm.<br><img src='images/vis_acc7415a.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 204
+Text: Find the length of the diagonal of a rectangle whose sides are 16 cm and 9 cm.<br><img src='images/vis_80c2b764.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 205
+Text: Find the length of the diagonal of a rectangle whose sides are 16 cm and 9 cm.<br><img src='images/vis_0c645bc5.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 206
+Text: Find the length of the diagonal of a rectangle whose sides are 20 cm and 15 cm.<br><img src='images/vis_3f2bc42c.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 207
+Text: Find the length of the diagonal of a rectangle whose sides are 16 cm and 9 cm.<br><img src='images/vis_142548db.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 208
+Text: Find the length of the diagonal of a rectangle whose sides are 20 cm and 12 cm.<br><img src='images/vis_4deda280.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 209
+Text: Find the length of the diagonal of a rectangle whose sides are 10 cm and 15 cm.<br><img src='images/vis_ed29b22c.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 210
+Text: Find the length of the diagonal of a rectangle whose sides are 10 cm and 8 cm.<br><img src='images/vis_86d364ce.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 211
+Text: Find the length of the diagonal of a rectangle whose sides are 10 cm and 15 cm.<br><img src='images/vis_5896230a.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 212
+Text: Find the length of the diagonal of a rectangle whose sides are 12 cm and 15 cm.<br><img src='images/vis_df5a82b5.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 213
+Text: Find the length of the diagonal of a rectangle whose sides are 12 cm and 15 cm.<br><img src='images/vis_7766c214.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 214
+Text: Find the length of the diagonal of a rectangle whose sides are 16 cm and 15 cm.<br><img src='images/vis_3a3a7678.svg' style='max-width:100%,'>
+
+Category: quantitative-aptitude, Question ID: 215
+Text: Find the length of the diagonal of a rectangle whose sides are 20 cm and 9 cm.<br><img src='images/vis_ad19d07a.svg' style='max-width:100%,'>
+
+
+Total found with image refs: 20

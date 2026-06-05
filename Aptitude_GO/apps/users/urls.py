@@ -1,0 +1,45 @@
+from django.urls import path
+from django.contrib.auth import views as auth_views
+from users import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('get-started/', views.onboarding_status, name='onboarding_status'),
+    path('get-started/interface/', views.onboarding_interest, name='onboarding_interest'),
+    path('role-selection/', views.role_selection, name='role_selection'),
+    path('company-onboarding/', views.company_onboarding, name='company_onboarding'),
+    path('company-dashboard/', views.company_dashboard, name='company_dashboard'),
+    path('register/', views.register, name='register'),
+    path('email-sent/', views.email_sent, name='email_sent'),
+    path('verify-email/<uidb64>/<token>/', views.verify_email, name='verify_email'),
+    path('login/', auth_views.LoginView.as_view(template_name='users/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    
+    # Password Reset Views
+    path('password-reset/', 
+         auth_views.PasswordResetView.as_view(template_name='users/password_reset_form.html', email_template_name='users/password_reset_email.html', success_url='/password-reset/done/'), 
+         name='password_reset'),
+    path('password-reset/done/', 
+         auth_views.PasswordResetDoneView.as_view(template_name='users/password_reset_done.html'), 
+         name='password_reset_done'),
+    path('password-reset-confirm/<uidb64>/<token>/', 
+         auth_views.PasswordResetConfirmView.as_view(template_name='users/password_reset_confirm.html', success_url='/password-reset-complete/'), 
+         name='password_reset_confirm'),
+    path('password-reset-complete/', 
+         auth_views.PasswordResetCompleteView.as_view(template_name='users/password_reset_complete.html'), 
+         name='password_reset_complete'),
+    path('profile/', views.profile, name='profile'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('profile/delete-account/', views.delete_account, name='delete_account'),
+    path('profile/upload-certificate/', views.upload_certificate, name='upload_certificate'),
+    path('profile/delete-certificate/<int:certificate_id>/', views.delete_certificate, name='delete_certificate'),
+    path('profile/<str:username>/', views.profile, name='user_profile'),
+    path('inbox/', views.inbox, name='inbox'),
+    path('chat/start/<str:username>/', views.start_chat, name='start_chat'),
+    path('chat/<int:conversation_id>/', views.chat_detail, name='chat_detail'),
+    path('chat/<int:conversation_id>/send/', views.send_message, name='send_message'),
+    path('admin-access/', views.admin_access, name='admin_access'),
+    path('custom-admin/', views.custom_admin_dashboard, name='custom_admin_dashboard'),
+    path('custom-admin/delete-user/<int:user_id>/', views.admin_delete_user, name='admin_delete_user'),
+    path('api/aptix/', views.aptix_chat_api, name='aptix_chat_api'),
+]

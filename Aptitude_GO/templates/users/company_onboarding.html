@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 4rem auto;">
+    <div style="text-align: center; margin-bottom: 3rem;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Who are you looking for?</h1>
+        <p style="color: #6b7280; font-size: 1.1rem;">Select the primary role you are hiring for. This helps us
+            customize your dashboard.</p>
+    </div>
+
+    <form method="post" id="companyOnboardForm">
+        {% csrf_token %}
+        <input type="hidden" name="hiring_focus" id="hiring_focus_input">
+
+        <div class="tiles-grid">
+            <div class="tile" onclick="selectTile('Software Developer')">
+                <div class="tile-icon">💻</div>
+                <div class="tile-label">Software Developer</div>
+            </div>
+
+            <div class="tile" onclick="selectTile('Data Scientist')">
+                <div class="tile-icon">📊</div>
+                <div class="tile-label">Data Scientist</div>
+            </div>
+
+            <div class="tile" onclick="selectTile('Product Manager')">
+                <div class="tile-icon">🚀</div>
+                <div class="tile-label">Product Manager</div>
+            </div>
+
+            <div class="tile" onclick="selectTile('Designer')">
+                <div class="tile-icon">🎨</div>
+                <div class="tile-label">UI/UX Designer</div>
+            </div>
+
+            <div class="tile" onclick="selectTile('Marketing')">
+                <div class="tile-icon">📢</div>
+                <div class="tile-label">Marketing</div>
+            </div>
+
+            <div class="tile" onclick="selectTile('Other')">
+                <div class="tile-icon">🔍</div>
+                <div class="tile-label">Other</div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .tiles-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .tile {
+        background: var(--card-bg);
+        border: 2px solid transparent;
+        border-radius: 16px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow);
+    }
+
+    .tile:hover {
+        transform: translateY(-4px);
+        border-color: #cbd5e1;
+    }
+
+    .tile.selected {
+        border-color: var(--primary-color);
+        background: #eef2ff;
+    }
+
+    .tile-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .tile-label {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    [data-theme="dark"] .tile {
+        background: rgba(30, 41, 59, 0.6);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    [data-theme="dark"] .tile:hover {
+        background: rgba(30, 41, 59, 0.9);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    [data-theme="dark"] .tile.selected {
+        background: rgba(79, 70, 229, 0.2);
+        border-color: #818cf8;
+    }
+</style>
+
+<script>
+    function selectTile(focus) {
+        document.getElementById('hiring_focus_input').value = focus;
+        document.getElementById('companyOnboardForm').submit();
+    }
+</script>
+{% endblock %}

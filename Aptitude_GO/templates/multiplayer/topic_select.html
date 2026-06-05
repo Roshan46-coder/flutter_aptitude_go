@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <div style="text-align: center; margin-bottom: 3rem;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 1rem; background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+            VS Online Players
+        </h1>
+        <p style="color: #64748b; font-size: 1.1rem;">
+            Challenge real players from around the world. Entry fee is <strong style="color: var(--accent-color);">20 Coins</strong> and <strong style="color: #ef4444;">1 Life</strong>. Winner takes <strong style="color: var(--accent-color);">40 Coins</strong>!
+        </p>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div style="margin-top: 1rem; padding: 1rem; border-radius: 8px; font-weight: 600;
+                    {% if message.tags == 'error' %}background: #fee2e2; color: #dc2626; border: 1px solid #f87171;
+                    {% else %}background: #dcfce3; color: #16a34a; border: 1px solid #4ade80;{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
+        {% for category in categories %}
+        <div class="card category-card">
+            <div>
+                <div class="category-icon">{{ category.name|slice:":1" }}</div>
+                <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.5rem;">{{ category.name }}</h3>
+                <p style="color: #64748b; margin-bottom: 1.5rem; line-height: 1.6;">{{ category.description }}</p>
+                <div
+                    style="font-size: 0.9rem; color: #64748b; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <span
+                        style="background: rgba(99, 102, 241, 0.1); padding: 4px 10px; border-radius: 8px; color: var(--primary-color); font-weight: 700;">
+                        {{ category.questions.count }} Questions
+                    </span>
+                </div>
+            </div>
+            
+            {% if coins >= 20 and lives >= 1 %}
+            <div>
+                <a href="{% url 'multiplayer:matchmaking' category.slug %}" class="btn" style="width: 100%; text-align: center; background: var(--accent-color); color: white;">
+                    Find Opponent (20🪙 | 1❤️)
+                </a>
+            </div>
+            {% else %}
+            <div>
+                <button class="btn btn-secondary" disabled style="width: 100%; opacity: 0.6; cursor: not-allowed; text-align: center;">
+                    Not Enough Resources
+                </button>
+                <p style="font-size: 0.8rem; color: #ef4444; margin-top: 0.5rem; margin-bottom: 0; text-align: center;">Play Solo Practice to earn more!</p>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #64748b; background: var(--card-bg); border-radius: 20px;">
+            No topics available right now. Let the admins know!
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .category-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .category-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 6px;
+        background: var(--primary-gradient);
+        opacity: 0.8;
+    }
+
+    .category-icon {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+</style>
+{% endblock %}

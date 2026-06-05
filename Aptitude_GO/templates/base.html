@@ -1,0 +1,755 @@
+{% load static %}
+{% load notification_tags %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aptitude GO</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --accent-color: #f59e0b;
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --glow: 0 0 15px rgba(79, 70, 229, 0.3);
+            --radius: 16px;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --text-color: #f1f5f9;
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            color-scheme: dark;
+        }
+
+        [data-theme="dark"] .logo {
+            filter: brightness(1.2);
+        }
+
+        [data-theme="dark"] header,
+        [data-theme="dark"] .card,
+        [data-theme="dark"] input[type="text"],
+        [data-theme="dark"] input[type="password"] {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="dark"] nav a {
+            color: #94a3b8;
+        }
+
+        [data-theme="dark"] nav a:hover {
+            color: #818cf8;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.2s;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(128, 128, 128, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(124, 58, 237, 0.05) 0px, transparent 50%),
+                linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        .logo {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        header {
+            background: transparent;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            z-index: -1;
+            transition: background 0.3s;
+        }
+
+        /* ... existing styles ... */
+        /* Note: Skipping redundant styles for brevity in replacement block, focusing on new additions */
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            margin: 0;
+            padding: 0;
+            align-items: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        nav a:hover {
+            color: var(--primary-color);
+        }
+
+        .profile-container {
+            position: relative;
+            display: inline-block;
+            border-radius: 50%;
+            padding: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .golden-frame-active {
+            background: linear-gradient(45deg, #fbbf24, #f59e0b, #fbbf24);
+            background-size: 200% 200%;
+            animation: golden-glow 3s linear infinite;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        @keyframes golden-glow {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Modern Input Styling */
+        input[type="text"],
+        input[type="password"],
+        input[type="email"],
+        input[type="number"],
+        input[type="search"],
+        input[type="tel"],
+        input[type="tel"],
+        input[type="url"],
+        input[type="datetime-local"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            color: var(--text-color);
+        }
+
+        [data-theme="dark"] input,
+        [data-theme="dark"] textarea,
+        [data-theme="dark"] select {
+            background-color: rgba(15, 23, 42, 0.5);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        [data-theme="dark"] input:focus,
+        [data-theme="dark"] textarea:focus,
+        [data-theme="dark"] select:focus {
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.25em;
+            cursor: pointer;
+            padding-right: 2.5rem;
+            /* Space for the arrow */
+        }
+
+        [data-theme="dark"] select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            color: #f1f5f9;
+        }
+
+        /* Auto-theme date pickers */
+        ::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        ::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
+        [data-theme="dark"] ::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-gradient);
+            color: white;
+            padding: 0.875rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.025em;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3), 0 4px 6px -2px rgba(79, 70, 229, 0.15);
+            filter: brightness(1.1);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            min-width: auto;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #e2e8f0;
+            color: var(--text-color);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: rgba(79, 70, 229, 0.05);
+            box-shadow: none;
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .btn-secondary:hover {
+            border-color: #818cf8;
+            color: #818cf8;
+            background: rgba(129, 140, 248, 0.1);
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #ef4444;
+            box-shadow: none;
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+            color: #b91c1c;
+            filter: brightness(1);
+        }
+
+        [data-theme="dark"] .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        [data-theme="dark"] .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 2.5rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        [data-theme="dark"] label {
+            color: #e2e8f0;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 1.5rem;
+            background: var(--card-bg);
+            padding: 0.5rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        [data-theme="dark"] .stats-bar {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Navbar Styling Corrections */
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .profile-btn {
+            background: #e0e7ff;
+            color: var(--primary-color);
+            border: 2px solid transparent;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        [data-theme="dark"] .profile-btn {
+            background: rgba(30, 41, 59, 0.8);
+            color: #818cf8;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.5rem;
+            background: var(--card-bg);
+            min-width: 160px;
+            box-shadow: var(--shadow);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            z-index: 9999;
+        }
+
+        .dropdown-content.show {
+            display: block;
+            animation: fadeIn 0.15s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-content a,
+        .dropdown-content button {
+            color: var(--text-color);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+            transition: background 0.2s;
+            background: none;
+            border: none;
+            width: 100%;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .dropdown-content a:hover,
+        .dropdown-content button:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--primary-color);
+        }
+
+        [data-theme="dark"] .dropdown-content {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="dark"] .dropdown-content a:hover,
+        [data-theme="dark"] .dropdown-content button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .stats-pill {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        [data-theme="dark"] .stats-pill {
+            background: rgba(30, 41, 59, 0.5);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            border: 2px solid var(--bg-color);
+            z-index: 10;
+        }
+
+        /* Profile Frame Styles */
+        .profile-container {
+            position: relative;
+            padding: 4px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .golden-frame-active {
+            background: linear-gradient(45deg, #fbbf24, #fef3c7, #f59e0b, #fbbf24);
+            background-size: 400% 400%;
+            animation: goldenGlow 3s ease infinite;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+            padding: 5px;
+            /* Thicker frame */
+        }
+
+        @keyframes goldenGlow {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .golden-frame-active .profile-btn {
+            border: 2px solid #fff;
+        }
+    </style>
+    <script>
+        // Check for saved theme preference or system preference
+        const savedTheme = localStorage.getItem('theme');
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+        if (savedTheme === 'dark' || (!savedTheme && systemTheme === 'dark')) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+
+<body>
+    <header>
+        <a href="{% url 'home' %}" class="logo">Aptitude GO</a>
+        <nav style="display: flex; align-items: center; gap: 1.5rem;">
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+                <span id="themeIcon">☀️</span>
+            </button>
+            <div class="nav-links">
+                {% if user.is_authenticated %}
+                {% if user.is_company %}
+                <!-- Company Navbar -->
+                <a href="{% url 'company_dashboard' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'company_dashboard' %}active{% endif %}">Dashboard</a>
+                <a href="{% url 'recruiter_events' %}"
+                    class="nav-link {% if 'events' in request.path %}active{% endif %}">Events</a>
+                <a href="#" class="nav-link">Find Talent</a>
+
+                <div style="margin-left: 1rem; position: relative;" class="dropdown">
+                    {% has_unread_messages user as unread_company %}
+                    <button class="profile-btn" onclick="toggleDropdown(this)">
+                        {{ user.username.0|upper }}
+                    </button>
+                    {% if unread_company %}
+                    <span class="notification-dot"></span>
+                    {% endif %}
+                    <div class="dropdown-content">
+                        <a href="{% url 'profile' %}">Profile</a>
+                        <a href="{% url 'inbox' %}">Inbox</a>
+                        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form-company').submit();">Log Out</a>
+                        <form id="logout-form-company" action="{% url 'logout' %}" method="post" style="display: none;">
+                            {% csrf_token %}
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Candidate Navbar -->
+                {% if not user.is_superuser %}
+                <a href="{% url 'arena_home' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'arena_home' %}active{% endif %}">Arena</a>
+                <a href="{% url 'store' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'store' %}active{% endif %}">Store</a>
+                <a href="{% url 'practice_arena' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'practice_arena' %}active{% endif %}">Practice</a>
+
+                <div class="stats-pill">
+                    <span style="color: #ef4444;">❤️ {{ user.lives }}</span>
+                    <span style="width: 1px; height: 16px; background: rgba(0,0,0,0.1);"></span>
+                    <span style="color: #f59e0b;">💰 {{ user.coins }}</span>
+                </div>
+                {% endif %}
+
+                {% if user.is_superuser %}
+                <a href="{% url 'custom_admin_dashboard' %}" class="nav-link">Admin Dashboard</a>
+                {% endif %}
+
+                <div style="margin-left: 1rem; position: relative;" class="dropdown">
+                    {% has_unread_messages user as unread_candidate %}
+                    {% load gamification_tags %}
+                    {% get_equipped_frame user as equipped_frame %}
+
+                    <div
+                        class="profile-container {% if equipped_frame and equipped_frame.name == 'Golden Frame' %}golden-frame-active{% endif %}">
+                        <button class="profile-btn" onclick="toggleDropdown(this)">
+                            {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                            {{ user.username.0|upper }}
+                            {% endif %}
+                        </button>
+                    </div>
+                    {% if unread_candidate %}
+                    <span class="notification-dot"></span>
+                    {% endif %}
+                    <div class="dropdown-content">
+                        <a href="{% url 'profile' %}">Profile</a>
+                        <a href="{% url 'inbox' %}">Inbox</a>
+                        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form-candidate').submit();">Log Out</a>
+                        <form id="logout-form-candidate" action="{% url 'logout' %}" method="post" style="display: none;">
+                            {% csrf_token %}
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+                {% else %}
+                <a href="{% url 'login' %}" class="nav-link">Log In</a>
+                <a href="{% url 'role_selection' %}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Sign
+                    Up</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer style="text-align: center; padding: 2rem; color: #64748b; font-size: 0.9rem;">
+        <p>&copy; {% now "Y" %} Aptitude GO. All Rights Reserved<a href="{% url 'admin_access' %}"
+                style="text-decoration: none; color: inherit; cursor: default;">.</a></p>
+        <div style="margin-top: 0.5rem; display: flex; justify-content: center; gap: 1.5rem;">
+            <a href="#" style="text-decoration: none; color: inherit; transition: color 0.2s;">Terms of Condition</a>
+            <a href="#" style="text-decoration: none; color: inherit; transition: color 0.2s;">Privacy Policy</a>
+            <a href="#" style="text-decoration: none; color: inherit; transition: color 0.2s;">Contact Support</a>
+        </div>
+    </footer>
+
+    <script>
+        const toggleBtn = document.getElementById('themeToggle');
+        const icon = document.getElementById('themeIcon');
+        const root = document.documentElement;
+
+        // Update icon based on current theme
+        function updateIcon() {
+            const isDark = root.getAttribute('data-theme') === 'dark';
+            icon.textContent = isDark ? '🌙' : '☀️';
+        }
+
+        updateIcon();
+
+        toggleBtn.addEventListener('click', () => {
+            const currentTheme = root.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            root.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon();
+        });
+
+        // Dropdown Logic
+        function toggleDropdown(btn) {
+            // Close other open dropdowns first (if any)
+            document.querySelectorAll('.dropdown-content.show').forEach(d => {
+                if (d !== btn.nextElementSibling && d !== btn.parentElement.querySelector('.dropdown-content')) {
+                    d.classList.remove('show');
+                }
+            });
+
+            // Find the dropdown content relative to the button
+            const container = btn.closest('.dropdown');
+            const content = container.querySelector('.dropdown-content');
+
+            if (content) {
+                // Toggle visibility
+                const isShown = content.classList.contains('show');
+
+                if (isShown) {
+                    content.classList.remove('show');
+                } else {
+                    content.classList.add('show');
+                }
+            }
+        }
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', function (event) {
+            if (!event.target.matches('.profile-btn') && !event.target.closest('.profile-btn') && !event.target.closest('.dropdown-content')) {
+                const dropdowns = document.getElementsByClassName("dropdown-content");
+                for (let i = 0; i < dropdowns.length; i++) {
+                    const openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        });
+    </script>
+    {% if user.is_authenticated %}
+        {% include 'components/aptix_chat.html' %}
+    {% endif %}
+</body>
+
+</html>

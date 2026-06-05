@@ -1,0 +1,8 @@
+<svg width="250" height="200" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="125,20 50,150 200,150" fill="none" stroke="black" stroke-width="2"/>
+    <line x1="125" y1="20" x2="125" y2="150" stroke="red" stroke-dasharray="4"/>
+    <rect x="125" y="140" width="10" height="10" fill="none" stroke="black"/>
+    <text x="135" y="90" fill="red">h</text>
+    <text x="120" y="170">base = 24 cm</text>
+    <text x="10" y="20">Area = 120 cm²</text>
+</svg>

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 4rem auto; text-align: center;">
+    <div class="card">
+        <h1 style="color: #ef4444;">Out of Lives!</h1>
+        <div style="font-size: 3rem; margin: 1rem 0;">💔</div>
+        <p>You have used all your lives for today.</p>
+        <p>Wait for the daily reset or buy a refill from the store.</p>
+        <div style="margin-top: 2rem;">
+            <a href="{% url 'profile' %}" class="btn">Back to Profile</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

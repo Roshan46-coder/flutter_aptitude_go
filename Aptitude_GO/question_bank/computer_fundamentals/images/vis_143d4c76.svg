@@ -1,0 +1,13 @@
+<svg width="400" height="150" xmlns="http://www.w3.org/2000/svg">
+    <!-- OSI Model simplified view -->
+    <rect x="20" y="30" width="60" height="40" fill="#ccffcc" stroke="black"/>
+    <text x="25" y="55">Src Host</text>
+    <line x1="80" y1="50" x2="160" y2="50" stroke="black" stroke-width="2"/>
+    <circle cx="180" cy="50" r="20" fill="#ffcccc" stroke="black"/>
+    <text x="175" y="55">R1</text>
+    <line x1="200" y1="50" x2="280" y2="50" stroke="black" stroke-width="2"/>
+    <rect x="280" y="30" width="60" height="40" fill="#ccffcc" stroke="black"/>
+    <text x="282" y="55">Dst Host</text>
+    <line x1="180" y1="70" x2="180" y2="100" stroke="gray" stroke-dasharray="4"/>
+    <text x="140" y="115" font-size="12">Operates up to Layer 3</text>
+</svg>

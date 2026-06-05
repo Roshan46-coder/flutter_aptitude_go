@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .matchmaking-container {
+        max-width: 600px;
+        margin: 4rem auto;
+        text-align: center;
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        padding: 3rem;
+        box-shadow: 0 0 30px rgba(79, 70, 229, 0.4);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .vs-text {
+        font-size: 3rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #ef4444, #f59e0b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 1.5rem 0;
+        text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    }
+
+    .slot-machine-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 2rem 0;
+    }
+
+    .player-card {
+        width: 150px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    [data-theme="dark"] .player-card {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    
+    .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .username-display {
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    /* Slot Animation */
+    .slot-roll {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .slot-item {
+        width: 100%;
+        height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .spinning {
+        animation: spin-slot 0.2s linear infinite;
+    }
+
+    @keyframes spin-slot {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(-200px); } /* Assuming 1 card height */
+    }
+
+    /* Radar Ping Animation */
+    .radar {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(79, 70, 229, 0.2) 0%, transparent 70%);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+        animation: pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    }
+
+    @keyframes pulse {
+        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+        50% { opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+    }
+    
+    .match-found-effect {
+        animation: scale-bump 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    
+    @keyframes scale-bump {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); box-shadow: 0 0 40px rgba(79, 70, 229, 0.6); }
+        100% { transform: scale(1); border-color: var(--primary-color); }
+    }
+</style>
+
+<div class="matchmaking-container">
+    <div class="radar" id="radar"></div>
+    
+    <h2 id="status-text" style="color: var(--primary-color); margin-bottom: 0;">Searching for Opponent</h2>
+    <p style="color: #64748b;">Queue: {{ topic|title }}</p>
+    
+    <div class="slot-machine-container">
+        <!-- Player 1 (You) -->
+        <div class="player-card">
+            <div class="avatar">
+                {% if request.user.avatar %}
+                    <img src="{{ request.user.avatar.url }}" alt="{{ request.user.username }}">
+                {% else %}
+                    {{ request.user.username.0|upper }}
+                {% endif %}
+            </div>
+            <div class="username-display">You</div>
+        </div>
+
+        <div class="vs-text">VS</div>
+
+        <!-- Player 2 (Opponent Slot) -->
+        <div class="player-card" id="opponent-card">
+            <div class="slot-roll" id="slot-roll">
+                <!-- Generating some dummy visual profiles for the spin effect -->
+                <div class="slot-item">
+                    <div class="avatar" style="background: #3b82f6;">?</div>
+                    <div class="username-display">Searching...</div>
+                </div>
+                <!-- Javascript will duplicate items here to create infinite scroll -->
+            </div>
+            
+            <!-- Result container (hidden initially) -->
+            <div id="opponent-result" style="display: none; flex-direction: column; align-items: center; width: 100%; height: 100%; justify-content: center; z-index: 10; background: inherit;">
+                <div class="avatar" id="opp-avatar" style="background: var(--accent-color);"></div>
+                <div class="username-display" id="opp-name"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="font-size: 0.9rem; color: #64748b; margin-top: 1rem;">
+        Estimated Wait: <span id="timer">0</span>s
+    </div>
+
+    <button id="cancel-btn" class="btn btn-secondary" style="margin-top: 2rem; width: 100%;" onclick="cancelSearch()">
+        Cancel Matchmaking
+    </button>
+</div>
+
+<script>
+    const topic = "{{ topic }}";
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/matchmaking/`;
+    let socket;
+    
+    let timer = 0;
+    let timerInterval;
+    const maxSearchTime = 30; // 30 seconds wait threshold limit before suggesting cancel
+    
+    // Slot Machine Logic
+    const dummyNames = ["ShadowNinja", "MathGenius", "LogicPro", "CodeBreaker", "SpeedyGonzales", "PuzzleMaster", "Brainiac"];
+    const colors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
+    const slotRoll = document.getElementById('slot-roll');
+    
+    function setupSlotMachine() {
+        slotRoll.innerHTML = '';
+        // Create 10 items to spin through
+        for (let i = 0; i < 10; i++) {
+            const name = dummyNames[Math.floor(Math.random() * dummyNames.length)];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            slotRoll.innerHTML += `
+                <div class="slot-item">
+                    <div class="avatar" style="background: ${color};">${name[0]}</div>
+                    <div class="username-display" style="opacity: 0.5;">${name}</div>
+                </div>
+            `;
+        }
+    }
+
+    function initSocket() {
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = function() {
+            console.log("Connected to matchmaking server");
+            
+            // Start spinning
+            setupSlotMachine();
+            slotRoll.classList.add('spinning');
+            
+            // Send search request
+            socket.send(JSON.stringify({
+                'action': 'search_match',
+                'topic': topic
+            }));
+            
+            // Start timer
+            timerInterval = setInterval(() => {
+                timer++;
+                document.getElementById('timer').innerText = timer;
+                if(timer > maxSearchTime) {
+                    document.getElementById('status-text').innerText = "Taking longer than usual...";
+                }
+            }, 1000);
+        };
+
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            
+            if (data.type === 'match_found') {
+                clearInterval(timerInterval);
+                
+                // Stop Roulette Animation and Show Opponent
+                document.getElementById('status-text').innerText = "Match Found!";
+                document.getElementById('status-text').style.color = "#10b981";
+                document.getElementById('radar').style.display = 'none';
+                
+                // Remove cancel button to prevent dodging
+                document.getElementById('cancel-btn').style.display = 'none';
+                
+                // Make wheel slow down instead of instantly stopping
+                slotRoll.style.animation = 'spin-slot 0.5s ease-out forwards';
+                
+                setTimeout(() => {
+                    slotRoll.style.display = 'none';
+                    const resultContainer = document.getElementById('opponent-result');
+                    resultContainer.style.display = 'flex';
+                    
+                    document.getElementById('opponent-card').classList.add('match-found-effect');
+                    
+                    document.getElementById('opp-avatar').innerText = data.opponent.username.charAt(0).toUpperCase();
+                    document.getElementById('opp-name').innerText = data.opponent.username;
+                    
+                    // Redirect to Game Room after dramatic pause
+                    setTimeout(() => {
+                        window.location.href = `/multiplayer/game/${data.match_id}/`;
+                    }, 2000);
+                }, 500); 
+                
+            } else if (data.type === 'error') {
+                alert(data.message);
+                window.location.href = "{% url 'multiplayer:topic_select' %}";
+            }
+        };
+
+        socket.onclose = function() {
+            clearInterval(timerInterval);
+            console.log("Disconnected from matchmaking");
+        };
+    }
+    
+    function cancelSearch() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({'action': 'cancel_search'}));
+        }
+        window.location.href = "{% url 'multiplayer:topic_select' %}";
+    }
+
+    // Start everything
+    window.onload = initSocket;
+    
+    // Prevent navigating away quietly
+    window.addEventListener('beforeunload', function(e) {
+        if(socket && socket.readyState === WebSocket.OPEN && document.getElementById('cancel-btn').style.display !== 'none') {
+             socket.send(JSON.stringify({'action': 'cancel_search'}));
+        }
+    });
+</script>
+{% endblock %}

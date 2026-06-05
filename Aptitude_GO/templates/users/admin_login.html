@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 4rem auto; text-align: center;">
+    <h2
+        style="margin-bottom: 2rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        Restricted Access</h2>
+
+    <div class="card">
+        {% if error %}
+        <div
+            style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'admin_access' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <input type="password" name="password" placeholder="Enter Admin Password" required autofocus
+                    style="text-align: center; letter-spacing: 0.2em; font-size: 1.2rem;">
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%;">
+                Unlock Dashboard
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

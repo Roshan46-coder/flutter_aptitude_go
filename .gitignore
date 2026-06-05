@@ -1,0 +1,28 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.sqlite3
+*.db
+venv/
+.env
+
+# Flutter
+aptitude_go_flutter/build/
+aptitude_go_flutter/.dart_tool/
+aptitude_go_flutter/.packages
+aptitude_go_flutter/.pub/
+aptitude_go_flutter/pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

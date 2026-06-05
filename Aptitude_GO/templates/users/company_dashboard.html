@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+    <!-- Dashboard Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+        <div>
+            <h1
+                style="font-size: 2.5rem; margin-bottom: 0.5rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Talent Scout
+            </h1>
+            <p style="color: #6b7280;">Find the top performers in the community based on real aptitude data.</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button class="btn btn-secondary">Filter by Skill</button>
+            <button class="btn">Download Report</button>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 2rem; font-weight: 800; color: var(--primary-color);">{{ candidates.count }}</div>
+            <div style="color: #6b7280; font-size: 0.9rem;">Total Candidates</div>
+        </div>
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 2rem; font-weight: 800; color: var(--accent-color);">{{ new_candidates_count }}</div>
+            <div style="color: #6b7280; font-size: 0.9rem;">New This Week</div>
+        </div>
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 2rem; font-weight: 800; color: #10b981;">{{ user.hiring_focus }}</div>
+            <div style="color: #6b7280; font-size: 0.9rem;">Your Focus</div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Table -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="dashboard-header">
+            <h3 style="margin: 0;">Top Candidates</h3>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr class="table-header" style="text-align: left; font-size: 0.85rem; text-transform: uppercase;">
+                        <th style="padding: 1rem 1.5rem;">Rank</th>
+                        <th style="padding: 1rem 1.5rem;">Candidate</th>
+                        <th style="padding: 1rem 1.5rem;">Level</th>
+                        <th style="padding: 1rem 1.5rem;">Experience</th>
+                        <th style="padding: 1rem 1.5rem;">Status</th>
+                        <th style="padding: 1rem 1.5rem;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for candidate in candidates %}
+                    <tr style="border-bottom: 1px solid #e2e8f0; transition: background 0.2s;" class="candidate-row">
+                        <td style="padding: 1rem 1.5rem; font-weight: 700; color: #94a3b8;">#{{ forloop.counter }}</td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div
+                                    style="width: 40px; height: 40px; background: #e0e7ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-weight: 700;">
+                                    {% if candidate.avatar %}
+                                    <img src="{{ candidate.avatar.url }}"
+                                        style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                    {% else %}
+                                    {{ candidate.username.0|upper }}
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600;">{{ candidate.username }}</div>
+                                    <div style="font-size: 0.8rem; color: #6b7280;">{{ candidate.interested_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <span
+                                style="background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: 600;">Lvl
+                                {{ candidate.level }}</span>
+                        </td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <div style="font-weight: 600;">{{ candidate.exp }} XP</div>
+                        </td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <span style="color: #64748b; font-size: 0.9rem;">{{ candidate.current_status|default:"Student" }}</span>
+                        </td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <a href="{% url 'user_profile' candidate.username %}" class="btn btn-secondary"
+                                style="padding: 0.5rem 1rem; font-size: 0.8rem; text-decoration: none;">View Profile</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="padding: 2rem; text-align: center; color: #6b7280;">No candidates found
+                            yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .candidate-row:hover {
+        background: #f8fafc;
+    }
+
+    [data-theme="dark"] .candidate-row:hover {
+        background: rgba(30, 41, 59, 0.8);
+    }
+
+    .table-header {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    [data-theme="dark"] .table-header {
+        background: rgba(30, 41, 59, 1);
+        color: #94a3b8;
+    }
+
+    .dashboard-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+
+    [data-theme="dark"] .dashboard-header {
+        background: rgba(30, 41, 59, 0.5);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}

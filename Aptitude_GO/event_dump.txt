@@ -1,0 +1,16 @@
+Timezone in Settings: Asia/Kolkata
+Current Timezone (Active): Asia/Kolkata
+Current Time (UTC): 2026-02-12 09:21:25.675681+00:00
+Current Time (Local): 2026-02-12 14:51:25.675681+05:30
+--------------------------------------------------
+Listing All Events:
+ID: 5 | Title: second event
+  Start (Stored/UTC): 2026-02-12 08:57:00+00:00
+  Start (Local): 2026-02-12 14:27:00+05:30
+  End   (Stored/UTC): 2026-02-12 09:27:00+00:00
+  End   (Local): 2026-02-12 14:57:00+05:30
+  Duration: 10 mins
+  Is Active: True
+  End > Now: True
+  Visible in List? True
+------------------------------

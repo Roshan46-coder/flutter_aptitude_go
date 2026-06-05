@@ -1,0 +1,19 @@
+<svg width="400" height="200" xmlns="http://www.w3.org/2000/svg">
+       <!-- Original -->
+       <text x="10" y="20">Find the mirror image of the shape:</text>
+       <polygon points="10,20 40,20 40,10 60,30 40,50 40,40 10,40" fill="#4f46e5" transform="translate(10, 30)" />
+       <line x1="90" y1="30" x2="90" y2="90" stroke="black" stroke-dasharray="4" />
+       
+       <!-- Options -->
+       <text x="10" y="130">A.</text>
+       <polygon points="10,20 40,20 40,10 60,30 40,50 40,40 10,40" fill="#4f46e5" transform="translate(30, 110)" />
+       
+       <text x="120" y="130">B.</text>
+       <polygon points="60,20 30,20 30,10 10,30 30,50 30,40 60,40" fill="#4f46e5" transform="translate(140, 110)" />
+       
+       <text x="230" y="130">C.</text>
+       <polygon points="10,20 40,20 40,10 60,30 40,50 40,40 10,40" fill="#4f46e5" transform="translate(250, 110) rotate(180, 35, 30)" />
+       
+       <text x="340" y="130">D.</text>
+       <polygon points="60,20 30,20 30,10 10,30 30,50 30,40 60,40" fill="#4f46e5" transform="translate(360, 110) rotate(180, 35, 30)" />
+    </svg>

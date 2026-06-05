@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 2rem; text-align: center;">
+    <h1
+        style="margin-bottom: 0.5rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        Live & Upcoming Events</h1>
+    <p style="color: #64748b;">Join special aptitude challenges and tournaments.</p>
+</div>
+
+{% if events %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+    {% for event in events %}
+    <div class="card" style="display: flex; flex-direction: column;">
+        <div style="margin-bottom: 1rem;">
+            {% if event.is_live %}
+            <span
+                style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">LIVE
+                NOW</span>
+            {% else %}
+            <span
+                style="background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">UPCOMING</span>
+            {% endif %}
+            <span style="float: right; font-size: 0.9rem; color: #64748b;">{{ event.category.name|default:"General"
+                }}</span>
+        </div>
+
+        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">{{ event.title }}</h3>
+        <p style="color: #64748b; margin-bottom: 1.5rem; flex-grow: 1;">{{ event.description|truncatechars:100 }}</p>
+
+        <div
+            style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: #4b5563;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>📅</span> <span>{{ event.start_time|date:"M d, H:i" }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>⏱️</span> <span>Window: {{ event.event_duration_minutes }}m | Test: {{ event.test_duration_minutes
+                    }}m</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>🎮</span> <span>{{ event.total_questions }} Questions</span>
+            </div>
+            {% if event.threshold_type == 'LEVEL' %}
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>🔒</span> <span>Level {{ event.threshold_value }}+ Required</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <a href="{% url 'event_detail' event.id %}" class="btn" style="text-align: center;">View Details -></a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: 4rem 2rem;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+    <h3 style="color: var(--text-color); margin-bottom: 0.5rem;">No Events Available</h3>
+    <p style="color: #64748b;">There are no active or upcoming events at the moment. Check back later!</p>
+    <a href="{% url 'arena_home' %}" class="btn" style="margin-top: 1rem;">Back to Arena</a>
+</div>
+{% endif %}
+{% endblock %}

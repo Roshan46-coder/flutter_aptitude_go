@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 3rem;">
+    <h1
+        style="font-size: 3rem; margin-bottom: 0.5rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        Game Arena</h1>
+    <p style="color: #64748b; font-size: 1.25rem;">Choose your battleground and prove your skills.</p>
+</div>
+
+<div class="modes-grid">
+    <!-- Solo Practice -->
+    <a href="{% url 'practice_dashboard' %}" class="card mode-card">
+        <div class="mode-visual solo-visual">
+            <span style="font-size: 4rem;">🎯</span>
+        </div>
+        <div class="mode-content">
+            <h3>Solo Practice</h3>
+            <p>Hone your skills against the clock. Earn XP and coins at your own pace.</p>
+            <span class="btn" style="margin-top: auto;">Enter Arena</span>
+        </div>
+    </a>
+
+    <!-- Events -->
+    <a href="{% url 'event_list' %}" class="card mode-card">
+        <div class="mode-visual events-visual">
+            <span style="font-size: 4rem;">📅</span>
+            <span class="badge-new" style="position: absolute; top: 1rem; right: 1rem; background: #ef4444; color: white; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 700;">NEW</span>
+        </div>
+        <div class="mode-content">
+            <h3>Special Events</h3>
+            <p>Join live aptitude challenges hosted by top recruiters. Prove your mettle.</p>
+            <span class="btn" style="margin-top: auto;">Explore Events</span>
+        </div>
+    </a>
+
+    <!-- VS Online Match -->
+    <a href="{% url 'multiplayer:topic_select' %}" class="card mode-card">
+        <div class="mode-visual room-visual" style="filter: none; opacity: 1;">
+            <span style="font-size: 4rem;">⚔️</span>
+            <span class="badge-new" style="position: absolute; top: 1rem; right: 1rem; background: var(--accent-color); color: white; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 800; text-shadow: 0 0 5px rgba(245, 158, 11, 0.3);">LIVE</span>
+        </div>
+        <div class="mode-content">
+            <h3>VS Online</h3>
+            <p>Challenge other players in real-time 1v1 matchmaking battles. Winner takes all.</p>
+            <span class="btn" style="margin-top: auto; background: var(--accent-color); color: white;">Find Match</span>
+        </div>
+    </a>
+
+    <!-- Tournament (Coming Soon) -->
+    <div class="card mode-card disabled">
+        <div class="mode-visual tournament-visual">
+            <span style="font-size: 4rem;">🏆</span>
+            <span class="badge-soon">Coming Soon</span>
+        </div>
+        <div class="mode-content">
+            <h3>Tournament</h3>
+            <p>Compete in massive daily events for exclusive rewards and leaderboard fame.</p>
+            <button class="btn" disabled
+                style="background: #94a3b8; cursor: not-allowed; box-shadow: none;">Locked</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .mode-card {
+        text-decoration: none;
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        min-height: 400px;
+    }
+
+    [data-theme="dark"] .mode-card {
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #f1f5f9;
+        background: rgba(30, 41, 59, 0.6);
+    }
+
+    .mode-card:not(.disabled):hover {
+        transform: translateY(-8px) scale(1.02);
+        border-color: rgba(79, 70, 229, 0.4);
+        box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.1), 0 10px 10px -5px rgba(79, 70, 229, 0.04);
+    }
+
+    [data-theme="dark"] .mode-card:not(.disabled):hover {
+        background: rgba(30, 41, 59, 0.9);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .mode-visual {
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .solo-visual {
+        background: linear-gradient(135deg, #e0e7ff 0%, #fae8ff 100%);
+    }
+
+    .events-visual {
+        background: linear-gradient(135deg, #fecaca 0%, #bfdbfe 100%);
+    }
+
+    .room-visual {
+        background: linear-gradient(135deg, #fef3c7 0%, #ffedd5 100%);
+        filter: grayscale(1) opacity(0.7);
+    }
+
+    .tournament-visual {
+        background: linear-gradient(135deg, #dcfce7 0%, #ecfccb 100%);
+        filter: grayscale(1) opacity(0.7);
+    }
+
+    [data-theme="dark"] .solo-visual {
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%);
+    }
+
+    [data-theme="dark"] .events-visual {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+    }
+
+    [data-theme="dark"] .room-visual {
+        background: linear-gradient(135deg, rgba(217, 119, 6, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+    }
+
+    [data-theme="dark"] .tournament-visual {
+        background: linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+    }
+
+    .mode-content {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        text-align: center;
+    }
+
+    .mode-content h3 {
+        font-size: 1.75rem;
+        margin: 0 0 1rem 0;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .mode-content p {
+        color: #64748b;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    [data-theme="dark"] .mode-content p {
+        color: #94a3b8;
+    }
+
+    .badge-soon {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    /* Disabled state needed visually */
+    .mode-card.disabled {
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+</style>
+{% endblock %}

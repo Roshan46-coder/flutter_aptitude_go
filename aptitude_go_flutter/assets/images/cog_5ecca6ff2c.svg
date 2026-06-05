@@ -1,0 +1,6 @@
+<svg width="250" height="100" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(20, 20)"><rect x="0" y="0" width="30" height="30" fill="white" stroke="gray"/><rect x="30" y="0" width="30" height="30" fill="black" stroke="gray"/><rect x="0" y="30" width="30" height="30" fill="white" stroke="gray"/><rect x="30" y="30" width="30" height="30" fill="white" stroke="gray"/></g>
+        <text x="95" y="55" font-size="20">+</text>
+        <g transform="translate(120, 20)"><rect x="0" y="0" width="30" height="30" fill="black" stroke="gray"/><rect x="30" y="0" width="30" height="30" fill="black" stroke="gray"/><rect x="0" y="30" width="30" height="30" fill="white" stroke="gray"/><rect x="30" y="30" width="30" height="30" fill="white" stroke="gray"/></g>
+        <text x="195" y="55" font-size="20">=</text>
+    </svg>

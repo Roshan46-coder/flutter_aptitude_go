@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 3rem;">
+    <h1
+        style="font-size: 2.5rem; margin-bottom: 0.5rem; background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+        Practice Arena</h1>
+    <p style="color: #64748b; font-size: 1.1rem;">Select a category to start training. Cost: <span
+            style="font-weight: 700; color: #ef4444;">1 Life/Test</span></p>
+</div>
+
+</div>
+
+{% include 'gamification/reward_wheel_modal.html' %}
+
+<!-- General Aptitude Section -->
+
+<!-- General Aptitude Section -->
+<div style="margin-bottom: 3rem;">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+        <span style="font-size: 2rem;">📚</span>
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-color);">General Aptitude</h2>
+            <p style="margin: 0; color: #64748b; font-size: 0.9rem;">Practice core aptitude topics</p>
+        </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
+        {% for category in categories %}
+        <div class="card category-card">
+            <div>
+                <div class="category-icon">{{ category.name|slice:":1" }}</div>
+                <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.5rem;">{{ category.name }}</h3>
+                <p style="color: #64748b; margin-bottom: 1.5rem; line-height: 1.6;">{{ category.description }}</p>
+                <div
+                    style="font-size: 0.9rem; color: #64748b; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <span
+                        style="background: rgba(99, 102, 241, 0.1); padding: 4px 10px; border-radius: 8px; color: var(--primary-color); font-weight: 700;">
+                        {{ category.questions.count }} Questions
+                    </span>
+                </div>
+            </div>
+            <div>
+                <a href="{% url 'start_test' category.slug %}" class="btn"
+                    style="width: 100%; text-align: center;">Start
+                    Challenge</a>
+            </div>
+        </div>
+        {% empty %}
+        <div
+            style="grid-column: 1/-1; text-align: center; padding: 3rem; background: var(--card-bg); border-radius: 20px;">
+            <p>No general categories available yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Company Level Questions Section -->
+<div style="margin-bottom: 3rem;">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+        <span style="font-size: 2rem;">🏢</span>
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-color);">Company Level Questions</h2>
+            <p style="margin: 0; color: #64748b; font-size: 0.9rem;">Prepare for interviews at top companies</p>
+        </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+        {% for category in company_categories %}
+        <div class="card company-card">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div class="company-icon">{{ category.name|slice:":1" }}</div>
+                <div style="flex: 1; min-width: 0;">
+                    <h3
+                        style="margin: 0; font-size: 1.15rem; color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ category.name }}</h3>
+                    <span style="font-size: 0.8rem; color: #64748b;">{{ category.questions.count }} Questions</span>
+                </div>
+            </div>
+
+            <a href="{% url 'start_test' category.slug %}" class="btn company-btn">
+                Start Practice →
+            </a>
+        </div>
+        {% empty %}
+        <div
+            style="grid-column: 1/-1; text-align: center; padding: 3rem; background: var(--card-bg); border-radius: 20px;">
+            <p>No company questions available yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .category-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .category-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 6px;
+        background: var(--primary-gradient);
+        opacity: 0.8;
+    }
+
+    .category-icon {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    /* Company cards */
+    .company-card {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(128, 128, 128, 0.15);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .company-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.12);
+    }
+
+    .company-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--primary-gradient);
+        opacity: 0.8;
+    }
+
+    .company-icon {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--primary-color);
+        flex-shrink: 0;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    [data-theme="dark"] .company-icon {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+    }
+
+    .company-btn {
+        width: 100%;
+        text-align: center;
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        margin-top: auto;
+        background: var(--primary-gradient);
+        border: none;
+    }
+
+    .company-btn:hover {
+        filter: brightness(1.1);
+        transform: none;
+    }
+
+    [data-theme="dark"] .company-card {
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+</style>
+{% endblock %}

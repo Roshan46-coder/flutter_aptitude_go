@@ -1,0 +1,618 @@
+Question;Option A;Option B;Option C;Option D;Answer,,,,,,,,
+Review the following Java snippet intended to print numbers from 1 to 5:<br><code>for(int i = 1, i <= 5, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Loop does not execute;Correctly prints 1 to 5;Prints 1 to 4 instead of 1 to 5;Loop does not execute;B,,,,,,,,
+Review the following Java snippet intended to print numbers from 1 to 5:<br><code>for(int i = 1, i < 5, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Loop does not execute;Loop does not execute;Prints 1 to 4 instead of 1 to 5;Correctly prints 1 to 5;C,,,,,,,,
+Review the following C snippet intended to print numbers from 1 to 8:<br><code>for(int i = 1, i >= 8, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Prints 1 to 7 instead of 1 to 8;Loop does not execute;Correctly prints 1 to 8;Infinite loop due to i++;B,,,,,,,,
+Review the following C snippet intended to print numbers from 1 to 10:<br><code>for(int i = 1, i >= 10, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Prints 1 to 9 instead of 1 to 10;Correctly prints 1 to 10;Loop does not execute;Infinite loop due to i++;C,,,,,,,,
+Review the following C++ snippet intended to print numbers from 1 to 7:<br><code>for(int i = 1, i < 7, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Prints 1 to 6 instead of 1 to 7;Correctly prints 1 to 7;Loop does not execute;Loop does not execute;A,,,,,,,,
+Review the following C snippet intended to print numbers from 1 to 5:<br><code>for(int i = 1, i >= 5, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Loop does not execute;Prints 1 to 4 instead of 1 to 5;Infinite loop due to i++;Correctly prints 1 to 5;A,,,,,,,,
+Review the following C++ snippet intended to print numbers from 1 to 5:<br><code>for(int i = 1, i > 5, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Prints 1 to 4 instead of 1 to 5;Infinite loop due to i++;Correctly prints 1 to 5;Loop does not execute;D,,,,,,,,
+Review the following C++ snippet intended to print numbers from 1 to 10:<br><code>for(int i = 1, i <= 10, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Prints 1 to 9 instead of 1 to 10;Loop does not execute;Loop does not execute;Correctly prints 1 to 10;D,,,,,,,,
+Review the following C snippet intended to print numbers from 1 to 5:<br><code>for(int i = 1, i > 5, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Prints 1 to 4 instead of 1 to 5;Loop does not execute;Correctly prints 1 to 5;Infinite loop due to i++;B,,,,,,,,
+Review the following C snippet intended to print numbers from 1 to 6:<br><code>for(int i = 1, i >= 6, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Prints 1 to 5 instead of 1 to 6;Infinite loop due to i++;Loop does not execute;Correctly prints 1 to 6;C,,,,,,,,
+Review the following C++ snippet intended to print numbers from 1 to 8:<br><code>for(int i = 1, i <= 8, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Correctly prints 1 to 8;Loop does not execute;Prints 1 to 7 instead of 1 to 8;Loop does not execute;A,,,,,,,,
+Review the following C++ snippet intended to print numbers from 1 to 6:<br><code>for(int i = 1, i <= 6, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Correctly prints 1 to 6;Loop does not execute;Loop does not execute;Prints 1 to 5 instead of 1 to 6;A,,,,,,,,
+Review the following C++ snippet intended to print numbers from 1 to 10:<br><code>for(int i = 1, i > 10, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Correctly prints 1 to 10;Prints 1 to 9 instead of 1 to 10;Loop does not execute;Infinite loop due to i++;C,,,,,,,,
+Review the following Java snippet intended to print numbers from 1 to 10:<br><code>for(int i = 1, i >= 10, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Correctly prints 1 to 10;Prints 1 to 9 instead of 1 to 10;Loop does not execute;Infinite loop due to i++;C,,,,,,,,
+Review the following Java snippet intended to print numbers from 1 to 10:<br><code>for(int i = 1, i > 10, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Prints 1 to 9 instead of 1 to 10;Loop does not execute;Correctly prints 1 to 10;Infinite loop due to i++;B,,,,,,,,
+Review the following C snippet intended to print numbers from 1 to 5:<br><code>for(int i = 1, i < 5, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Loop does not execute;Prints 1 to 4 instead of 1 to 5;Loop does not execute;Correctly prints 1 to 5;B,,,,,,,,
+Review the following C++ snippet intended to print numbers from 1 to 6:<br><code>for(int i = 1, i < 6, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Loop does not execute;Correctly prints 1 to 6;Loop does not execute;Prints 1 to 5 instead of 1 to 6;D,,,,,,,,
+Review the following C snippet intended to print numbers from 1 to 10:<br><code>for(int i = 1, i <= 10, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Prints 1 to 9 instead of 1 to 10;Correctly prints 1 to 10;Loop does not execute;Loop does not execute;B,,,,,,,,
+Review the following C snippet intended to print numbers from 1 to 6:<br><code>for(int i = 1, i < 6, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Loop does not execute;Correctly prints 1 to 6;Prints 1 to 5 instead of 1 to 6;Loop does not execute;C,,,,,,,,
+Review the following C++ snippet intended to print numbers from 1 to 6:<br><code>for(int i = 1, i > 6, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Infinite loop due to i++;Correctly prints 1 to 6;Loop does not execute;Prints 1 to 5 instead of 1 to 6;C,,,,,,,,
+Review the following Java snippet intended to print numbers from 1 to 7:<br><code>for(int i = 1, i >= 7, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Infinite loop due to i++;Correctly prints 1 to 7;Prints 1 to 6 instead of 1 to 7;Loop does not execute;D,,,,,,,,
+Review the following Java snippet intended to print numbers from 1 to 8:<br><code>for(int i = 1, i < 8, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Loop does not execute;Loop does not execute;Correctly prints 1 to 8;Prints 1 to 7 instead of 1 to 8;D,,,,,,,,
+Review the following C++ snippet intended to print numbers from 1 to 6:<br><code>for(int i = 1, i >= 6, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Loop does not execute;Infinite loop due to i++;Prints 1 to 5 instead of 1 to 6;Correctly prints 1 to 6;A,,,,,,,,
+Review the following Java snippet intended to print numbers from 1 to 7:<br><code>for(int i = 1, i > 7, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Prints 1 to 6 instead of 1 to 7;Loop does not execute;Infinite loop due to i++;Correctly prints 1 to 7;B,,,,,,,,
+Review the following Java snippet intended to print numbers from 1 to 6:<br><code>for(int i = 1, i > 6, i++) {<br>&nbsp,&nbsp,print(i),<br>}</code><br>What is the logical error, if any?;Infinite loop due to i++;Prints 1 to 5 instead of 1 to 6;Loop does not execute;Correctly prints 1 to 6;C,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 80) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Compilation Error: Cannot use assignment in an if condition.;Prints 'False' because initially x is 0, which is not equal to 80.;Runtime Error: Assignment in conditional expression.;Prints 'True' because x = 80 is an assignment that evaluates to 80 (truthy).;D,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 17) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'False' because initially x is 0, which is not equal to 17.;Compilation Error: Cannot use assignment in an if condition.;Prints 'True' because x = 17 is an assignment that evaluates to 17 (truthy).;Runtime Error: Assignment in conditional expression.;C,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 60) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'False' because initially x is 0, which is not equal to 60.;Runtime Error: Assignment in conditional expression.;Prints 'True' because x = 60 is an assignment that evaluates to 60 (truthy).;Compilation Error: Cannot use assignment in an if condition.;C,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 13) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'False' because initially x is 0, which is not equal to 13.;Compilation Error: Cannot use assignment in an if condition.;Runtime Error: Assignment in conditional expression.;Prints 'True' because x = 13 is an assignment that evaluates to 13 (truthy).;D,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 70) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'True' because x = 70 is an assignment that evaluates to 70 (truthy).;Prints 'False' because initially x is 0, which is not equal to 70.;Runtime Error: Assignment in conditional expression.;Compilation Error: Cannot use assignment in an if condition.;A,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 39) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'True' because x = 39 is an assignment that evaluates to 39 (truthy).;Prints 'False' because initially x is 0, which is not equal to 39.;Compilation Error: Cannot use assignment in an if condition.;Runtime Error: Assignment in conditional expression.;A,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 94) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Runtime Error: Assignment in conditional expression.;Prints 'True' because x = 94 is an assignment that evaluates to 94 (truthy).;Prints 'False' because initially x is 0, which is not equal to 94.;Compilation Error: Cannot use assignment in an if condition.;B,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 95) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Compilation Error: Cannot use assignment in an if condition.;Prints 'True' because x = 95 is an assignment that evaluates to 95 (truthy).;Runtime Error: Assignment in conditional expression.;Prints 'False' because initially x is 0, which is not equal to 95.;B,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 48) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Compilation Error: Cannot use assignment in an if condition.;Prints 'False' because initially x is 0, which is not equal to 48.;Prints 'True' because x = 48 is an assignment that evaluates to 48 (truthy).;Runtime Error: Assignment in conditional expression.;C,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 73) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Compilation Error: Cannot use assignment in an if condition.;Prints 'True' because x = 73 is an assignment that evaluates to 73 (truthy).;Prints 'False' because initially x is 0, which is not equal to 73.;Runtime Error: Assignment in conditional expression.;B,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 71) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'True' because x = 71 is an assignment that evaluates to 71 (truthy).;Compilation Error: Cannot use assignment in an if condition.;Prints 'False' because initially x is 0, which is not equal to 71.;Runtime Error: Assignment in conditional expression.;A,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 65) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'True' because x = 65 is an assignment that evaluates to 65 (truthy).;Runtime Error: Assignment in conditional expression.;Prints 'False' because initially x is 0, which is not equal to 65.;Compilation Error: Cannot use assignment in an if condition.;A,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 47) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Compilation Error: Cannot use assignment in an if condition.;Runtime Error: Assignment in conditional expression.;Prints 'True' because x = 47 is an assignment that evaluates to 47 (truthy).;Prints 'False' because initially x is 0, which is not equal to 47.;C,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 46) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'True' because x = 46 is an assignment that evaluates to 46 (truthy).;Compilation Error: Cannot use assignment in an if condition.;Prints 'False' because initially x is 0, which is not equal to 46.;Runtime Error: Assignment in conditional expression.;A,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 90) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Compilation Error: Cannot use assignment in an if condition.;Runtime Error: Assignment in conditional expression.;Prints 'True' because x = 90 is an assignment that evaluates to 90 (truthy).;Prints 'False' because initially x is 0, which is not equal to 90.;C,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 3) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Runtime Error: Assignment in conditional expression.;Prints 'False' because initially x is 0, which is not equal to 3.;Prints 'True' because x = 3 is an assignment that evaluates to 3 (truthy).;Compilation Error: Cannot use assignment in an if condition.;C,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 1) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'False' because initially x is 0, which is not equal to 1.;Runtime Error: Assignment in conditional expression.;Compilation Error: Cannot use assignment in an if condition.;Prints 'True' because x = 1 is an assignment that evaluates to 1 (truthy).;D,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 6) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Runtime Error: Assignment in conditional expression.;Prints 'False' because initially x is 0, which is not equal to 6.;Compilation Error: Cannot use assignment in an if condition.;Prints 'True' because x = 6 is an assignment that evaluates to 6 (truthy).;D,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 52) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'True' because x = 52 is an assignment that evaluates to 52 (truthy).;Runtime Error: Assignment in conditional expression.;Prints 'False' because initially x is 0, which is not equal to 52.;Compilation Error: Cannot use assignment in an if condition.;A,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 78) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'True' because x = 78 is an assignment that evaluates to 78 (truthy).;Prints 'False' because initially x is 0, which is not equal to 78.;Compilation Error: Cannot use assignment in an if condition.;Runtime Error: Assignment in conditional expression.;A,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 64) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'False' because initially x is 0, which is not equal to 64.;Prints 'True' because x = 64 is an assignment that evaluates to 64 (truthy).;Compilation Error: Cannot use assignment in an if condition.;Runtime Error: Assignment in conditional expression.;B,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 31) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'True' because x = 31 is an assignment that evaluates to 31 (truthy).;Compilation Error: Cannot use assignment in an if condition.;Prints 'False' because initially x is 0, which is not equal to 31.;Runtime Error: Assignment in conditional expression.;A,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 75) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Compilation Error: Cannot use assignment in an if condition.;Prints 'False' because initially x is 0, which is not equal to 75.;Prints 'True' because x = 75 is an assignment that evaluates to 75 (truthy).;Runtime Error: Assignment in conditional expression.;C,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 28) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Compilation Error: Cannot use assignment in an if condition.;Prints 'False' because initially x is 0, which is not equal to 28.;Prints 'True' because x = 28 is an assignment that evaluates to 28 (truthy).;Runtime Error: Assignment in conditional expression.;C,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 56) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Compilation Error: Cannot use assignment in an if condition.;Prints 'False' because initially x is 0, which is not equal to 56.;Runtime Error: Assignment in conditional expression.;Prints 'True' because x = 56 is an assignment that evaluates to 56 (truthy).;D,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 36) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Runtime Error: Assignment in conditional expression.;Prints 'False' because initially x is 0, which is not equal to 36.;Prints 'True' because x = 36 is an assignment that evaluates to 36 (truthy).;Compilation Error: Cannot use assignment in an if condition.;C,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 100) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Compilation Error: Cannot use assignment in an if condition.;Prints 'False' because initially x is 0, which is not equal to 100.;Prints 'True' because x = 100 is an assignment that evaluates to 100 (truthy).;Runtime Error: Assignment in conditional expression.;C,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 61) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'True' because x = 61 is an assignment that evaluates to 61 (truthy).;Prints 'False' because initially x is 0, which is not equal to 61.;Runtime Error: Assignment in conditional expression.;Compilation Error: Cannot use assignment in an if condition.;A,,,,,,,,
+"A developer wrote the following C code:<br><code>int x = 0,<br>if(x = 21) {<br>&nbsp,&nbsp,printf(""True""),<br>} else {<br>&nbsp,&nbsp,printf(""False""),<br>}</code><br>What gets printed and why?";Prints 'True' because x = 21 is an assignment that evaluates to 21 (truthy).;Compilation Error: Cannot use assignment in an if condition.;Prints 'False' because initially x is 0, which is not equal to 21.;Runtime Error: Assignment in conditional expression.;A,,,,,,,,
+Identify the execution issue in this Python code:<br><code>i = 0
+while i < 5:
+  print(i)
+# missing i += 1</code>;RecursionError: maximum recursion depth exceeded (missing base case);SyntaxError: Invalid syntax;Infinite loop printing 0 constantly;Prints 'None' because the function lacks a return statement;C,,,,,,,,
+Identify the execution issue in this Python code:<br><code>def add(a, b):
+  result = a + b
+print(add(2, 3))</code>;Prints 'None' because the function lacks a return statement;RecursionError: maximum recursion depth exceeded (missing base case);SyntaxError: Invalid syntax;Infinite loop printing 0 constantly;A,,,,,,,,
+Identify the execution issue in this Python code:<br><code>def factorial(n):
+  return n * factorial(n-1)
+print(factorial(3))</code>;Infinite loop printing 0 constantly;RecursionError: maximum recursion depth exceeded (missing base case);Prints 'None' because the function lacks a return statement;SyntaxError: Invalid syntax;B,,,,,,,,
+What exception does this Java code snippet throw?<br><code>int[] arr = new int[3],
+System.out.println(arr[3]),</code>;NullPointerException;StringIndexOutOfBoundsException;Compilation Error (variable uninitialized);ArrayIndexOutOfBoundsException;D,,,,,,,,
+What exception does this Java code snippet throw?<br><code>String str = null,
+System.out.println(str.length()),</code>;StringIndexOutOfBoundsException;ArrayIndexOutOfBoundsException;NullPointerException;Compilation Error (variable uninitialized);C,,,,,,,,
+What exception does this Java code snippet throw?<br><code>int[] arr = new int[5],
+System.out.println(arr[5]),</code>;Compilation Error (variable uninitialized);StringIndexOutOfBoundsException;NullPointerException;ArrayIndexOutOfBoundsException;D,,,,,,,,
+What exception does this Java code snippet throw?<br><code>int[] arr = new int[6],
+System.out.println(arr[6]),</code>;StringIndexOutOfBoundsException;Compilation Error (variable uninitialized);NullPointerException;ArrayIndexOutOfBoundsException;D,,,,,,,,
+What exception does this Java code snippet throw?<br><code>int[] arr = new int[4],
+System.out.println(arr[4]),</code>;StringIndexOutOfBoundsException;ArrayIndexOutOfBoundsException;NullPointerException;Compilation Error (variable uninitialized);B,,,,,,,,
+What exception does this Java code snippet throw?<br><code>int[] arr = new int[7],
+System.out.println(arr[7]),</code>;StringIndexOutOfBoundsException;NullPointerException;Compilation Error (variable uninitialized);ArrayIndexOutOfBoundsException;D,,,,,,,,
+Trace the output of this C++ snippet:<br><code>int x = 18,
+if (true) {
+  int x = 32,
+}
+cout << x,</code>;Compilation Error: redefinition of x;Garbage Value;32;18;D,,,,,,,,
+Trace the output of this C++ snippet:<br><code>int x = 10,
+  int x = 36,
+Trace the output of this C++ snippet:<br><code>int x = 16,
+  int x = 38,
+Trace the output of this C++ snippet:<br><code>int x = 19,
+  int x = 37,
+Trace the output of this C++ snippet:<br><code>int x = 20,
+  int x = 33,
+Trace the output of this C++ snippet:<br><code>int x = 14,
+  int x = 30,
+Trace the output of this C++ snippet:<br><code>int x = 17,
+  int x = 31,
+Trace the output of this C++ snippet:<br><code>int x = 12,
+  int x = 40,
+  int x = 34,
+  int x = 35,
+Trace the output of this C++ snippet:<br><code>int x = 15,
+Trace the output of this C++ snippet:<br><code>int x = 13,
+  int x = 39,
+Trace the output of this C++ snippet:<br><code>int x = 11,
+What is the most likely issue with the following loop construct?<br><code>float x = 0.0,
+while(x != 1.0) {
+  x += 0.1,
+}</code>;It terminates normally after 10 iterations.;It may result in an infinite loop because 0.1 cannot be represented exactly in binary floating-point.;Compilation Error: cannot use != with floats.;It terminates normally after 11 iterations.;B,,,,,,,,
+Analyze the following C code:<br><code>int main() {
+  int sum,
+  for(int i=1, i<=5, i++) {
+    sum += i,
+"  printf(""%d"", sum),"
+  return 0,
+}</code><br>What is the result?;Outputs an unpredictable (garbage) value because 'sum' is uninitialized.;Compilation Error: sum is uninitialized.;Outputs 0.;Outputs 15.;A,,,,,,,,
+What happens when this Java code executes?<br><code>List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3)),
+for(Integer num : list) {
+  if(num == 2) list.remove(num),
+Trace the output of <code>fact(3)</code> given this buggy C function:<br><code>int fact(int n) {
+  if (n == 0) return 2,
+  return n * fact(n-1),
+Trace the output of <code>fact(7)</code> given this buggy C function:<br><code>int fact(int n) {
+  if (n == 0) return 0,
+  if (n == 0) return 1,
+Trace the output of <code>fact(4)</code> given this buggy C function:<br><code>int fact(int n) {
+Trace the output of <code>fact(6)</code> given this buggy C function:<br><code>int fact(int n) {
+Trace the output of <code>fact(5)</code> given this buggy C function:<br><code>int fact(int n) {
+A developer wrote a linear search for Java. Array: <code>[3, 24, 26, 39, 44, 46]</code>, Target: <code>44</code>.<br><code>int find(int[] arr, int target) {
+  for(int i=0, i < arr.length - 1, i++) {
+    if(arr[i] == target) return i,
+  return -1,
+}</code><br>What does <code>find(arr, target)</code> return?;Compilation Error;5;-1;4;D,,,,,,,,
+A developer wrote a linear search for Java. Array: <code>[9, 16, 21, 49]</code>, Target: <code>49</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[1, 12, 14, 21, 24, 25, 37, 39]</code>, Target: <code>1</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[1, 11, 19, 26, 31, 37, 38]</code>, Target: <code>31</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[5, 6, 8, 9, 13, 28, 35, 50]</code>, Target: <code>8</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[2, 16, 24, 28, 31, 35, 39]</code>, Target: <code>24</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[9, 16, 26, 26, 32, 36, 41, 47]</code>, Target: <code>26</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[1, 5, 9, 11, 40, 48, 48]</code>, Target: <code>48</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[11, 27, 36, 49]</code>, Target: <code>49</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[5, 7, 8, 9, 11, 17, 43, 50]</code>, Target: <code>5</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[1, 3, 9, 24, 26, 30]</code>, Target: <code>26</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[16, 17, 18, 24]</code>, Target: <code>16</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[20, 24, 46, 46]</code>, Target: <code>24</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[6, 27, 33, 36]</code>, Target: <code>6</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[8, 12, 36, 37, 48]</code>, Target: <code>36</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[3, 5, 24, 31, 33, 48, 49]</code>, Target: <code>31</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[8, 11, 12, 29, 47, 48, 50]</code>, Target: <code>11</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[5, 9, 13, 22, 35, 35, 37]</code>, Target: <code>13</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[6, 20, 25, 26, 38]</code>, Target: <code>25</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[13, 13, 14, 21, 26, 37, 44, 47]</code>, Target: <code>44</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[11, 16, 25, 40, 45, 47]</code>, Target: <code>47</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[2, 23, 28, 50]</code>, Target: <code>23</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[7, 15, 16, 19, 19, 31, 31]</code>, Target: <code>7</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[1, 14, 19, 22, 24]</code>, Target: <code>1</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[13, 19, 45, 48]</code>, Target: <code>45</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 10, 29, 29, 35, 41, 43]</code>, Target: <code>43</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[8, 15, 16, 17, 18, 31, 33, 33]</code>, Target: <code>17</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[10, 13, 14, 32, 37, 38]</code>, Target: <code>10</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[17, 20, 21, 24, 29, 32, 35, 38]</code>, Target: <code>20</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[10, 14, 15, 29, 31, 41, 49, 49]</code>, Target: <code>14</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 5, 14, 14, 14, 28, 43, 47]</code>, Target: <code>14</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[32, 41, 44, 47, 50]</code>, Target: <code>41</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[2, 3, 13, 15, 25, 28, 35]</code>, Target: <code>28</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[2, 3, 28, 50]</code>, Target: <code>28</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[5, 30, 34, 40]</code>, Target: <code>5</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 18, 23, 23, 26, 48]</code>, Target: <code>18</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[6, 14, 17, 23, 28, 30, 35, 49]</code>, Target: <code>28</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[9, 29, 32, 38, 39, 46]</code>, Target: <code>39</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[2, 7, 13, 27, 28, 38, 39]</code>, Target: <code>13</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[15, 31, 38, 47]</code>, Target: <code>15</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[21, 24, 25, 30, 44, 49]</code>, Target: <code>21</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[17, 20, 22, 48, 49]</code>, Target: <code>22</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[22, 29, 41, 43]</code>, Target: <code>43</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[5, 14, 19, 29, 32, 45]</code>, Target: <code>5</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[14, 19, 26, 27, 27, 37, 37, 41]</code>, Target: <code>41</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 23, 31, 34, 35, 44]</code>, Target: <code>31</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[11, 14, 15, 29, 29, 42, 46, 47]</code>, Target: <code>15</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[15, 29, 30, 34, 36, 40]</code>, Target: <code>34</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 23, 31, 36, 43, 44]</code>, Target: <code>23</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[10, 25, 29, 30, 42, 47]</code>, Target: <code>29</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 6, 17, 37, 45, 50]</code>, Target: <code>6</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 4, 18, 23, 35]</code>, Target: <code>18</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[10, 13, 18, 18, 20, 27]</code>, Target: <code>27</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[8, 12, 20, 22, 28, 40]</code>, Target: <code>12</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 12, 16, 17, 29, 40]</code>, Target: <code>17</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[10, 14, 22, 42]</code>, Target: <code>10</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[2, 3, 4, 4, 36, 43, 45]</code>, Target: <code>3</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[27, 30, 34, 44, 46]</code>, Target: <code>46</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[3, 4, 15, 29, 40, 46, 47, 47]</code>, Target: <code>3</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[1, 5, 10, 17, 33, 40, 49]</code>, Target: <code>5</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[9, 26, 31, 35, 39]</code>, Target: <code>26</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 14, 30, 31, 49]</code>, Target: <code>30</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 18, 32, 34, 37, 44]</code>, Target: <code>44</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[8, 25, 35, 49]</code>, Target: <code>8</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 10, 23, 36]</code>, Target: <code>4</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[16, 24, 34, 49]</code>, Target: <code>24</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[25, 35, 39, 40, 46]</code>, Target: <code>39</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[4, 6, 22, 24, 35, 38, 39, 45]</code>, Target: <code>38</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[2, 3, 22, 37, 43, 47]</code>, Target: <code>37</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[3, 3, 13, 33, 34, 42]</code>, Target: <code>34</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[3, 4, 21, 23, 26, 35]</code>, Target: <code>4</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[1, 2, 14, 32, 35]</code>, Target: <code>1</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[8, 14, 19, 22, 28, 50]</code>, Target: <code>22</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[2, 20, 24, 25, 26, 26, 41, 49]</code>, Target: <code>49</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[5, 8, 14, 26, 39, 44]</code>, Target: <code>14</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[5, 18, 23, 29, 45]</code>, Target: <code>5</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[23, 28, 41, 41, 43]</code>, Target: <code>41</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[16, 17, 18, 23, 26, 36, 37, 41]</code>, Target: <code>16</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[2, 11, 36, 38, 38]</code>, Target: <code>36</code>.<br><code>int find(int[] arr, int target) {
+A developer wrote a linear search for Java. Array: <code>[2, 14, 21, 29, 40, 47]</code>, Target: <code>14</code>.<br><code>int find(int[] arr, int target) {
+"Identify the error in this Python string reversal attempt:<br><code>s = ""hello"""
+"res = """""
+for i in range(len(s), 0, -1):
+  res += s[i]</code>;Prints 'olleh';SyntaxError;IndexError: string index out of range (s[len(s)] is invalid);Prints 'hello';C,,,,,,,,
+"Identify the error in this Python string reversal attempt:<br><code>s = ""world"""
+"Identify the error in this Python string reversal attempt:<br><code>s = ""debug"""
+"Identify the error in this Python string reversal attempt:<br><code>s = ""python"""
+"Identify the error in this Python string reversal attempt:<br><code>s = ""logic"""
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 5 + 4 * 2,
+// Intended logic was (5 + 4) * 2</code>;18;22;13;35;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 3 * 4,
+// Intended logic was (2 + 3) * 4</code>;14;10;41;20;A,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 5 * 4,
+// Intended logic was (2 + 5) * 4</code>;37;22;14;28;B,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 2 * 5,
+// Intended logic was (2 + 2) * 5</code>;20;33;12;9;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 3 + 2 * 2,
+// Intended logic was (3 + 2) * 2</code>;7;29;10;8;A,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 4 * 2,
+// Intended logic was (4 + 4) * 2</code>;18;48;16;12;D,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 2 * 3,
+// Intended logic was (4 + 2) * 3</code>;10;18;11;31;A,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 3 * 5,
+// Intended logic was (4 + 3) * 5</code>;19;35;17;21;A,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 3 + 5 * 3,
+// Intended logic was (3 + 5) * 3</code>;18;24;20;49;A,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 5 + 5 * 3,
+// Intended logic was (5 + 5) * 3</code>;30;20;28;11;B,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 3 + 2 * 4,
+// Intended logic was (3 + 2) * 4</code>;10;37;11;20;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 5 + 4 * 3,
+// Intended logic was (5 + 4) * 3</code>;16;23;17;27;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 4 * 2,
+// Intended logic was (2 + 4) * 2</code>;12;28;10;21;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 4 * 4,
+// Intended logic was (2 + 4) * 4</code>;24;18;28;12;B,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 5 + 2 * 5,
+// Intended logic was (5 + 2) * 5</code>;43;27;35;15;D,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 3 + 3 * 5,
+// Intended logic was (3 + 3) * 5</code>;14;30;21;18;D,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 3 + 3 * 3,
+// Intended logic was (3 + 3) * 3</code>;18;46;5;12;D,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 3 + 5 * 2,
+// Intended logic was (3 + 5) * 2</code>;21;17;13;16;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 4 * 3,
+// Intended logic was (4 + 4) * 3</code>;16;10;19;24;A,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 5 + 3 * 4,
+// Intended logic was (5 + 3) * 4</code>;47;17;32;19;B,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 5 * 2,
+// Intended logic was (2 + 5) * 2</code>;39;12;14;8;B,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 5 + 2 * 2,
+// Intended logic was (5 + 2) * 2</code>;46;9;14;12;B,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 5 + 3 * 3,
+// Intended logic was (5 + 3) * 3</code>;14;18;48;24;A,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 3 * 2,
+// Intended logic was (2 + 3) * 2</code>;10;5;8;24;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 5 * 2,
+// Intended logic was (4 + 5) * 2</code>;18;22;14;12;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 5 + 2 * 3,
+// Intended logic was (5 + 2) * 3</code>;11;29;13;21;A,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 4 * 5,
+// Intended logic was (4 + 4) * 5</code>;21;40;24;42;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 3 + 3 * 4,
+// Intended logic was (3 + 3) * 4</code>;5;24;15;13;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 3 + 4 * 4,
+// Intended logic was (3 + 4) * 4</code>;28;19;16;30;B,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 3 * 2,
+// Intended logic was (4 + 3) * 2</code>;10;14;35;39;A,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 2 * 4,
+// Intended logic was (2 + 2) * 4</code>;16;10;8;43;B,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 5 * 3,
+// Intended logic was (2 + 5) * 3</code>;42;13;17;21;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 5 * 4,
+// Intended logic was (4 + 5) * 4</code>;16;24;47;36;B,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 3 + 4 * 3,
+// Intended logic was (3 + 4) * 3</code>;43;21;15;9;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 4 * 4,
+// Intended logic was (4 + 4) * 4</code>;20;32;27;19;A,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 2 * 5,
+// Intended logic was (4 + 2) * 5</code>;13;30;14;21;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 3 * 3,
+// Intended logic was (2 + 3) * 3</code>;33;15;9;11;D,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 5 + 3 * 5,
+// Intended logic was (5 + 3) * 5</code>;40;20;38;25;B,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 3 + 4 * 2,
+// Intended logic was (3 + 4) * 2</code>;26;14;11;28;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 5 + 3 * 2,
+// Intended logic was (5 + 3) * 2</code>;17;41;16;11;D,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 5 * 5,
+// Intended logic was (2 + 5) * 5</code>;15;35;27;13;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 3 + 2 * 5,
+// Intended logic was (3 + 2) * 5</code>;25;11;39;13;D,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 2 + 2 * 2,
+// Intended logic was (2 + 2) * 2</code>;23;32;6;8;C,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 2 * 2,
+// Intended logic was (4 + 2) * 2</code>;8;13;12;10;A,,,,,,,,
+Trace the actual evaluated <code>result</code> of this code snippet:<br><code>int result = 4 + 3 * 3,
+// Intended logic was (4 + 3) * 3</code>;15;13;26;21;B,,,,,,,,
+Trace the final value of <code>count</code> after this nested loop executes:<br><code>int count = 0,
+for(int i=0, i<2, i++) {
+  for(int j=0, j<4, j++) {
+    count++,
+for(int i=0, i<3, i++) {
+  for(int j=0, j<5, j++) {
+for(int i=0, i<5, i++) {
+  for(int j=0, j<2, j++) {
+  for(int j=0, j<3, j++) {
+for(int i=0, i<4, i++) {
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 8 + 5),</code>";85 is the Result;Result is: 13;Compilation Error;Result is: 85;D,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 9 + 8),</code>";Result is: 17;98 is the Result;Compilation Error;Result is: 98;D,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 9 + 4),</code>";94 is the Result;Compilation Error;Result is: 13;Result is: 94;D,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 4 + 6),</code>";Result is: 10;Result is: 46;Compilation Error;46 is the Result;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 9 + 3),</code>";Result is: 12;Compilation Error;Result is: 93;93 is the Result;C,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 9 + 5),</code>";Result is: 95;95 is the Result;Compilation Error;Result is: 14;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 3 + 3),</code>";Compilation Error;33 is the Result;Result is: 6;Result is: 33;D,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 6 + 9),</code>";69 is the Result;Result is: 69;Result is: 15;Compilation Error;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 8 + 3),</code>";Compilation Error;Result is: 83;83 is the Result;Result is: 11;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 7 + 5),</code>";Compilation Error;75 is the Result;Result is: 12;Result is: 75;D,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 6 + 3),</code>";Result is: 9;Compilation Error;63 is the Result;Result is: 63;D,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 5 + 9),</code>";Compilation Error;Result is: 59;Result is: 14;59 is the Result;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 8 + 7),</code>";87 is the Result;Compilation Error;Result is: 87;Result is: 15;C,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 6 + 5),</code>";Compilation Error;Result is: 65;65 is the Result;Result is: 11;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 3 + 5),</code>";Result is: 35;Compilation Error;35 is the Result;Result is: 8;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 7 + 7),</code>";Result is: 77;Compilation Error;Result is: 14;77 is the Result;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 6 + 4),</code>";64 is the Result;Result is: 64;Result is: 10;Compilation Error;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 2 + 6),</code>";Result is: 8;Result is: 26;Compilation Error;26 is the Result;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 5 + 6),</code>";56 is the Result;Result is: 56;Compilation Error;Result is: 11;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 6 + 7),</code>";Result is: 13;67 is the Result;Result is: 67;Compilation Error;C,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 2 + 5),</code>";Result is: 25;Compilation Error;Result is: 7;25 is the Result;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 5 + 7),</code>";57 is the Result;Compilation Error;Result is: 12;Result is: 57;D,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 2 + 4),</code>";24 is the Result;Result is: 6;Result is: 24;Compilation Error;C,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 5 + 2),</code>";Result is: 7;52 is the Result;Result is: 52;Compilation Error;C,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 7 + 6),</code>";76 is the Result;Compilation Error;Result is: 13;Result is: 76;D,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 4 + 3),</code>";Result is: 43;Result is: 7;Compilation Error;43 is the Result;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 5 + 4),</code>";Result is: 9;Compilation Error;Result is: 54;54 is the Result;C,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 4 + 7),</code>";Compilation Error;Result is: 47;47 is the Result;Result is: 11;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 6 + 6),</code>";Result is: 66;Compilation Error;66 is the Result;Result is: 12;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 9 + 2),</code>";92 is the Result;Compilation Error;Result is: 11;Result is: 92;D,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 2 + 7),</code>";Compilation Error;Result is: 27;Result is: 9;27 is the Result;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 4 + 9),</code>";Result is: 13;Compilation Error;49 is the Result;Result is: 49;D,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 9 + 6),</code>";Compilation Error;Result is: 96;Result is: 15;96 is the Result;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 5 + 8),</code>";Result is: 58;Compilation Error;Result is: 13;58 is the Result;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 7 + 4),</code>";Result is: 11;Result is: 74;Compilation Error;74 is the Result;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 8 + 9),</code>";Result is: 89;89 is the Result;Result is: 17;Compilation Error;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 2 + 2),</code>";Result is: 22;Result is: 4;22 is the Result;Compilation Error;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 8 + 6),</code>";86 is the Result;Compilation Error;Result is: 86;Result is: 14;C,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 7 + 8),</code>";Result is: 15;Result is: 78;78 is the Result;Compilation Error;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 7 + 3),</code>";Compilation Error;Result is: 10;Result is: 73;73 is the Result;C,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 4 + 5),</code>";45 is the Result;Result is: 45;Compilation Error;Result is: 9;B,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 2 + 3),</code>";Result is: 23;23 is the Result;Result is: 5;Compilation Error;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 2 + 9),</code>";Result is: 29;29 is the Result;Compilation Error;Result is: 11;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 9 + 9),</code>";99 is the Result;Result is: 18;Result is: 99;Compilation Error;C,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 5 + 3),</code>";Result is: 53;Compilation Error;Result is: 8;53 is the Result;A,,,,,,,,
+"What is the exact output of this Java statement?<br><code>System.out.println(""Result is: "" + 8 + 4),</code>";84 is the Result;Compilation Error;Result is: 84;Result is: 12;C,,,,,,,,
+"Trace the python slice output:<br><code>s = ""AptitudeTest"""
+print(s[:4])</code>;Apti;Aptit;IndexError;pti;A,,,,,,,,
+print(s[:2])</code>;IndexError;Ap;Apt;p;B,,,,,,,,
+print(s[:6])</code>;ptitu;Aptitu;Aptitud;IndexError;B,,,,,,,,
+print(s[:5])</code>;ptit;IndexError;Aptitu;Aptit;D,,,,,,,,
+print(s[:3])</code>;IndexError;Apt;pt;Apti;B,,,,,,,,
+Trace the output of this C pointer operation:<br><code>int a = 36,
+int *p = &a,
+*p = *p + 7,
+"printf(""%d"", a),</code>";66;36;43;Memory Address of 'a';C,,,,,,,,
+Trace the output of this C pointer operation:<br><code>int a = 17,
+*p = *p + 3,
+Trace the output of this C pointer operation:<br><code>int a = 48,
+Trace the output of this C pointer operation:<br><code>int a = 21,
+Trace the output of this C pointer operation:<br><code>int a = 37,
+*p = *p + 9,
+Trace the output of this C pointer operation:<br><code>int a = 11,
+*p = *p + 8,
+Trace the output of this C pointer operation:<br><code>int a = 22,
+Trace the output of this C pointer operation:<br><code>int a = 40,
+*p = *p + 6,
+Trace the output of this C pointer operation:<br><code>int a = 18,
+Trace the output of this C pointer operation:<br><code>int a = 34,
+Trace the output of this C pointer operation:<br><code>int a = 14,
+Trace the output of this C pointer operation:<br><code>int a = 47,
+Trace the output of this C pointer operation:<br><code>int a = 10,
+*p = *p + 4,
+Trace the output of this C pointer operation:<br><code>int a = 26,
+Trace the output of this C pointer operation:<br><code>int a = 13,
+Trace the output of this C pointer operation:<br><code>int a = 33,
+*p = *p + 5,
+Trace the output of this C pointer operation:<br><code>int a = 42,
+Trace the output of this C pointer operation:<br><code>int a = 16,
+Trace the output of this C pointer operation:<br><code>int a = 24,
+Trace the output of this C pointer operation:<br><code>int a = 44,
+*p = *p + 2,
+Trace the output of this C pointer operation:<br><code>int a = 12,
+Trace the output of this C pointer operation:<br><code>int a = 29,
+Trace the output of this C pointer operation:<br><code>int a = 45,
+Trace the output of this C pointer operation:<br><code>int a = 15,
+Trace the output of this C pointer operation:<br><code>int a = 31,
+Trace the output of this C pointer operation:<br><code>int a = 41,
+Trace the output of this C pointer operation:<br><code>int a = 20,
+Trace the output of this C pointer operation:<br><code>int a = 50,
+Trace the output of this C pointer operation:<br><code>int a = 30,
+Trace the output of this C pointer operation:<br><code>int a = 23,
+Trace the output of this C pointer operation:<br><code>int a = 27,
+Trace the output of this C pointer operation:<br><code>int a = 28,
+Trace the output of this C pointer operation:<br><code>int a = 19,
+Trace the output of this C pointer operation:<br><code>int a = 25,
+Trace the output of this C pointer operation:<br><code>int a = 32,
+Trace the output of this C pointer operation:<br><code>int a = 43,
+What is printed by this Java code?<br><code>int[][] mat = {{4, 2, 1}, {6, 3, 3}, {9, 2, 1}, {9, 3, 8}},
+System.out.println(mat[3][0]),</code>;8;9;IndexOutOfBoundsException;4;B,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{9, 8}, {10, 4}, {8, 3}},
+System.out.println(mat[2][1]),</code>;9;2;3;IndexOutOfBoundsException;C,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{7, 5}, {8, 6}, {10, 5}, {5, 6}},
+System.out.println(mat[2][0]),</code>;7;10;6;IndexOutOfBoundsException;B,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{10, 1, 2}, {7, 1, 3}},
+System.out.println(mat[1][1]),</code>;1;10;IndexOutOfBoundsException;3;A,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{8, 1}, {3, 10}},
+System.out.println(mat[1][0]),</code>;8;10;IndexOutOfBoundsException;3;D,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{7, 10, 9, 3}, {5, 4, 8, 10}},
+System.out.println(mat[0][2]),</code>;9;10;IndexOutOfBoundsException;7;A,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{6, 3}, {8, 6}, {1, 6}, {1, 2}},
+System.out.println(mat[0][1]),</code>;IndexOutOfBoundsException;3;6;2;B,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{2, 7, 6, 5}, {4, 5, 7, 4}},
+What is printed by this Java code?<br><code>int[][] mat = {{9, 2}, {4, 6}, {9, 6}, {4, 10}},
+System.out.println(mat[3][1]),</code>;9;15;IndexOutOfBoundsException;10;D,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{4, 10, 3}, {3, 6, 6}, {1, 8, 8}, {5, 10, 4}},
+System.out.println(mat[2][2]),</code>;6;IndexOutOfBoundsException;8;4;C,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{9, 9}, {6, 3}, {10, 2}},
+What is printed by this Java code?<br><code>int[][] mat = {{9, 5}, {10, 8}, {5, 7}},
+What is printed by this Java code?<br><code>int[][] mat = {{9, 6, 5, 3}, {10, 1, 1, 2}, {10, 7, 5, 4}, {5, 7, 5, 1}},
+What is printed by this Java code?<br><code>int[][] mat = {{9, 4, 1}, {6, 4, 1}, {1, 10, 2}, {5, 2, 8}},
+System.out.println(mat[0][0]),</code>;IndexOutOfBoundsException;9;8;2;B,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{3, 1, 9}, {10, 5, 5}},
+What is printed by this Java code?<br><code>int[][] mat = {{3, 1, 10}, {1, 6, 7}},
+What is printed by this Java code?<br><code>int[][] mat = {{10, 6, 3, 2}, {10, 3, 8, 7}, {3, 10, 2, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{5, 5}, {1, 5}, {1, 6}},
+What is printed by this Java code?<br><code>int[][] mat = {{10, 7, 8}, {8, 9, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{1, 4}, {1, 5}, {4, 2}, {10, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{3, 3, 2, 3}, {3, 7, 8, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{1, 2, 10}, {1, 9, 7}, {10, 9, 8}, {6, 1, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{9, 7}, {3, 10}, {5, 7}, {2, 1}},
+What is printed by this Java code?<br><code>int[][] mat = {{7, 2}, {7, 7}},
+What is printed by this Java code?<br><code>int[][] mat = {{1, 1, 2}, {1, 7, 8}, {7, 7, 6}, {9, 9, 9}},
+What is printed by this Java code?<br><code>int[][] mat = {{7, 7}, {7, 4}, {10, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{4, 2, 6, 10}, {4, 5, 4, 6}, {9, 2, 8, 9}, {10, 7, 2, 5}},
+What is printed by this Java code?<br><code>int[][] mat = {{5, 3, 9}, {9, 3, 2}},
+What is printed by this Java code?<br><code>int[][] mat = {{10, 10, 7}, {6, 2, 10}, {4, 3, 7}},
+What is printed by this Java code?<br><code>int[][] mat = {{4, 10, 4, 7}, {5, 2, 3, 3}, {8, 10, 4, 5}, {6, 8, 8, 8}},
+System.out.println(mat[3][3]),</code>;8;4;IndexOutOfBoundsException;1;A,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{9, 5}, {10, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{9, 9}, {7, 1}, {9, 3}},
+What is printed by this Java code?<br><code>int[][] mat = {{8, 4}, {6, 1}},
+What is printed by this Java code?<br><code>int[][] mat = {{2, 2}, {6, 6}},
+What is printed by this Java code?<br><code>int[][] mat = {{5, 4, 1, 4}, {4, 1, 3, 7}, {2, 5, 5, 5}},
+What is printed by this Java code?<br><code>int[][] mat = {{2, 10, 3}, {7, 7, 7}, {5, 7, 6}},
+What is printed by this Java code?<br><code>int[][] mat = {{3, 7, 1, 10}, {4, 3, 1, 10}, {1, 8, 6, 9}, {4, 1, 6, 4}},
+What is printed by this Java code?<br><code>int[][] mat = {{4, 4}, {7, 4}, {1, 4}, {6, 1}},
+What is printed by this Java code?<br><code>int[][] mat = {{4, 3, 7}, {10, 5, 6}, {5, 10, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{1, 5, 5, 1}, {9, 7, 6, 5}},
+What is printed by this Java code?<br><code>int[][] mat = {{2, 6, 10, 8}, {8, 2, 5, 3}, {6, 1, 1, 9}, {6, 6, 8, 6}},
+What is printed by this Java code?<br><code>int[][] mat = {{7, 5, 4, 1}, {8, 3, 8, 6}, {9, 2, 6, 3}, {5, 4, 2, 7}},
+What is printed by this Java code?<br><code>int[][] mat = {{2, 2, 7}, {2, 1, 5}, {9, 6, 1}},
+What is printed by this Java code?<br><code>int[][] mat = {{7, 7, 1, 9}, {3, 5, 5, 9}, {1, 5, 2, 4}, {1, 3, 2, 4}},
+What is printed by this Java code?<br><code>int[][] mat = {{3, 10, 7, 6}, {6, 6, 5, 1}},
+System.out.println(mat[1][2]),</code>;3;IndexOutOfBoundsException;1;5;D,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{10, 1, 5, 6}, {1, 8, 7, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{3, 4, 6}, {9, 6, 5}, {8, 7, 9}, {2, 10, 7}},
+What is printed by this Java code?<br><code>int[][] mat = {{2, 9, 4}, {9, 8, 3}, {3, 3, 2}},
+What is printed by this Java code?<br><code>int[][] mat = {{2, 2}, {6, 4}, {8, 10}, {9, 7}},
+What is printed by this Java code?<br><code>int[][] mat = {{10, 8}, {6, 7}, {3, 6}, {4, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{10, 3}, {7, 3}},
+What is printed by this Java code?<br><code>int[][] mat = {{4, 4, 1}, {1, 1, 3}},
+What is printed by this Java code?<br><code>int[][] mat = {{4, 2}, {1, 7}, {10, 7}, {3, 2}},
+What is printed by this Java code?<br><code>int[][] mat = {{5, 9}, {8, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{4, 1}, {9, 3}, {3, 10}, {7, 10}},
+What is printed by this Java code?<br><code>int[][] mat = {{9, 7, 5}, {1, 5, 10}},
+What is printed by this Java code?<br><code>int[][] mat = {{8, 2, 8, 5}, {3, 8, 3, 2}},
+What is printed by this Java code?<br><code>int[][] mat = {{5, 6, 9, 9}, {3, 8, 2, 5}, {4, 3, 5, 2}},
+What is printed by this Java code?<br><code>int[][] mat = {{2, 1, 8, 7}, {3, 10, 9, 3}, {10, 6, 5, 2}, {7, 9, 2, 1}},
+What is printed by this Java code?<br><code>int[][] mat = {{8, 3, 5, 2}, {2, 4, 9, 4}},
+System.out.println(mat[0][3]),</code>;2;IndexOutOfBoundsException;4;8;A,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{1, 5, 10, 4}, {10, 10, 5, 7}},
+What is printed by this Java code?<br><code>int[][] mat = {{5, 9, 5, 4}, {8, 6, 4, 4}},
+What is printed by this Java code?<br><code>int[][] mat = {{5, 10, 9}, {6, 2, 8}, {4, 2, 8}, {6, 2, 7}},
+System.out.println(mat[3][2]),</code>;5;7;9;IndexOutOfBoundsException;B,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{9, 6, 5, 5}, {9, 5, 4, 4}, {1, 7, 10, 7}, {10, 6, 9, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{7, 5, 3, 6}, {5, 5, 8, 4}, {10, 2, 10, 7}, {7, 10, 2, 7}},
+What is printed by this Java code?<br><code>int[][] mat = {{9, 7, 9, 4}, {3, 10, 6, 1}, {1, 8, 10, 7}},
+System.out.println(mat[2][3]),</code>;15;9;IndexOutOfBoundsException;7;D,,,,,,,,
+What is printed by this Java code?<br><code>int[][] mat = {{6, 4, 8, 4}, {2, 3, 9, 2}, {8, 7, 2, 1}, {9, 9, 3, 1}},
+What is printed by this Java code?<br><code>int[][] mat = {{6, 10, 2}, {2, 6, 4}, {8, 1, 4}, {5, 8, 10}},
+What is printed by this Java code?<br><code>int[][] mat = {{5, 10, 7}, {2, 4, 2}, {2, 3, 5}},
+What is printed by this Java code?<br><code>int[][] mat = {{2, 1, 2, 4}, {10, 6, 9, 9}, {8, 1, 9, 1}},
+What is printed by this Java code?<br><code>int[][] mat = {{7, 4, 6, 9}, {5, 7, 10, 8}, {1, 9, 4, 9}},
+What is printed by this Java code?<br><code>int[][] mat = {{1, 2, 10}, {6, 3, 9}, {6, 10, 2}, {7, 3, 10}},
+What is printed by this Java code?<br><code>int[][] mat = {{7, 1, 2}, {6, 4, 3}},
+What is printed by this Java code?<br><code>int[][] mat = {{6, 5, 5, 9}, {10, 5, 10, 8}, {1, 7, 8, 2}},
+What is printed by this Java code?<br><code>int[][] mat = {{10, 9}, {9, 2}},
+What is printed by this Java code?<br><code>int[][] mat = {{8, 1, 4, 10}, {6, 3, 3, 1}},
+What is printed by this Java code?<br><code>int[][] mat = {{1, 6}, {9, 2}},
+What is printed by this Java code?<br><code>int[][] mat = {{10, 7, 2, 10}, {5, 9, 10, 9}},
+What is printed by this Java code?<br><code>int[][] mat = {{9, 6, 4, 8}, {4, 2, 7, 8}},
+What is printed by this Java code?<br><code>int[][] mat = {{3, 10, 2, 6}, {2, 5, 9, 8}},
+Identify the output of this Python script:<br><code>def update_list(lst):
+  lst.append(30)
+my_list = [13]
+update_list(my_list)
+print(my_list)</code>;[30];[13];SyntaxError;[13, 30];D,,,,,,,,
+  lst.append(23)
+my_list = [7]
+  lst.append(28)
+my_list = [6]
+  lst.append(20)
+my_list = [8]
+  lst.append(22)
+my_list = [10]
+  lst.append(29)
+my_list = [14]
+my_list = [15]
+my_list = [11]
+  lst.append(27)
+my_list = [12]
+  lst.append(26)
+my_list = [5]
+  lst.append(25)
+  lst.append(21)
+my_list = [9]
+  lst.append(24)
+"Evaluate the behavior of this loop over a C string:<br><code>char str[] = ""Platform"","
+for(int i = 0, i <= strlen(str), i++) {
+"  if(str[i] == '\0') printf(""End""),"
+"Evaluate the behavior of this loop over a C string:<br><code>char str[] = ""Aptitude"","
+"Evaluate the behavior of this loop over a C string:<br><code>char str[] = ""Tracing"","
+"Evaluate the behavior of this loop over a C string:<br><code>char str[] = ""Django"","
+"Evaluate the behavior of this loop over a C string:<br><code>char str[] = ""Debugging"","
+What is printed by this Python snippet demonstrating mutable defaults?<br><code>def add_item(num, lst=[]):
+  lst.append(num)
+  return lst
+add_item(1)
+print(add_item(4))</code>;[[1], [4]];[1, 4];[1];[4];B,,,,,,,,
+print(add_item(5))</code>;[5];[1];[[1], [5]];[1, 5];D,,,,,,,,
+print(add_item(2))</code>;[1];[[1], [2]];[1, 2];[2];C,,,,,,,,
+print(add_item(1))</code>;[1];[1];[1, 1];[[1], [1]];C,,,,,,,,
+print(add_item(3))</code>;[1];[[1], [3]];[3];[1, 3];D,,,,,,,,
+print(add_item(8))</code>;[1];[1, 8];[8];[[1], [8]];B,,,,,,,,
+print(add_item(7))</code>;[[1], [7]];[1, 7];[7];[1];B,,,,,,,,
+print(add_item(9))</code>;[1, 9];[[1], [9]];[9];[1];A,,,,,,,,
+print(add_item(10))</code>;[[1], [10]];[10];[1];[1, 10];D,,,,,,,,
+print(add_item(6))</code>;[1, 6];[[1], [6]];[1];[6];A,,,,,,,,
+Trace the closure output in this Python code:<br><code>funcs = [lambda: i for i in range(4)]
+print(funcs[1]())</code>;[1];IndexError;1;3;D,,,,,,,,
+print(funcs[3]())</code>;[3];3;IndexError;3;B,,,,,,,,
+Trace the closure output in this Python code:<br><code>funcs = [lambda: i for i in range(3)]
+print(funcs[0]())</code>;0;2;IndexError;[0];B,,,,,,,,
+print(funcs[2]())</code>;3;IndexError;2;[2];A,,,,,,,,
+Trace the closure output in this Python code:<br><code>funcs = [lambda: i for i in range(5)]
+print(funcs[4]())</code>;4;IndexError;[4];4;A,,,,,,,,
+What is the output regarding Python object identity?<br><code>a = [1, 2, 3]
+b = a[:]
+print(a == b, a is b)</code>;False True;True False;True True;False False;B,,,,,,,,
+Trace the print statements generated by this Python exception flow:<br><code>def trace():
+  try:
+    if True:
+      raise ValueError()
+    print('A')
+  except ValueError:
+    print('B')
+  else:
+    print('C')
+  finally:
+    print('D')
+trace()</code>;B D;B C D;A C D;A B C D;A,,,,,,,,
+    if False:
+What is the primary logical flaw and result of this Python loop?<br><code>lst = [1, 2, 3, 4]
+for item in lst:
+  if item == 2:
+    lst.remove(item)
+print(lst)</code>;ConcurrentModificationException;RuntimeError: dictionary changed size during iteration;It throws an IndexError.;It skips checking the element immediately succeeding 2 and outputs a modified list.;D,,,,,,,,
+What is the primary logical flaw and result of this Python loop?<br><code>lst = [1, 3, 3, 4]
+  if item == 3:
+What is the primary logical flaw and result of this Python loop?<br><code>lst = [1, 4, 3, 4]
+  if item == 4:
+Trace the final value of 'x' printed:<br><code>x = 13
+def func():
+  x = 40
+  def inner():
+    nonlocal x
+    x += 5
+  inner()
+func()
+print(x)</code>;13;18;40;45;A,,,,,,,,
+Trace the final value of 'x' printed:<br><code>x = 16
+  x = 39
+Trace the final value of 'x' printed:<br><code>x = 12
+  x = 32
+Trace the final value of 'x' printed:<br><code>x = 10
+  x = 37
+  x = 30
+Trace the final value of 'x' printed:<br><code>x = 19
+  x = 36
+Trace the final value of 'x' printed:<br><code>x = 20
+  x = 38
+  x = 31
+Trace the final value of 'x' printed:<br><code>x = 18
+Trace the final value of 'x' printed:<br><code>x = 14
+  x = 35
+Trace the final value of 'x' printed:<br><code>x = 11
+Trace the final value of 'x' printed:<br><code>x = 15
+  x = 34
+  x = 33
+Trace the final value of 'x' printed:<br><code>x = 17

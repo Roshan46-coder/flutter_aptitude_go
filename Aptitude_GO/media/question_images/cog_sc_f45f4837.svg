@@ -1,0 +1,7 @@
+<svg width="250" height="80" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="40.0,10.0 68.53169548885461,30.72949016875158 57.633557568774194,64.27050983124843 22.36644243122581,64.27050983124843 11.46830451114539,30.729490168751582" fill="none" stroke="black" stroke-width="2"/>
+        <text x="85" y="45" font-size="20">+</text>
+        <circle cx="130" cy="40" r="30" fill="none" stroke="black" stroke-width="2"/>
+        <text x="175" y="45" font-size="20">=</text>
+        <text x="210" y="45" font-size="30">?</text>
+    </svg>

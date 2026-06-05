@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 4rem auto; text-align: center;">
+    <div class="card">
+        <h1>Step 2 of 3</h1>
+        <h2 style="color: var(--primary-color);">What are your targets?</h2>
+        <p style="color: #6b7280; margin-bottom: 2rem;">Select all that apply.</p>
+
+        <form method="post" id="interestForm" onsubmit="prepareSubmission()">
+            {% csrf_token %}
+
+            <div class="tiles-grid">
+                <div class="tile" onclick="toggleTile(this)" data-value="Engineering">Engineering</div>
+                <div class="tile" onclick="toggleTile(this)" data-value="Management (MBA)">Management (MBA)</div>
+                <div class="tile" onclick="toggleTile(this)" data-value="Banking">Banking</div>
+                <div class="tile" onclick="toggleTile(this)" data-value="Civil Services">Civil Services</div>
+                <div class="tile" onclick="toggleTile(this)" data-value="Software / IT">Software / IT</div>
+                <div class="tile" onclick="toggleTile(this)" data-value="Study Abroad (GRE/GMAT)">Study Abroad</div>
+                <div class="tile" onclick="toggleTile(this)" data-value="Defense">Defense</div>
+                <div class="tile" onclick="toggleTile(this)" data-value="Railways">Railways</div>
+                <div class="tile" onclick="toggleTile(this)" data-value="General Aptitude">General Aptitude</div>
+            </div>
+
+            <input type="hidden" name="interest" id="interestInput">
+
+            <button type="submit" class="btn"
+                style="margin-top: 2rem; padding-left: 3rem; padding-right: 3rem;">Continue</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .tiles-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .tile {
+        padding: 1.5rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: var(--radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+        user-select: none;
+        color: var(--text-color);
+    }
+
+    [data-theme="dark"] .tile {
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #e2e8f0;
+    }
+
+    .tile:hover {
+        border-color: #a5b4fc;
+        transform: translateY(-2px);
+    }
+
+    [data-theme="dark"] .tile:hover {
+        border-color: #818cf8;
+        background: rgba(30, 41, 59, 0.8);
+    }
+
+    .tile.selected {
+        border-color: var(--primary-color);
+        background-color: #eef2ff;
+        color: var(--primary-color);
+        box-shadow: 0 0 0 1px var(--primary-color);
+    }
+
+    [data-theme="dark"] .tile.selected {
+        background-color: rgba(79, 70, 229, 0.2);
+        color: #818cf8;
+        border-color: #818cf8;
+        box-shadow: 0 0 0 1px #818cf8;
+    }
+</style>
+
+<script>
+    let selectedInterests = new Set();
+
+    function toggleTile(element) {
+        const value = element.getAttribute('data-value');
+        if (selectedInterests.has(value)) {
+            selectedInterests.delete(value);
+            element.classList.remove('selected');
+        } else {
+            selectedInterests.add(value);
+            element.classList.add('selected');
+        }
+    }
+
+    function prepareSubmission() {
+        // Convert Set to Array, join with commas, and set to hidden input
+        const interestsArray = Array.from(selectedInterests);
+        document.getElementById('interestInput').value = interestsArray.join(', ');
+    }
+</script>
+{% endblock %}

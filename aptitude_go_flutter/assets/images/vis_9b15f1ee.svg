@@ -1,0 +1,37 @@
+<svg width="250" height="350" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="125" cy="30" rx="40" ry="20" fill="none" stroke="black" stroke-width="2"/>
+    <text x="110" y="35">Start</text>
+    <line x1="125" y1="50" x2="125" y2="80" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    
+    <rect x="85" y="80" width="80" height="40" fill="none" stroke="black" stroke-width="2"/>
+    <text x="105" y="105">i = 1</text>
+    <line x1="125" y1="120" x2="125" y2="150" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    
+    <polygon points="125,150 185,180 125,210 65,180" fill="none" stroke="black" stroke-width="2"/>
+    <text x="105" y="185">i <= 3 ?</text>
+    
+    <!-- True branch -->
+    <line x1="125" y1="210" x2="125" y2="240" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="135" y="225">Yes</text>
+    
+    <path d="M 80,240 L 160,240 L 170,280 L 90,280 Z" fill="none" stroke="black" stroke-width="2"/>
+    <text x="105" y="265">Print i</text>
+    
+    <!-- Increment -->
+    <line x1="125" y1="280" x2="125" y2="300" stroke="black" stroke-width="2"/>
+    <line x1="125" y1="300" x2="30" y2="300" stroke="black" stroke-width="2"/>
+    <line x1="30" y1="300" x2="30" y2="135" stroke="black" stroke-width="2"/>
+    <line x1="30" y1="135" x2="125" y2="135" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    
+    <rect x="15" y="160" width="30" height="30" fill="white"/>
+    <text x="18" y="180">i++</text>
+    
+    <!-- False branch -->
+    <line x1="185" y1="180" x2="220" y2="180" stroke="black" stroke-width="2"/>
+    <line x1="220" y1="180" x2="220" y2="320" stroke="black" stroke-width="2"/>
+    <line x1="220" y1="320" x2="165" y2="320" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="195" y="175">No</text>
+    
+    <ellipse cx="125" cy="320" rx="40" ry="20" fill="none" stroke="black" stroke-width="2"/>
+    <text x="115" y="325">End</text>
+</svg>

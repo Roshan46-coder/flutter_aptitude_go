@@ -1,0 +1,13 @@
+<svg width="400" height="200" xmlns="http://www.w3.org/2000/svg">
+       <text x="10" y="20">Find the water image (upside down) of: ROAD</text>
+       <text x="30" y="60" font-family="monospace" font-size="40" fill="black">ROAD</text>
+       <line x1="10" y1="70" x2="150" y2="70" stroke="blue" stroke-dasharray="4" stroke-width="2" />
+       
+       <text x="10" y="110">A.</text>
+       <g transform="translate(30, 100) scale(1, -1)">
+         <text x="0" y="0" font-family="monospace" font-size="30" fill="black">ROAD</text>
+       </g>
+       
+       <text x="140" y="110">B. DAOR</text>
+       <text x="240" y="110">C. ROAD</text>
+    </svg>

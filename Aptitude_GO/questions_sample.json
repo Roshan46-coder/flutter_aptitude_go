@@ -1,0 +1,74 @@
+[
+    {
+        "category": "Quantitative Aptitude",
+        "text": "If a car travels 60 km in 1.5 hours, what is its average speed?",
+        "difficulty": "EASY",
+        "explanation": "Speed = Distance / Time. 60 km / 1.5 hr = 40 km/hr.",
+        "options": [
+            {
+                "text": "30 km/hr",
+                "is_correct": false
+            },
+            {
+                "text": "40 km/hr",
+                "is_correct": true
+            },
+            {
+                "text": "45 km/hr",
+                "is_correct": false
+            },
+            {
+                "text": "60 km/hr",
+                "is_correct": false
+            }
+        ]
+    },
+    {
+        "category": "Logical Reasoning",
+        "text": "Find the next number in the series: 2, 4, 8, 16, ...",
+        "difficulty": "EASY",
+        "explanation": "Each number is multiplied by 2 to get the next. 16 * 2 = 32.",
+        "options": [
+            {
+                "text": "30",
+                "is_correct": false
+            },
+            {
+                "text": "32",
+                "is_correct": true
+            },
+            {
+                "text": "24",
+                "is_correct": false
+            },
+            {
+                "text": "64",
+                "is_correct": false
+            }
+        ]
+    },
+    {
+        "category": "Verbal Ability",
+        "text": "Choose the synonym for 'Happy'.",
+        "difficulty": "EASY",
+        "explanation": "'Joyful' is a synonym for 'Happy'.",
+        "options": [
+            {
+                "text": "Sad",
+                "is_correct": false
+            },
+            {
+                "text": "Angry",
+                "is_correct": false
+            },
+            {
+                "text": "Joyful",
+                "is_correct": true
+            },
+            {
+                "text": "Bored",
+                "is_correct": false
+            }
+        ]
+    }
+]

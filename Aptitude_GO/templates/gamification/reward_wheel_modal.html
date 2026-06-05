@@ -1,0 +1,403 @@
+<div id="rewardWheelModal" class="reward-modal-overlay" style="display: none;"
+    data-show-modal="{{ show_wheel_modal|yesno:'true,false' }}">
+    <div class="reward-modal-content">
+        <button class="close-modal" onclick="closeWheelModal()">×</button>
+        <div class="modal-inner">
+            <h2 class="fortune-title">🎡 Monthly Fortune</h2>
+            <div class="wheel-container">
+                <div class="pointer-arrow"></div>
+                <div class="wheel-border-outer">
+                    <div class="wheel-main" id="mainWheel">
+                        <div class="wheel-labels">
+                            <div class="segment-label" style="--i:0;">
+                                <div class="label-content"><span class="icon">❤️</span><br>+2 Life</div>
+                            </div>
+                            <div class="segment-label" style="--i:1;">
+                                <div class="label-content"><span class="icon">💰</span><br>20 Coins</div>
+                            </div>
+                            <div class="segment-label" style="--i:2;">
+                                <div class="label-content"><span class="icon">💰</span><br>30 Coins</div>
+                            </div>
+                            <div class="segment-label" style="--i:3;">
+                                <div class="label-content"><span class="icon">💰</span><br>50 Coins</div>
+                            </div>
+                            <div class="segment-label" style="--i:4;">
+                                <div class="label-content"><span class="icon">🖼️</span><br>Gold Frame</div>
+                            </div>
+                            <div class="segment-label" style="--i:5;">
+                                <div class="label-content"><span class="icon">❤️</span><br>+1 Life</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="spinBtnModal" class="spin-hub">
+                        <span id="hubContent">SPIN<br>NOW</span>
+                    </button>
+                </div>
+            </div>
+            <div id="resultText" class="result-display"></div>
+        </div>
+    </div>
+</div>
+
+<canvas id="confettiCanvas"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1001; display: none;"></canvas>
+
+<style>
+    :root {
+        --wheel-gold: #fbce45;
+        --wheel-cream: #fff9e6;
+        --wheel-bronze: #d97706;
+        --modal-bg: #fffcf0;
+        --wheel-text: #92400e;
+        --shadow-color: rgba(251, 206, 69, 0.4);
+    }
+
+    [data-theme="dark"] {
+        --modal-bg: #0f172a;
+        --wheel-text: #fef3c7;
+        --wheel-gold: #fbce45;
+        --wheel-bronze: #8b5e3c;
+        --wheel-cream: #1e293b;
+        --shadow-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .reward-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(12px);
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: modalFadeIn 0.3s ease;
+    }
+
+    .reward-modal-content {
+        background: var(--modal-bg);
+        padding: 2.5rem;
+        border-radius: 40px;
+        width: 95%;
+        max-width: 450px;
+        position: relative;
+        border: 3px solid var(--wheel-gold);
+        box-shadow: 0 0 50px var(--shadow-color);
+        animation: modalScaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .fortune-title {
+        color: var(--wheel-text);
+        font-size: 2rem;
+        margin-bottom: 2rem;
+        font-family: 'Outfit', sans-serif;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .wheel-container {
+        position: relative;
+        width: 340px;
+        height: 340px;
+        margin: 0 auto;
+    }
+
+    .pointer-arrow {
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 34px;
+        height: 44px;
+        background: #ef4444;
+        clip-path: polygon(50% 100%, 0 0, 100% 0);
+        z-index: 150;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+        border-top: 5px solid white;
+    }
+
+    .wheel-border-outer {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 12px solid var(--wheel-gold);
+        position: relative;
+        box-shadow: 0 0 0 4px var(--wheel-bronze), 0 20px 40px rgba(0, 0, 0, 0.4);
+        background: var(--wheel-cream);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .wheel-main {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        position: absolute;
+        transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
+        background: conic-gradient(var(--wheel-cream) 0deg 60deg,
+                #fffde7 60deg 120deg,
+                var(--wheel-cream) 120deg 180deg,
+                #fffde7 180deg 240deg,
+                var(--wheel-cream) 240deg 300deg,
+                #fffde7 300deg 360deg);
+    }
+
+    [data-theme="dark"] .wheel-main {
+        background: conic-gradient(#1e293b 0deg 60deg,
+                #334155 60deg 120deg,
+                #1e293b 120deg 180deg,
+                #334155 180deg 240deg,
+                #1e293b 240deg 300deg,
+                #334155 300deg 360deg);
+    }
+
+    .wheel-labels {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+    }
+
+    .segment-label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        transform: rotate(calc(60deg * var(--i) + 30deg));
+    }
+
+    .label-content {
+        margin-top: 30px;
+        text-align: center;
+        color: var(--wheel-text);
+        font-weight: 900;
+        font-size: 0.85rem;
+        line-height: 1.2;
+    }
+
+    .label-content .icon {
+        font-size: 1.8rem;
+    }
+
+    .spin-hub {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90px;
+        height: 90px;
+        background: radial-gradient(circle, #fbce45, #d97706);
+        border-radius: 50%;
+        border: 4px solid white;
+        z-index: 10;
+        color: white;
+        font-weight: 900;
+        font-size: 0.8rem;
+        cursor: pointer;
+        box-shadow: 0 0 20px rgba(217, 119, 6, 0.5);
+        transition: all 0.2s;
+    }
+
+    .spin-hub:hover:not(:disabled) {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 0 0 40px rgba(217, 119, 6, 0.8);
+    }
+
+    .spin-hub:disabled {
+        background: #94a3b8;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+
+    .result-display {
+        margin-top: 2rem;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--wheel-bronze);
+        min-height: 2rem;
+        width: 100%;
+        text-align: center;
+        transition: all 0.5s;
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 1rem;
+        right: 1.5rem;
+        background: none;
+        border: none;
+        font-size: 2.5rem;
+        color: var(--wheel-text);
+        cursor: pointer;
+        opacity: 0.5;
+    }
+
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes modalScaleUp {
+        from {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @media (max-width: 400px) {
+        .wheel-container {
+            width: 280px;
+            height: 280px;
+        }
+
+        .reward-modal-content {
+            padding: 1.5rem;
+        }
+
+        .label-content {
+            margin-top: 20px;
+            font-size: 0.75rem;
+        }
+    }
+</style>
+
+<script>
+    function closeWheelModal() {
+        document.getElementById('rewardWheelModal').style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('rewardWheelModal');
+        const show = modal.getAttribute('data-show-modal') === 'true';
+
+        if (show) {
+            setTimeout(() => { modal.style.display = 'flex'; }, 1000);
+        }
+
+        const spinBtn = document.getElementById('spinBtnModal');
+        const wheel = document.getElementById('mainWheel');
+        const resultText = document.getElementById('resultText');
+
+        if (spinBtn) {
+            spinBtn.addEventListener('click', async () => {
+                if (spinBtn.disabled) return;
+                spinBtn.disabled = true;
+
+                try {
+                    const response = await fetch("{% url 'process_spin' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const baseRotations = 8 + Math.floor(Math.random() * 5);
+                        // Math: To get target index 'i' at the top (0 deg)
+                        // segmentIndex = Math.floor((360 - (finalRotation % 360)) / 60) % 6
+                        // (finalRotation % 360) = 360 - (segmentIndex * 60)
+                        const stopAngle = 360 - (data.reward_index * 60) - 30; // Center of segment
+                        const totalRotation = (baseRotations * 360) + stopAngle;
+
+                        wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+                        setTimeout(() => {
+                            // Add a tiny bounce effect
+                            wheel.style.transition = 'none';
+                            wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+                            // Update hub text for "centered inside" feel
+                            const hub = document.getElementById('hubContent');
+                            if (hub) hub.innerHTML = `WON:<br>${data.reward_label.split(' ')[0]}`;
+
+                            resultText.textContent = `WINNER: ${data.reward_label}`;
+                            startConfetti();
+
+                            // Update Navbar stats
+                            updateUINavbar(data.new_coins, data.new_lives);
+
+                            if (data.reward_label.includes('Frame')) {
+                                resultText.innerHTML += '<br><span style="font-size: 0.7em;">Golden Frame Auto-Equipped!</span>';
+                                // Instant application to all profile containers on the page
+                                document.querySelectorAll('.profile-container').forEach(el => {
+                                    el.classList.add('golden-frame-active');
+                                });
+                            }
+
+                            setTimeout(closeWheelModal, 5000);
+                        }, 5100);
+                    } else {
+                        alert(data.error);
+                        spinBtn.disabled = false;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    spinBtn.disabled = false;
+                }
+            });
+        }
+    });
+
+    function updateUINavbar(coins, lives) {
+        const statsPill = document.querySelector('.stats-pill');
+        if (statsPill) {
+            const livesSpan = statsPill.querySelector('span:nth-child(1)');
+            const coinsSpan = statsPill.querySelector('span:nth-child(3)');
+            if (livesSpan) livesSpan.textContent = `❤️ ${lives}`;
+            if (coinsSpan) coinsSpan.textContent = `💰 ${coins}`;
+        }
+    }
+
+    function startConfetti() {
+        const canvas = document.getElementById('confettiCanvas');
+        canvas.style.display = 'block';
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+        for (let i = 0; i < 150; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                size: Math.random() * 7 + 4,
+                color: ["#fbce45", "#ef4444", "#4f46e5", "#10b981", "#8b5cf6"][Math.floor(Math.random() * 5)],
+                speed: Math.random() * 4 + 2,
+                angle: Math.random() * 360
+            });
+        }
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.angle * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                ctx.restore();
+                p.y += p.speed;
+                p.angle += p.speed;
+            });
+            if (document.getElementById('rewardWheelModal').style.display !== 'none') {
+                requestAnimationFrame(draw);
+            } else { canvas.style.display = 'none'; }
+        }
+        draw();
+    }
+</script>

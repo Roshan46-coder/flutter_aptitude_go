@@ -1,0 +1,7 @@
+<svg width="250" height="200" xmlns="http://www.w3.org/2000/svg">
+        <rect x="50" y="50" width="150" height="100" fill="none" stroke="black" stroke-width="2"/>
+        <line x1="50" y1="50" x2="200" y2="150" stroke="blue" stroke-dasharray="5"/>
+        <text x="120" y="40">20 cm</text>
+        <text x="5" y="105">15 cm</text>
+        <text x="120" y="95" fill="blue" transform="rotate(33, 120, 95)">d = ?</text>
+    </svg>

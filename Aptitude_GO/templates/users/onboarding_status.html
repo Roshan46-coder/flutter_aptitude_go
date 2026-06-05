@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 4rem auto; text-align: center;">
+    <div class="card">
+        <h1>Step 1 of 3</h1>
+        <h2 style="color: var(--primary-color);">Tell us about yourself</h2>
+        <p style="color: #6b7280; margin-bottom: 2rem;">Help us personalize your experience.</p>
+
+        <form method="post" id="statusForm">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <button type="button" class="btn-option" onclick="selectOption('Student')">Student</button>
+                <button type="button" class="btn-option" onclick="selectOption('Job Seeker')">Job Seeker</button>
+                <button type="button" class="btn-option" onclick="selectOption('Professional')">Professional</button>
+                <button type="button" class="btn-option" onclick="selectOption('Other')">Other</button>
+            </div>
+            <input type="hidden" name="status" id="statusInput" required>
+        </form>
+    </div>
+</div>
+
+<style>
+    .btn-option {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 2px solid #e5e7eb;
+        padding: 1.5rem;
+        border-radius: var(--radius);
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--text-color);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .btn-option {
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #e2e8f0;
+    }
+
+    .btn-option:hover {
+        border-color: var(--primary-color);
+        background: #eef2ff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="dark"] .btn-option:hover {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: #818cf8;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+</style>
+
+<script>
+    function selectOption(value) {
+        document.getElementById('statusInput').value = value;
+        document.getElementById('statusForm').submit();
+    }
+</script>
+{% endblock %}

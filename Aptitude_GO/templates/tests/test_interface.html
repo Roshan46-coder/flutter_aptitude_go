@@ -1,0 +1,1018 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- TensorFlow.js and BlazeFace -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
+
+<div style="max-width: 800px; margin: 0 auto; padding: 1rem;">
+    <div id="test-container" style="transition: filter 0.1s;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+                <h2 style="margin: 0;">{{ category.name }}</h2>
+                <div style="font-size: 0.9rem; color: #6b7280; margin-top: 4px;">
+                    Question <span id="current-q-num">1</span> of {{ questions|length }}
+                </div>
+            </div>
+            <div class="timer-badge">
+                <span style="font-size: 1.25rem;">⏱️</span>
+                <span id="timer" style="font-weight: 700; font-family: monospace; font-size: 1.5rem;">30</span>s
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div
+            style="width: 100%; background: #e2e8f0; height: 6px; border-radius: 3px; margin-bottom: 2rem; overflow: hidden;">
+            <div id="progress-bar"
+                style="width: 0%; height: 100%; background: var(--primary-color); transition: width 0.3s;"></div>
+        </div>
+
+        <form method="post" action="{% url 'submit_test' %}" id="testForm">
+            {% csrf_token %}
+
+            {% for question in questions %}
+            <div class="question-slide" id="slide-{{ forloop.counter }}"
+                data-is-coding="{{ question.is_coding_problem|lower }}" data-time-limit="{{ question.time_limit }}" style="display: none;">
+                <!-- Question Card -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div
+                        style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; line-height: 1.5; white-space: pre-wrap;">
+                        {{ question.text|safe }}</div>
+
+                    {% if question.is_coding_problem %}
+                    <!-- Coding Problem: Text area for answer -->
+                    <div class="coding-answer-area">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <span style="font-size: 1.25rem;">💻</span>
+                            <span style="font-weight: 600; color: var(--text-color);">Type your answer / code
+                                below:</span>
+                        </div>
+                        <textarea name="code_answer_{{ forloop.counter }}" class="code-textarea" rows="10"
+                            placeholder="Write your solution here..." spellcheck="false"></textarea>
+                    </div>
+                    {% else %}
+                    <!-- MCQ: Radio button options -->
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        {% for option in question.options.all %}
+                        <label class="option-label" data-q-index="{{ forloop.parentloop.counter }}">
+                            <!-- Use loop counter for unique naming across duplicates -->
+                            <input type="radio" name="answer_{{ forloop.parentloop.counter }}" value="{{ option.id }}"
+                                style="margin-right: 0.75rem;">
+                            <span style="font-size: 1rem;">{{ option.text }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display: flex; justify-content: flex-end;">
+                    {% if not forloop.last %}
+                    <button type="button" class="btn" onclick="nextQuestion()">Next Question ➜</button>
+                    {% else %}
+                    <button type="submit" class="btn btn-primary" style="background: #10b981;">Submit Test</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </form>
+    </div>
+</div>
+
+<style>
+    .timer-badge {
+        background: #fee2e2;
+        color: #ef4444;
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
+    }
+
+    .option-label {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+    }
+
+    .option-label:hover {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+    }
+
+    /* Selected state handled by JS */
+    .option-selected {
+        border-color: var(--primary-color) !important;
+        background: #eef2ff !important;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    /* Animation */
+    .question-slide {
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    [data-theme="dark"] .option-label {
+        background: rgba(30, 41, 59, 0.6);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #f1f5f9;
+    }
+
+    [data-theme="dark"] .option-label:hover {
+        background: rgba(30, 41, 59, 0.9);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    [data-theme="dark"] .option-selected {
+        background: rgba(79, 70, 229, 0.2) !important;
+        border-color: #818cf8 !important;
+    }
+
+    /* Anti-cheating: Prevent text selection */
+    .no-select {
+        -webkit-user-select: none;
+        /* Safari */
+        -moz-user-select: none;
+        /* Firefox */
+        -ms-user-select: none;
+        /* IE10+/Edge */
+        user-select: none;
+        /* Standard */
+    }
+
+    /* Coding problem textarea */
+    .coding-answer-area {
+        margin-top: 1rem;
+    }
+
+    .code-textarea {
+        width: 100%;
+        min-height: 200px;
+        padding: 1rem;
+        font-family: 'Courier New', Consolas, monospace;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        background: #1e293b;
+        color: #e2e8f0;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.2s;
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        user-select: text;
+    }
+
+    .code-textarea:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .code-textarea::placeholder {
+        color: #64748b;
+    }
+
+    [data-theme="dark"] .code-textarea {
+        background: #0f172a;
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #e2e8f0;
+    }
+</style>
+
+<!-- Full Screen & Proctoring Overlay -->
+<div id="fullscreen-overlay" style="
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: var(--bg-color); z-index: 2147483640; 
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--text-color); font-family: sans-serif;
+">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">🛡️</div>
+    <h1 style="margin-bottom: 1rem;">Secure Test Environment</h1>
+
+    <div
+        style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 600px; width: 90%;">
+        <div class="step-item" id="step-fullscreen"
+            style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+            <div class="step-icon"
+                style="width: 32px; height: 32px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                1</div>
+            <div style="flex: 1;">
+                <h3 style="margin: 0; font-size: 1.1rem;">Full Screen Mode</h3>
+                <p style="margin: 0.25rem 0 0; color: #64748b; font-size: 0.9rem;">Test must be the only active window.
+                </p>
+            </div>
+            <button onclick="enableFullScreen()" class="btn btn-sm" id="btn-fullscreen">Enable</button>
+            <span class="check-mark" style="display: none; color: #10b981; font-size: 1.5rem;">✓</span>
+        </div>
+
+        <div class="step-item" id="step-proctor"
+            style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; opacity: 0.5; pointer-events: none;">
+            <div class="step-icon"
+                style="width: 32px; height: 32px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                2</div>
+            <div style="flex: 1;">
+                <h3 style="margin: 0; font-size: 1.1rem;">Screen Monitoring</h3>
+                <p style="margin: 0.25rem 0 0; color: #64748b; font-size: 0.9rem;">You must share your <b>Entire
+                        Screen</b> for validation.</p>
+            </div>
+            <button onclick="enableProctoring()" class="btn btn-sm" id="btn-proctor">Start</button>
+            <span class="check-mark" style="display: none; color: #10b981; font-size: 1.5rem;">✓</span>
+        </div>
+
+        <div class="step-item" id="step-devices"
+            style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; opacity: 0.5; pointer-events: none;">
+            <div class="step-icon"
+                style="width: 32px; height: 32px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                3</div>
+            <div style="flex: 1;">
+                <h3 style="margin: 0; font-size: 1.1rem;">Environment Check</h3>
+                <p style="margin: 0.25rem 0 0; color: #64748b; font-size: 0.9rem;">Verifying Camera & Mic are available
+                    and not in use.</p>
+            </div>
+            <button onclick="checkDevices()" class="btn btn-sm" id="btn-devices">Verify</button>
+            <span class="check-mark" style="display: none; color: #10b981; font-size: 1.5rem;">✓</span>
+        </div>
+
+        <div id="error-msg"
+            style="color: #ef4444; font-size: 0.9rem; margin-top: 1rem; text-align: center; display: none;"></div>
+    </div>
+</div>
+
+<script>
+    let currentQuestion = 1;
+    const totalQuestions = {{ questions| length }};
+    const timeLimit = 30; // 30 seconds per question
+    let timeLeft = timeLimit;
+    let timerInterval;
+    let isTestActive = false;
+    let screenStream = null;
+    let cameraStream = null;
+
+    // Modified Init - Validation before start
+    function init() {
+        {% if site_settings.anti_malpractice_enabled %}
+        // We wait for user interaction via overlay
+        checkSteps();
+        {% else %}
+        document.getElementById('fullscreen-overlay').style.display = 'none';
+        const container = document.getElementById('test-container');
+        if (container) {
+            container.style.visibility = 'visible';
+            container.style.opacity = '1';
+        }
+        if (!isTestActive) {
+            isTestActive = true;
+            showQuestion(currentQuestion);
+            startTimer();
+        }
+        {% endif %}
+    }
+
+    function checkSteps() {
+        // Check Fullscreen
+        const isFS = !!document.fullscreenElement || window.fsBypassed;
+        updateStepUI('fullscreen', isFS);
+
+        // Chain Enable Logic
+        // 1. Fullscreen -> 2. Proctoring -> 3. Devices
+
+        const proctorStep = document.getElementById('step-proctor');
+        const deviceStep = document.getElementById('step-devices');
+        const isProctorDone = !!screenStream;
+        const isDeviceDone = !!cameraStream;
+
+        if (isFS) {
+            proctorStep.style.opacity = '1';
+            proctorStep.style.pointerEvents = 'all';
+        } else {
+            proctorStep.style.opacity = '0.5';
+            proctorStep.style.pointerEvents = 'none';
+        }
+
+        if (isFS && isProctorDone) {
+            deviceStep.style.opacity = '1';
+            deviceStep.style.pointerEvents = 'all';
+        } else {
+            deviceStep.style.opacity = '0.5';
+            deviceStep.style.pointerEvents = 'none';
+        }
+
+        updateStepUI('proctor', isProctorDone);
+        updateStepUI('devices', isDeviceDone);
+
+        // If ALL done, start test
+        if (isFS && isProctorDone && isDeviceDone) {
+            document.getElementById('fullscreen-overlay').style.display = 'none';
+            const container = document.getElementById('test-container');
+            if (container) {
+                container.style.visibility = 'visible';
+                container.style.opacity = '1';
+            }
+            if (!isTestActive) {
+                isTestActive = true;
+                showQuestion(currentQuestion);
+                startTimer();
+            }
+        } else {
+            document.getElementById('fullscreen-overlay').style.display = 'flex';
+            const container = document.getElementById('test-container');
+            if (container) {
+                container.style.visibility = 'hidden';
+                container.style.opacity = '0';
+            }
+            isTestActive = false;
+        }
+    }
+
+    // ... enableFullScreen ... enableProctoring ...
+
+    // 3. Device Check (Camera Exclusivity & Audio Guard)
+    async function checkDevices() {
+        try {
+            // Request Video & Audio
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+            // Initialize Audio Analysis
+            initAudioGuard(cameraStream);
+
+            checkSteps();
+
+        } catch (err) {
+            console.error(err);
+            if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                showError("⚠️ Camera/Mic is in use by another application! Please close Google Meet, Zoom, or other tools to proceed.");
+            } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                showError("🚫 Permission Denied. You must allow Camera & Mic access.");
+            } else {
+                showError(`Device Error: ${err.message}`);
+            }
+        }
+    }
+
+    // Audio & Face Logic
+    let audioContext, analyser, microphone, javascriptNode;
+    let faceModel = null;
+    let faceCheckInterval = null;
+
+    async function initAudioGuard(stream) {
+        // Audio Part
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            microphone = audioContext.createMediaStreamSource(stream);
+            javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+
+            analyser.smoothingTimeConstant = 0.8;
+            analyser.fftSize = 1024;
+
+            microphone.connect(analyser);
+            analyser.connect(javascriptNode);
+            javascriptNode.connect(audioContext.destination);
+
+            setupMeterUI(microphone);
+        }
+
+        // Face Detection Part
+        if (!faceModel) {
+            try {
+                // Initialize BlazeFace
+                faceModel = await blazeface.load();
+                console.log("Face Model Loaded");
+                startFaceDetection();
+            } catch (e) {
+                console.error("Failed to load Face Model", e);
+            }
+        }
+    }
+
+    function setupMeterUI(microphone) {
+        // Add UI ... (re-using existing UI logic but ensuring it's robust)
+        // Check if meter exists
+        if (document.getElementById('audio-meter')) return;
+
+        const meter = document.createElement('div');
+        meter.id = 'audio-meter';
+        meter.style.cssText = `
+            position: fixed; bottom: 20px; right: 20px; 
+            background: rgba(0,0,0,0.9); color: white; padding: 12px; border-radius: 12px;
+            font-size: 12px; z-index: 20000; display: flex;
+            flex-direction: column; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            border: 1px solid #333; width: 220px;
+        `;
+
+        // Video Container
+        const vidContainer = document.createElement('div');
+        vidContainer.style.cssText = `
+            position: relative; width: 100%; height: 120px; background: #000;
+            border-radius: 8px; overflow: hidden; margin-bottom: 4px;
+        `;
+
+        const video = document.createElement('video');
+        video.id = 'proctor-video';
+        video.autoplay = true;
+        video.muted = true;
+        video.style.cssText = 'width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);'; // Mirror
+        if (microphone.mediaStream) video.srcObject = microphone.mediaStream;
+
+        const recBadge = document.createElement('div');
+        recBadge.innerHTML = '🔴 REC';
+        recBadge.style.cssText = `
+            position: absolute; top: 8px; left: 8px; 
+            font-size: 10px; font-weight: bold; color: #ef4444;
+            background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px;
+            animation: blink 1s infinite;
+        `;
+
+        vidContainer.appendChild(video);
+        vidContainer.appendChild(recBadge);
+
+        meter.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-weight: bold; color: #9ca3af;">AUDIO & ENV MONITOR</span>
+                <span style="font-size: 10px; color: #10b981;">● Online</span>
+            </div>
+            <div style="font-size: 10px; color: #6b7280; margin-bottom: 8px;">
+                Calculating allowed. Eye tracking disabled.
+            </div>
+        `;
+        meter.insertBefore(vidContainer, meter.firstChild.nextSibling);
+
+        const audioRow = document.createElement('div');
+        audioRow.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%;';
+        audioRow.innerHTML = `
+            <span>🎤 Audio:</span>
+            <div style="flex: 1; height: 6px; background: #333; border-radius: 3px; overflow: hidden;">
+                <div id="noise-bar" style="width: 0%; height: 100%; background: #10b981; transition: width 0.1s;"></div>
+            </div>
+        `;
+        meter.appendChild(audioRow);
+        document.body.appendChild(meter);
+
+        // Blink style
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes blink { 50% { opacity: 0.5; } }`;
+        document.head.appendChild(style);
+
+        javascriptNode.onaudioprocess = function () {
+            var array = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(array);
+            var values = 0;
+            var length = array.length;
+            for (var i = 0; i < length; i++) values += array[i];
+            var average = values / length;
+
+            const meterEl = document.getElementById('audio-meter');
+            const bar = document.getElementById('noise-bar');
+
+            if (isTestActive && meterEl) {
+                meterEl.style.display = 'flex';
+                bar.style.width = Math.min(100, average * 4) + '%';
+                if (average > 12) {
+                    bar.style.background = '#ef4444';
+                    triggerNoiseWarning();
+                } else {
+                    bar.style.background = '#10b981';
+                }
+            } else if (meterEl) {
+                meterEl.style.display = 'none';
+            }
+        }
+    }
+
+    function startFaceDetection() {
+        if (faceCheckInterval) clearInterval(faceCheckInterval);
+
+        const video = document.getElementById('proctor-video');
+
+        faceCheckInterval = setInterval(async () => {
+            if (!isTestActive || !faceModel || !video || video.paused || video.ended) return;
+
+            try {
+                const predictions = await faceModel.estimateFaces(video, false);
+
+                if (predictions.length === 0) {
+                    handleFaceViolation("No Face Detected", true);
+                } else if (predictions.length > 1) {
+                    handleFaceViolation("Multiple Faces Detected", false); // Don't blur for multiple, just warn
+                } else {
+                    // All good
+                    clearFaceViolation();
+                }
+            } catch (err) {
+                console.warn("Face Detect Error", err);
+            }
+        }, 3000); // Check every 3s
+    }
+
+    let violationOverlay = null;
+    function handleFaceViolation(msg, shouldBlur) {
+        logIncident(msg, 10);
+
+        if (shouldBlur) {
+            // Check if overlay already exists
+            if (!violationOverlay) {
+                violationOverlay = document.createElement('div');
+                violationOverlay.id = 'face-violation';
+                violationOverlay.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                    background: rgba(0,0,0,0.9); z-index: 2147483646; 
+                    display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    color: #ef4444; font-family: sans-serif;
+                `;
+                violationOverlay.innerHTML = `
+                    <div style="font-size: 5rem;">👤❓</div>
+                    <h1 style="color: white; margin-top: 1rem;">FACE NOT DETECTED</h1>
+                    <p style="color: #ef4444; font-size: 1.5rem; font-weight: bold; margin-top: 1rem;">
+                        Please return to the camera view immediately.
+                    </p>
+                `;
+                document.body.appendChild(violationOverlay);
+
+                // Hide content
+                const container = document.getElementById('test-container');
+                if (container) container.style.visibility = 'hidden';
+            }
+        }
+    }
+
+    function clearFaceViolation() {
+        if (violationOverlay) {
+            violationOverlay.remove();
+            violationOverlay = null;
+
+            // Show content
+            const container = document.getElementById('test-container');
+            if (container) container.style.visibility = 'visible';
+        }
+    }
+
+    let lastWarning = 0;
+    let malpracticeScore = 0;
+    const MAX_MALPRACTICE_SCORE = 100;
+
+    function triggerNoiseWarning() {
+        const now = Date.now();
+        if (now - lastWarning > 5000) { // Debounce 5s
+            lastWarning = now;
+            logIncident('High Audio Level Detected', 15);
+        }
+    }
+
+    function logIncident(reason, severity) {
+        {% if not site_settings.anti_malpractice_enabled %}
+        return; // Disabled by admin
+        {% endif %}
+        
+        malpracticeScore += severity;
+
+        // Visual Alert
+        const alert = document.createElement('div');
+        alert.style.cssText = `
+            position: fixed; top: 100px; right: 20px;
+            background: #dc2626; color: white; padding: 1rem;
+            border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 20000; animation: slideIn 0.3s ease-out;
+            max-width: 300px;
+        `;
+        alert.innerHTML = `
+            <strong>⚠️ Incident Recorded</strong><br>
+            <div style="font-size: 0.9rem; margin-top: 4px;">${reason}</div>
+            <div style="font-size: 0.8rem; margin-top: 4px; opacity: 0.9;">
+                Trust Score deducted. (${Math.max(0, 100 - malpracticeScore)}/100)
+            </div>
+        `;
+        document.body.appendChild(alert);
+
+        setTimeout(() => alert.remove(), 4000);
+
+        // Update Title
+        document.title = `⚠️ Suspicious Activity (${malpracticeScore})`;
+
+        // Check Termination
+        if (malpracticeScore >= MAX_MALPRACTICE_SCORE) {
+            terminateTest(reason); // Pass reason
+        }
+    }
+
+    function terminateTest(reason) {
+        isTestActive = false;
+        clearInterval(timerInterval);
+
+        // Create Termination Overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #7f1d1d; color: white; z-index: 2147483647;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; font-family: sans-serif;
+        `;
+        overlay.innerHTML = `
+            <div style="font-size: 4rem;">🚫</div>
+            <h1>Test Terminated</h1>
+            <p style="font-size: 1.5rem; margin-top: 1rem;">Malpractice Limit Exceeded</p>
+            <p style="margin-top: 2rem;">Reason: ${reason}</p>
+            <p style="margin-top: 1rem;">Submitting your results automatically...</p>
+        `;
+        document.body.appendChild(overlay);
+
+        // Force Submit after 3s
+        setTimeout(() => {
+            document.getElementById('testForm').submit();
+        }, 3000);
+    }
+
+    // Add listeners for scoring
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement && isTestActive) {
+            logIncident('Exited Full Screen Mode', 30);
+        }
+    });
+
+    window.addEventListener('blur', () => {
+        if (isTestActive) {
+            logIncident('Window Focus Lost', 20);
+        }
+    });
+
+
+    // 1. Full Screen
+    function enableFullScreen() {
+        const elem = document.documentElement;
+        const method = elem.requestFullscreen || elem.mozRequestFullScreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
+        if (method) {
+            method.call(elem).catch(err => {
+                showError("Full Screen blocked by browser, bypassing for practice.");
+                // Bypassing strict fullscreen check so user can enter the test
+                window.fsBypassed = true;
+                checkSteps();
+            });
+        } else {
+            window.fsBypassed = true;
+            checkSteps();
+        }
+    }
+
+    // 2. Proctoring (Screen Share)
+    async function enableProctoring() {
+        try {
+            // Request Screen Share - "monitor" preference
+            screenStream = await navigator.mediaDevices.getDisplayMedia({
+                video: { cursor: "always" },
+                audio: false
+            });
+
+            // STRICT VALIDATION: Ensure "Entire Screen" (monitor) was shared
+            const videoTrack = screenStream.getVideoTracks()[0];
+            const settings = videoTrack.getSettings();
+
+            // Note: displaySurface support varies, but usually 'monitor' for full screen
+            if (settings.displaySurface && settings.displaySurface !== 'monitor') {
+                // Reject
+                videoTrack.stop();
+                screenStream = null;
+                showError("❌ Invalid Share: You select 'Entire Screen' tab (not Window/Chrome Tab).");
+                updateStepUI('proctor', false);
+                return;
+            }
+
+            // Validate: Must be active
+            if (screenStream.active) {
+                updateStepUI('proctor', true);
+
+                videoTrack.onended = function () {
+                    screenStream = null;
+                    updateStepUI('proctor', false);
+                    showError("Screen Monitoring Stopped! Test Paused.");
+                    checkSteps();
+                };
+
+                checkSteps();
+            }
+        } catch (err) {
+            console.error(err);
+            showError("Screen Sharing Denied. You must share your ENTIRE screen to proceed.");
+            updateStepUI('proctor', false);
+        }
+    }
+
+    function updateStepUI(step, isDone) {
+        const row = document.getElementById(`step-${step}`);
+        const btn = document.getElementById(`btn-${step}`);
+        const check = row.querySelector('.check-mark');
+
+        if (isDone) {
+            btn.style.display = 'none';
+            check.style.display = 'block';
+            row.style.background = '#f0fdf4'; // Light green
+        } else {
+            btn.style.display = 'block';
+            check.style.display = 'none';
+            row.style.background = 'transparent';
+        }
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('error-msg');
+        el.innerText = msg;
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 5000);
+    }
+
+    // Listen for Full Screen changes
+    function onFullScreenChange() {
+        // If we exit full screen, we invalidate step 1
+        const isFS = !!document.fullscreenElement;
+        updateStepUI('fullscreen', isFS);
+        checkSteps();
+    }
+
+    document.addEventListener('fullscreenchange', onFullScreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullScreenChange);
+    document.addEventListener('mozfullscreenchange', onFullScreenChange);
+    document.addEventListener('MSFullscreenChange', onFullScreenChange);
+
+    function showQuestion(n) {
+        if (!isTestActive) return;
+
+        // Hide all slides
+        document.querySelectorAll('.question-slide').forEach(el => el.style.display = 'none');
+
+        // Show target slide
+        const slide = document.getElementById(`slide-${n}`);
+        if (slide) {
+            slide.style.display = 'block';
+
+            // Dynamic Timer from backend (fallback to default if missing)
+            const isCoding = slide.getAttribute('data-is-coding') === 'true';
+            const explicitTime = parseInt(slide.getAttribute('data-time-limit'), 10);
+            timeLeft = explicitTime ? explicitTime : (isCoding ? 300 : 60);
+            
+            updateTimerDisplay();
+
+            // Update UI
+            document.getElementById('current-q-num').innerText = n;
+            const progress = ((n - 1) / totalQuestions) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+    }
+
+    function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+
+        timerInterval = setInterval(() => {
+            if (!isTestActive) return;
+
+            timeLeft--;
+            updateTimerDisplay();
+
+            if (timeLeft <= 0) {
+                // Time's up!
+                clearInterval(timerInterval);
+
+                if (currentQuestion < totalQuestions) {
+                    nextQuestion(true); // Auto-advance
+                } else {
+                    document.getElementById('testForm').submit();
+                }
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        const el = document.getElementById('timer');
+        if (el) {
+            el.innerText = timeLeft;
+            if (timeLeft <= 10) el.style.color = '#dc2626';
+            else el.style.color = '#ef4444';
+        }
+    }
+
+    function nextQuestion(autoArgs = false) {
+        if (currentQuestion < totalQuestions) {
+            currentQuestion++;
+            // Note: timeLeft is now reset in showQuestion() based on question type
+            showQuestion(currentQuestion);
+            startTimer(); // Reset timer for new question
+        } else {
+            // Last question submit
+            document.getElementById('testForm').submit();
+        }
+    }
+
+    // Option Styling Logic
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            const index = this.parentElement.getAttribute('data-q-index');
+            const name = this.name;
+
+            // Clear styles for this group
+            document.querySelectorAll(`input[name="${name}"]`).forEach(input => {
+                input.parentElement.classList.remove('option-selected');
+            });
+
+            // Set style for selected
+            if (this.checked) {
+                this.parentElement.classList.add('option-selected');
+            }
+        });
+    });
+
+    // Start on load
+    document.addEventListener('DOMContentLoaded', function () {
+        init();
+        {% if site_settings.anti_malpractice_enabled %}
+        setupSecurity();
+        {% endif %}
+    });
+
+    // Security Features
+    function setupSecurity() {
+        // 1. Disable Right Click
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // 2. Preemptive Blur on Keys
+        // We trigger blur KEYDOWN for Meta (Windows), Shift (for Snip), Ctrl, PrintScreen
+        document.addEventListener('keydown', function (e) {
+
+            // Checking for specific keys that might precede a screenshot
+            const sensitiveKeys = ['PrintScreen', 'Meta', 'Control', 'Alt'];
+            if (sensitiveKeys.includes(e.key) || e.key === 'Shift') {
+                // FAST BLUR
+                const container = document.getElementById('test-container');
+                if (container) container.style.filter = 'blur(20px)';
+
+                if (e.key === 'PrintScreen') {
+                    e.preventDefault();
+                    triggerBlackout('Screenshot Attempt Detected');
+                }
+            }
+
+            // Combinations
+            if ((e.ctrlKey || e.metaKey) && ['c', 'p', 's'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+                triggerBlackout('Copy/Save Attempt Detected');
+            }
+        });
+
+        document.addEventListener('keyup', function (e) {
+            // Restore blur only if NO sensitive keys are held? 
+            // We'll restore after a short delay if no blackout is active
+            const sensitiveKeys = ['PrintScreen', 'Meta', 'Control', 'Alt', 'Shift'];
+            if (sensitiveKeys.includes(e.key)) {
+                // If we are not in full blackout mode, remove the blur
+                if (!document.getElementById('security-blackout') || document.getElementById('security-blackout').style.display === 'none') {
+                    setTimeout(() => {
+                        const container = document.getElementById('test-container');
+                        if (container) container.style.filter = 'none';
+                    }, 500);
+                }
+            }
+        });
+
+        // 3. Blur on Focus Loss (Tab switch or clicking snipping tool)
+        window.addEventListener('blur', function () {
+            const container = document.getElementById('test-container');
+            if (container) container.style.filter = 'blur(20px)';
+
+            document.title = "⚠️ RESTRICTED";
+
+            // Show persistent lock screen
+            showLockScreen('Focus Lost! Click to Resume.');
+        });
+
+        window.addEventListener('focus', function () {
+            const container = document.getElementById('test-container');
+            if (container) container.style.filter = 'none';
+            document.title = "Aptitude GO";
+            hideLockScreen();
+        });
+
+        // 4. Mouse Leave (Aggressive)
+        document.documentElement.addEventListener('mouseleave', function () {
+            const container = document.getElementById('test-container');
+            if (container) container.style.filter = 'blur(20px)';
+        });
+
+        document.documentElement.addEventListener('mouseenter', function () {
+            // Only restore if we don't have a blackout active
+            if (!document.getElementById('security-blackout') || document.getElementById('security-blackout').style.display === 'none') {
+                const container = document.getElementById('test-container');
+                if (container) container.style.filter = 'none';
+            }
+        });
+
+        // 5. Disable Copy/Cut/Paste
+        document.addEventListener('copy', e => e.preventDefault());
+        document.addEventListener('cut', e => e.preventDefault());
+        document.addEventListener('paste', e => e.preventDefault());
+    }
+
+    function showLockScreen(msg) {
+        // Apply blur to container explicitly
+        const container = document.getElementById('test-container');
+        if (container) container.style.filter = 'blur(20px)';
+
+        let blackout = document.getElementById('security-blackout');
+        if (!blackout) {
+            createBlackout();
+            blackout = document.getElementById('security-blackout');
+        }
+        document.getElementById('blackout-msg').innerText = msg;
+        blackout.style.display = 'flex';
+
+        // Removed hiding content logic, relying on Overlay + Blur
+        document.body.classList.remove('hide-content');
+    }
+
+    function hideLockScreen() {
+        const blackout = document.getElementById('security-blackout');
+        if (blackout) blackout.style.display = 'none';
+
+        const container = document.getElementById('test-container');
+        if (container) container.style.filter = 'none';
+    }
+
+    function triggerBlackout(reason) {
+        showLockScreen(reason);
+        if (window.blackoutTimeout) clearTimeout(window.blackoutTimeout);
+        window.blackoutTimeout = setTimeout(() => {
+            if (document.hasFocus()) {
+                hideLockScreen();
+            }
+        }, 2000);
+    }
+
+    function createBlackout() {
+        const blackout = document.createElement('div');
+        blackout.id = 'security-blackout';
+        blackout.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85); z-index: 2147483647; display: none; 
+            align-items: center; justify-content: center; flex-direction: column;
+            color: #ef4444; font-family: sans-serif; text-align: center;
+            backdrop-filter: blur(10px);
+        `;
+        // Changed background to rgba to allow seeing the blurred content behind it if desired? 
+        // User said "blurred image gets captured". 
+        // If I make it semi-transparent black, they see blurred content + warning.
+
+        const icon = document.createElement('div');
+        icon.style.fontSize = '4rem';
+        icon.innerText = '⚠️';
+
+        const msg = document.createElement('div');
+        msg.id = 'blackout-msg';
+        msg.style.cssText = 'font-size: 2rem; font-weight: bold; margin-top: 1rem;';
+
+        const sub = document.createElement('div');
+        sub.innerText = 'Action Prohibited during Test';
+        sub.style.cssText = 'color: white; margin-top: 0.5rem;';
+
+        blackout.appendChild(icon);
+        blackout.appendChild(msg);
+        blackout.appendChild(sub);
+        document.body.appendChild(blackout);
+    }
+</script>
+
+<style>
+    /* Security Styles */
+    @media print {
+        body {
+            display: none !important;
+        }
+    }
+
+    /* When content is hidden, hide everything except the blackout overlay */
+    body.hide-content>*:not(#security-blackout) {
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+
+    /* Soft blur for mouse leave */
+    body.blur-active>*:not(#security-blackout) {
+        filter: blur(20px);
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 2rem auto;">
+    <h2 style="text-align: center; margin-bottom: 2rem;">Edit Profile</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Name Fields -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label for="id_first_name" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">First
+                        Name</label>
+                    <input type="text" name="first_name" id="id_first_name"
+                        value="{{ form.first_name.value|default:'' }}" class="form-control"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                </div>
+                <div>
+                    <label for="id_last_name" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Last
+                        Name</label>
+                    <input type="text" name="last_name" id="id_last_name" value="{{ form.last_name.value|default:'' }}"
+                        class="form-control"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="id_email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email
+                    Address</label>
+                <input type="email" name="email" id="id_email" value="{{ form.email.value|default:'' }}"
+                    class="form-control"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+            </div>
+
+            <!-- Professional Info -->
+            <div>
+                <label for="id_current_status" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Current
+                    Job / Status</label>
+                <input type="text" name="current_status" id="id_current_status"
+                    value="{{ form.current_status.value|default:'' }}"
+                    placeholder="e.g. Student, Software Engineer, Intern" class="form-control"
+                    list="status-options"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                <datalist id="status-options">
+                    <option value="Student">
+                    <option value="Intern">
+                    <option value="Software Engineer">
+                    <option value="Data Scientist">
+                    <option value="Product Manager">
+                    <option value="Designer">
+                    <option value="Teacher">
+                    <option value="Freelancer">
+                    <option value="Looking for Work">
+                </datalist>
+            </div>
+
+            <div>
+                <label for="id_organization" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Place of
+                    Work / College</label>
+                <input type="text" name="organization" id="id_organization"
+                    value="{{ form.organization.value|default:'' }}" placeholder="e.g. XYZ University, Tech Corp"
+                    class="form-control"
+                    list="org-options"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                <datalist id="org-options">
+                    <option value="IIT Bombay">
+                    <option value="IIT Delhi">
+                    <option value="BITS Pilani">
+                    <option value="NIT Trichy">
+                    <option value="Anna University">
+                    <option value="Delhi University">
+                    <option value="Google">
+                    <option value="Microsoft">
+                    <option value="Amazon">
+                    <option value="TCS">
+                    <option value="Infosys">
+                    <option value="Wipro">
+                </datalist>
+            </div>
+
+            <div>
+                <label for="id_interested_field" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Field
+                    of Interest</label>
+                <input type="text" name="interested_field" id="id_interested_field"
+                    value="{{ form.interested_field.value|default:'' }}"
+                    placeholder="e.g. Data Science, Web Development" class="form-control"
+                    list="interest-options"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                 <datalist id="interest-options">
+                    <option value="Software Development">
+                    <option value="Data Science">
+                    <option value="Machine Learning">
+                    <option value="Web Development">
+                    <option value="Mobile App Development">
+                    <option value="Cybersecurity">
+                    <option value="Cloud Computing">
+                    <option value="Digital Marketing">
+                    <option value="Finance">
+                    <option value="Consulting">
+                </datalist>
+            </div>
+
+            <!-- Social Links -->
+            <div>
+                <label for="id_linkedin_url" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">LinkedIn Profile URL</label>
+                <input type="url" name="linkedin_url" id="id_linkedin_url"
+                    value="{{ form.linkedin_url.value|default:'' }}"
+                    placeholder="https://linkedin.com/in/..." class="form-control"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+            </div>
+
+            <div>
+                <label for="id_github_url" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">GitHub Profile URL</label>
+                <input type="url" name="github_url" id="id_github_url"
+                    value="{{ form.github_url.value|default:'' }}"
+                    placeholder="https://github.com/..." class="form-control"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="submit" class="btn" style="flex: 1;">Save Changes</button>
+                <a href="{% url 'profile' %}"
+                    style="flex: 1; text-align: center; padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; text-decoration: none; color: #374151; background: #f9fafb;">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

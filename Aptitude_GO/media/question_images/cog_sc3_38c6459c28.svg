@@ -1,0 +1,21 @@
+<svg width="250" height="200" xmlns="http://www.w3.org/2000/svg">
+        <!-- Circle A (Top Left) -->
+        <circle cx="90" cy="80" r="60" fill="red" opacity="0.3" stroke="black"/>
+        <!-- Circle B (Top Right) -->
+        <circle cx="160" cy="80" r="60" fill="blue" opacity="0.3" stroke="black"/>
+        <!-- Circle C (Bottom Center) -->
+        <circle cx="125" cy="140" r="60" fill="green" opacity="0.3" stroke="black"/>
+        
+        <text x="60" y="60" font-weight="bold">X</text>
+        <text x="180" y="60" font-weight="bold">Y</text>
+        <text x="120" y="180" font-weight="bold">Z</text>
+        
+        <!-- Values -->
+        <text x="60" y="80" font-size="12">2</text>
+        <text x="180" y="80" font-size="12">1</text>
+        <text x="120" y="160" font-size="12">10</text>
+        <text x="120" y="70" font-size="12">20</text>
+        <text x="90" y="120" font-size="12">5</text>
+        <text x="150" y="120" font-size="12">8</text>
+        <text x="120" y="105" font-size="12">5</text>
+    </svg>

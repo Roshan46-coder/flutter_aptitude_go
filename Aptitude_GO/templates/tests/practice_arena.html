@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 3rem;">
+    <h1
+        style="font-size: 3rem; margin-bottom: 0.5rem; background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+        📚 Practice Arena
+    </h1>
+    <p style="color: #64748b; font-size: 1.25rem;">Download and study previous aptitude question banks in PDF format.
+    </p>
+</div>
+
+<div class="search-container">
+    <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="pdfSearch" placeholder="Search by title or category..." aria-label="Search PDFs">
+    </div>
+</div>
+
+<div id="noResults" class="no-results" style="display: none;">
+    <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">🔍</span>
+    <h3>No PDFs found for your search.</h3>
+    <p>Try searching for a different keyword or category.</p>
+</div>
+
+<div class="pdf-grid" id="pdfGrid">
+    {% for pdf in pdf_list %}
+    <div class="card pdf-card" data-name="{{ pdf.name|lower }}">
+        <div class="pdf-icon-wrapper">
+            <span style="font-size: 3.5rem;">📄</span>
+        </div>
+        <div class="pdf-info">
+            <h3 title="{{ pdf.name }}">{{ pdf.name|truncatechars:35 }}</h3>
+            <div class="metadata">
+                <span class="file-size">📦 {{ pdf.size }}</span>
+            </div>
+            <div class="actions">
+                <a href="{% url 'serve_watermarked_pdf' pdf.name %}" target="_blank" class="btn outline-btn">
+                    👁 Preview
+                </a>
+                <a href="{% url 'serve_watermarked_pdf' pdf.name %}?download=1" download class="btn">
+                    ⬇ Download
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div
+        style="grid-column: 1 / -1; text-align: center; padding: 4rem; background: var(--card-bg); border-radius: 20px; border: 2px dashed #cbd5e1;">
+        <span style="font-size: 4rem; display: block; margin-bottom: 1rem;">📭</span>
+        <h3 style="color: var(--text-color);">No practice materials available yet.</h3>
+        <p style="color: #64748b;">PDFs uploaded to 'media/practice_questions/' will appear here.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .pdf-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        transition: all 0.3s ease;
+    }
+
+    /* Search Styles */
+    .search-container {
+        max-width: 600px;
+        margin: 0 auto 3rem auto;
+        padding: 0 1rem;
+    }
+
+    .search-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1.5rem;
+        font-size: 1.2rem;
+        color: #64748b;
+        pointer-events: none;
+    }
+
+    #pdfSearch {
+        width: 100%;
+        padding: 1.25rem 1.5rem 1.25rem 3.5rem;
+        font-size: 1.1rem;
+        background: var(--card-bg);
+        border: 2px solid rgba(226, 232, 240, 0.8);
+        border-radius: 50px;
+        color: var(--text-color);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        outline: none;
+    }
+
+    #pdfSearch:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.2);
+        transform: translateY(-2px);
+    }
+
+    [data-theme="dark"] #pdfSearch {
+        background: #1e293b;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* No Results Styles */
+    .no-results {
+        text-align: center;
+        padding: 5rem 1rem;
+        background: var(--card-bg);
+        border-radius: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+        border: 2px dashed rgba(226, 232, 240, 0.8);
+    }
+
+    [data-theme="dark"] .no-results {
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .no-results h3 {
+        font-size: 1.5rem;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .no-results p {
+        color: #64748b;
+    }
+
+    .pdf-card {
+        padding: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        transition: all 0.3s ease;
+    }
+
+    [data-theme="dark"] .pdf-card {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .pdf-icon-wrapper {
+        height: 140px;
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    [data-theme="dark"] .pdf-icon-wrapper {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    }
+
+    .pdf-info {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .pdf-info h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--text-color);
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+    .metadata {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    .actions .btn {
+        font-size: 0.85rem;
+        padding: 0.6rem;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .outline-btn {
+        background: transparent;
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        box-shadow: none;
+    }
+
+    .outline-btn:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    [data-theme="dark"] .outline-btn {
+        border-color: #818cf8;
+        color: #818cf8;
+    }
+
+    [data-theme="dark"] .outline-btn:hover {
+        background: #818cf8;
+        color: white;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('pdfSearch');
+        const pdfGrid = document.getElementById('pdfGrid');
+        const noResults = document.getElementById('noResults');
+        const cards = document.querySelectorAll('.pdf-card');
+
+        if (!searchInput) return;
+
+        searchInput.addEventListener('input', function (e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const title = card.getAttribute('data-name') || card.querySelector('h3').textContent.toLowerCase();
+
+                if (title.includes(searchTerm)) {
+                    card.style.display = '';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (visibleCount === 0 && cards.length > 0) {
+                pdfGrid.style.display = 'none';
+                noResults.style.display = 'block';
+            } else {
+                pdfGrid.style.display = 'grid';
+                noResults.style.display = 'none';
+            }
+        });
+
+        // Entrance animation
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 50 * index);
+        });
+    });
+</script>
+{% endblock %}

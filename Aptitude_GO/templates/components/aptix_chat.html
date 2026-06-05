@@ -1,0 +1,482 @@
+<div class="aptix-container" id="aptixContainer" style="display: none;">
+    <!-- Chat Window -->
+    <div class="aptix-chat-window" id="aptixChatWindow">
+        <div class="aptix-header">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="aptix-avatar-small">
+                    <svg width="30" height="30" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="25" y="30" width="50" height="45" rx="15" fill="#4f46e5" />
+                        <rect x="35" y="40" width="30" height="20" rx="5" fill="#1e293b" />
+                        <circle cx="43" cy="50" r="4" fill="#60a5fa" />
+                        <circle cx="57" cy="50" r="4" fill="#60a5fa" />
+                    </svg>
+                </div>
+                <div>
+                    <h4 style="margin: 0; font-size: 1.1rem; color: white;">Aptix</h4>
+                    <span style="font-size: 0.75rem; color: #a5b4fc; display: flex; align-items: center; gap: 4px;">
+                        <span class="status-dot"></span> Online Mentoring
+                    </span>
+                </div>
+            </div>
+            <button class="aptix-close-btn" onclick="toggleAptixChat()">×</button>
+        </div>
+
+        <div class="aptix-messages" id="aptixMessages">
+            <div class="message system-msg">
+                Aptix connected. Ready to guide you, {{ request.user.first_name|default:request.user.username }}!
+            </div>
+            <div class="message aptix-msg">
+                <div class="msg-bubble">
+                    Beep Boop! 🚀 I'm Aptix, your AI Career Companion. Whether you're stuck on a math problem or need advice for technical interviews, I've got your back! How can I help you today?
+                </div>
+            </div>
+            <!-- Dynamic Messages Go Here -->
+        </div>
+
+        <div class="aptix-input-area">
+            <input type="text" id="aptixInput" placeholder="Ask me anything about your prep..." onkeypress="handleAptixKey(event)">
+            <button class="aptix-send-btn" onclick="sendAptixMessage()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mascot Button -->
+    <div class="aptix-mascot" id="aptixMascot" onclick="toggleAptixChat()">
+        <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="aptix-svg">
+            <!-- Thruster Fire (Animated) -->
+            <path d="M 40 75 Q 50 95 60 75" fill="#f59e0b" class="aptix-fire" />
+            <!-- Ears/Side pieces -->
+            <rect x="18" y="45" width="7" height="15" rx="3" fill="#94a3b8" />
+            <rect x="75" y="45" width="7" height="15" rx="3" fill="#94a3b8" />
+            <!-- Body -->
+            <rect x="25" y="30" width="50" height="45" rx="18" fill="#4f46e5" class="aptix-body-color" />
+            <!-- Screen/Face -->
+            <rect x="35" y="40" width="30" height="20" rx="6" fill="#0f172a" />
+            <!-- Eyes -->
+            <circle cx="43" cy="50" r="4.5" fill="#38bdf8" class="aptix-eye" />
+            <circle cx="57" cy="50" r="4.5" fill="#38bdf8" class="aptix-eye" />
+            <!-- Antenna base -->
+            <rect x="48" y="15" width="4" height="15" fill="#94a3b8" />
+            <!-- Antenna ball -->
+            <circle cx="50" cy="12" r="6" fill="#fbbf24" class="aptix-antenna" />
+        </svg>
+        <div class="aptix-badge" id="aptixBadge">1</div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --aptix-primary: #4f46e5;
+        --aptix-bg: #ffffff;
+        --aptix-text: #1e293b;
+        --aptix-border: #e2e8f0;
+    }
+    [data-theme="dark"] {
+        --aptix-bg: #1e293b;
+        --aptix-text: #f8fafc;
+        --aptix-border: rgba(255,255,255,0.1);
+    }
+
+    .aptix-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        pointer-events: none; /* VERY IMPORTANT: stops container from eating clicks */
+    }
+
+    /* Mascot Animations */
+    .aptix-mascot {
+        cursor: pointer;
+        position: relative;
+        filter: drop-shadow(0 10px 15px rgba(79, 70, 229, 0.4));
+        animation: aptixFloat 3s ease-in-out infinite;
+        transition: transform 0.3s;
+        pointer-events: auto; /* Re-enable clicks just for the mascot */
+    }
+    .aptix-mascot:hover {
+        transform: scale(1.1) translateY(-5px);
+    }
+
+    .aptix-mascot.spin-anim {
+        animation: aptixSpin 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .aptix-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #ef4444;
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+        border: 2px solid white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        animation: aptixPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    [data-theme="dark"] .aptix-badge { border-color: #0f172a; }
+
+    @keyframes aptixFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-12px); }
+    }
+
+    @keyframes aptixBlink {
+        0%, 96%, 98%, 100% { transform: scaleY(1); }
+        97%, 99% { transform: scaleY(0.1); }
+    }
+    .aptix-eye {
+        transform-origin: center;
+        animation: aptixBlink 4.5s infinite;
+    }
+
+    @keyframes aptixGlow {
+        0%, 100% { fill: #fbbf24; filter: drop-shadow(0 0 2px #fbbf24); }
+        50% { fill: #f59e0b; filter: drop-shadow(0 0 10px #f59e0b); }
+    }
+    .aptix-antenna {
+        animation: aptixGlow 2s infinite;
+    }
+
+    @keyframes aptixFire {
+        0%, 100% { transform: scaleY(1); opacity: 0.8; }
+        50% { transform: scaleY(1.3); opacity: 1; }
+    }
+    .aptix-fire {
+        transform-origin: top center;
+        animation: aptixFire 0.1s infinite;
+    }
+
+    @keyframes aptixSpin {
+        0% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(180deg) scale(1.3); }
+        100% { transform: rotate(360deg) scale(1); }
+    }
+
+    @keyframes aptixPop {
+        0% { transform: scale(0); }
+        100% { transform: scale(1); }
+    }
+
+    /* Chat Window */
+    .aptix-chat-window {
+        width: 360px;
+        height: 520px;
+        background: var(--aptix-bg);
+        border-radius: 20px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--aptix-primary);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin-bottom: 20px;
+        transform-origin: bottom right;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        opacity: 0;
+        transform: scale(0.5);
+        pointer-events: none;
+    }
+
+    .aptix-chat-window.open {
+        opacity: 1;
+        transform: scale(1);
+        pointer-events: all;
+    }
+
+    .aptix-header {
+        background: linear-gradient(135deg, var(--aptix-primary) 0%, #6366f1 100%);
+        padding: 1rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 5px #10b981;
+        animation: aptixPulse 2s infinite;
+    }
+
+    @keyframes aptixPulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    .aptix-close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+        padding: 0;
+        line-height: 1;
+    }
+    .aptix-close-btn:hover { opacity: 1; }
+
+    .aptix-messages {
+        flex: 1;
+        padding: 1.25rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        background: var(--aptix-bg);
+    }
+    .aptix-messages::-webkit-scrollbar { width: 6px; }
+    .aptix-messages::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 10px; }
+
+    .message {
+        display: flex;
+        max-width: 85%;
+        color: var(--aptix-text);
+        font-size: 0.95rem;
+        line-height: 1.4;
+    }
+
+    .system-msg {
+        max-width: 100%;
+        justify-content: center;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    .aptix-msg {
+        align-self: flex-start;
+    }
+    .aptix-msg .msg-bubble {
+        background: rgba(79, 70, 229, 0.1);
+        padding: 12px 16px;
+        border-radius: 18px 18px 18px 4px;
+        border: 1px solid rgba(79, 70, 229, 0.2);
+    }
+    [data-theme="dark"] .aptix-msg .msg-bubble { background: rgba(79, 70, 229, 0.15); border-color: rgba(79, 70, 229, 0.3); }
+
+    .user-msg {
+        align-self: flex-end;
+    }
+    .user-msg .msg-bubble {
+        background: var(--aptix-primary);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 18px 18px 4px 18px;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+    }
+
+    .typing-indicator {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+    }
+    .typing-dot {
+        width: 6px;
+        height: 6px;
+        background: #94a3b8;
+        border-radius: 50%;
+        animation: typingDot 1.4s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes typingDot {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+    }
+
+    .aptix-input-area {
+        padding: 1rem;
+        border-top: 1px solid var(--aptix-border);
+        display: flex;
+        gap: 0.5rem;
+        background: var(--aptix-bg);
+    }
+
+    .aptix-input-area input {
+        flex: 1;
+        background: rgba(128,128,128,0.1);
+        border: 1px solid var(--aptix-border);
+        padding: 0.75rem 1rem;
+        border-radius: 20px;
+        color: var(--aptix-text);
+        font-size: 0.95rem;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .aptix-input-area input:focus { border-color: var(--aptix-primary); }
+
+    .aptix-send-btn {
+        background: var(--aptix-primary);
+        color: white;
+        border: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+    }
+    .aptix-send-btn:hover {
+        transform: scale(1.05);
+        background: #4338ca;
+    }
+
+    @media (max-width: 600px) {
+        .aptix-chat-window {
+            width: calc(100vw - 40px);
+            height: calc(100vh - 120px);
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+        }
+    }
+</style>
+
+<script>
+    let aptixRotationTimer;
+    
+    document.addEventListener("DOMContentLoaded", () => {
+        // Hide during all active tests (Solo, Event, View Online) by detecting the test container
+        if (document.getElementById('test-container')) {
+            return;
+        }
+
+        document.getElementById('aptixContainer').style.display = 'flex';
+        // Random sudden spins to make him noticeable
+        startAptixSpins();
+    });
+
+    function startAptixSpins() {
+        const mascot = document.getElementById('aptixMascot');
+        // Spin every 15-30 seconds
+        aptixRotationTimer = setInterval(() => {
+            if(!mascot.classList.contains('spin-anim')) {
+                mascot.classList.add('spin-anim');
+                setTimeout(() => mascot.classList.remove('spin-anim'), 700);
+            }
+        }, 15000 + Math.random() * 15000);
+    }
+
+    function toggleAptixChat() {
+        const win = document.getElementById('aptixChatWindow');
+        const badge = document.getElementById('aptixBadge');
+        win.classList.toggle('open');
+        
+        if (win.classList.contains('open')) {
+            // Hide notification badge when opened
+            if(badge) badge.style.display = 'none';
+            document.getElementById('aptixInput').focus();
+        }
+    }
+
+    function handleAptixKey(event) {
+        if (event.key === "Enter") {
+            sendAptixMessage();
+        }
+    }
+
+    function sendAptixMessage() {
+        const input = document.getElementById('aptixInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        // Append User Message
+        const msgContainer = document.getElementById('aptixMessages');
+        const userHtml = `
+            <div class="message user-msg">
+                <div class="msg-bubble">${escapeHtml(text)}</div>
+            </div>
+        `;
+        msgContainer.insertAdjacentHTML('beforeend', userHtml);
+        input.value = '';
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+
+        // Show Typing Indicator
+        const typingId = 'typing-' + Date.now();
+        const typingHtml = `
+            <div class="message aptix-msg" id="${typingId}">
+                <div class="msg-bubble">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        msgContainer.insertAdjacentHTML('beforeend', typingHtml);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+
+        // Make Aptix Spin when processing
+        const mascot = document.getElementById('aptixMascot');
+        mascot.classList.add('spin-anim');
+        setTimeout(() => mascot.classList.remove('spin-anim'), 700);
+
+        fetch('/api/aptix/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getAptixCookie('csrftoken')
+            },
+            body: JSON.stringify({ message: text })
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById(typingId).remove();
+            const reply = data.success ? data.response : "Error: " + data.error;
+            
+            const botHtml = `
+                <div class="message aptix-msg">
+                    <div class="msg-bubble">${escapeHtml(reply)}</div>
+                </div>
+            `;
+            msgContainer.insertAdjacentHTML('beforeend', botHtml);
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        })
+        .catch(err => {
+            document.getElementById(typingId).remove();
+            console.error(err);
+        });
+    }
+
+    function getAptixCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function escapeHtml(unsafe) {
+        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+</script>

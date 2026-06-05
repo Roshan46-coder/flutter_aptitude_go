@@ -1,0 +1,26 @@
+<svg width="400" height="250" xmlns="http://www.w3.org/2000/svg">
+    <text x="150" y="20" font-weight="bold">Sales Data (in 1000s)</text>
+    <line x1="50" y1="200" x2="350" y2="200" stroke="black" stroke-width="2"/>
+    <line x1="50" y1="200" x2="50" y2="40" stroke="black" stroke-width="2"/>
+    <!-- Y axis labels -->
+    <text x="25" y="200">0</text>
+    <text x="20" y="150">50</text>
+    <text x="15" y="100">100</text>
+    <text x="15" y="50">150</text>
+    <!-- Bars -->
+    <rect x="70" y="120" width="40" height="80" fill="steelblue"/>
+    <text x="75" y="110">80</text>
+    <text x="75" y="220">2018</text>
+    
+    <rect x="140" y="90" width="40" height="110" fill="steelblue"/>
+    <text x="140" y="80">110</text>
+    <text x="145" y="220">2019</text>
+    
+    <rect x="210" y="40" width="40" height="160" fill="steelblue"/>
+    <text x="210" y="30">160</text>
+    <text x="215" y="220">2020</text>
+    
+    <rect x="280" y="100" width="40" height="100" fill="steelblue"/>
+    <text x="280" y="90">100</text>
+    <text x="285" y="220">2021</text>
+</svg>
