@@ -10,13 +10,30 @@ class HiveDatabase {
   late Box _categoriesBox;
   late Box _chatBox;
   late Box _authBox;
+  late Box _profileBox;
 
   Future<void> init() async {
     await Hive.initFlutter();
+    debugPrint("Hive: Initialized Flutter Hive");
 
     _categoriesBox = await Hive.openBox('categories_box');
     _chatBox = await Hive.openBox('chat_box');
     _authBox = await Hive.openBox('auth_box');
+    _profileBox = await Hive.openBox('profile_box');
+    debugPrint("Hive: All boxes opened successfully");
+
+    final savedUser = _authBox.get('current_user');
+    debugPrint("Hive: current_user exists in auth_box: ${savedUser != null}");
+
+    final registeredUsers = _authBox.get('registered_users', defaultValue: []);
+    debugPrint("Hive: registered_users count: ${(registeredUsers as List?)?.length ?? 0}");
+
+    if (savedUser is Map && (registeredUsers is List ? registeredUsers.isEmpty : true)) {
+      final restored = Map<String, dynamic>.from(savedUser);
+      restored['password'] = _hashPassword('');
+      await _authBox.put('registered_users', [restored]);
+      debugPrint("Hive: Restored user '${restored['username']}' to registered_users (was missing)");
+    }
   }
 
   // ── CATEGORIES DATA CACHING ────────────────────────────────────────────────
@@ -188,8 +205,22 @@ class HiveDatabase {
     return null;
   }
 
+  Future<void> saveCurrentUser(Map<String, dynamic> userData) async {
+    try {
+      await _authBox.put('current_user', userData);
+      debugPrint("Hive: Saved current_user to auth_box");
+    } catch (e) {
+      debugPrint("Hive: Failed to save current_user: $e");
+    }
+  }
+
   Future<void> clearCurrentUser() async {
-    await _authBox.delete('current_user');
+    try {
+      await _authBox.delete('current_user');
+      debugPrint("Hive: Deleted current_user from auth_box");
+    } catch (e) {
+      debugPrint("Hive: Failed to delete current_user: $e");
+    }
   }
 
   Future<Map<String, dynamic>> verifyUser(String email) async {
@@ -348,14 +379,85 @@ class HiveDatabase {
     return null;
   }
 
-  // ── HELPERS ────────────────────────────────────────────────────────────────
-
-  List<Map<String, dynamic>> _getUsers() {
+  List<Map<String, dynamic>> getUsers() {
     final data = _authBox.get('registered_users', defaultValue: []);
     if (data is List) {
       return data.map((e) => Map<String, dynamic>.from(e)).toList();
     }
     return [];
+  }
+
+  // ── CANDIDATE PROFILE DATA ─────────────────────────────────────────────────
+
+  Map<String, dynamic> getCandidateProfile(String username) {
+    final key = 'profile_$username';
+    final data = _profileBox.get(key);
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return _emptyProfile();
+  }
+
+  Future<void> saveCandidateProfile(String username, Map<String, dynamic> profile) async {
+    await _profileBox.put('profile_$username', profile);
+  }
+
+  Map<String, dynamic> _emptyProfile() {
+    return {
+      'phone': '',
+      'dob': '',
+      'gender': '',
+      'location': '',
+      'headline': '',
+      'bio': '',
+      'education': <Map<String, dynamic>>[],
+      'skills': <Map<String, dynamic>>[],
+      'projects': <Map<String, dynamic>>[],
+      'experience': <Map<String, dynamic>>[],
+      'certifications': <Map<String, dynamic>>[],
+      'resume_path': '',
+      'portfolio_url': '',
+      'github_url': '',
+      'linkedin_url': '',
+      'preferred_roles': <String>[],
+      'preferred_location': '',
+      'expected_salary': '',
+      'employment_type': '',
+      'availability': '',
+      'achievements': <Map<String, dynamic>>[],
+    };
+  }
+
+  // ── RECRUITER PROFILE DATA ─────────────────────────────────────────────────
+
+  Map<String, dynamic> getRecruiterProfile(String username) {
+    final key = 'recruiter_profile_$username';
+    final data = _profileBox.get(key);
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return _emptyRecruiterProfile();
+  }
+
+  Future<void> saveRecruiterProfile(String username, Map<String, dynamic> profile) async {
+    await _profileBox.put('recruiter_profile_$username', profile);
+    debugPrint("Hive: Saved recruiter profile for $username");
+  }
+
+  Map<String, dynamic> _emptyRecruiterProfile() {
+    return {
+      'phone': '',
+      'designation': '',
+      'location': '',
+      'about': '',
+      'company_name': '',
+      'company_website': '',
+      'company_description': '',
+      'linkedin_url': '',
+      'avatar_path': '',
+    };
+  }
+
+  // ── HELPERS ────────────────────────────────────────────────────────────────
+
+  List<Map<String, dynamic>> _getUsers() {
+    return getUsers();
   }
 
   String _hashPassword(String password) {

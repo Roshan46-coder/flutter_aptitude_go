@@ -178,6 +178,10 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                     _buildUserStatsCard(user, xpPercentage, currentLevelProgress),
                     const SizedBox(height: 20),
 
+                    // Join Private Exam Card
+                    _buildJoinExamCard(),
+                    const SizedBox(height: 20),
+
                     // Spin wheel promotion alert
                     if (_spinEligible) ...[
                       _buildSpinAlertCard(),
@@ -227,6 +231,202 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                 ),
               ),
       ),
+    );
+  }
+
+  Widget _buildJoinExamCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.neonPurple.withValues(alpha: 0.3)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.cardBg,
+            AppTheme.neonPurple.withValues(alpha: 0.04),
+          ],
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.vpn_key_outlined, color: AppTheme.neonPurple, size: 22),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Have an Exam Code?",
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  "Enter a secure 8-digit access code to register and join a private exam.",
+                  style: TextStyle(fontSize: 13, color: Colors.white54),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          ElevatedButton(
+            onPressed: () => _showJoinExamDialog(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.neonPurple,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            child: const Text("Join Exam", style: TextStyle(fontWeight: FontWeight.bold)),
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showJoinExamDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    bool isSubmitting = false;
+    String? errorText;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: AppTheme.cardBg,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              title: const Row(
+                children: [
+                  Icon(Icons.vpn_key_rounded, color: AppTheme.neonPurple),
+                  SizedBox(width: 10),
+                  Text("Join Private Exam", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    "Enter the 8-character secure access code provided by your recruiter.",
+                    style: TextStyle(color: Colors.white54, fontSize: 13, height: 1.4),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    maxLength: 8,
+                    autofocus: true,
+                    style: const TextStyle(
+                      letterSpacing: 4.0,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                    decoration: InputDecoration(
+                      hintText: "CODE1234",
+                      hintStyle: const TextStyle(letterSpacing: 2.0, color: Colors.white24, fontSize: 16),
+                      errorText: errorText,
+                      counterText: "",
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting ? null : () => Navigator.pop(context),
+                  child: const Text("Cancel", style: TextStyle(color: Colors.white38)),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final code = controller.text.trim().toUpperCase();
+                          if (code.length != 8) {
+                            setState(() {
+                              errorText = "Code must be exactly 8 characters";
+                            });
+                            return;
+                          }
+                          setState(() {
+                            isSubmitting = true;
+                            errorText = null;
+                          });
+
+                          try {
+                            final api = Provider.of<ApiClient>(context, listen: false);
+                            final response = await api.post('events/join/', data: {'code': code});
+                            if (response.data != null && response.data['success'] == true) {
+                              final eventId = response.data['event_id'] as int;
+                              final eventTitle = response.data['event_title'] as String? ?? 'Exam';
+                              
+                              if (context.mounted) {
+                                Navigator.pop(context); // Close dialog
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Successfully joined exam: $eventTitle'),
+                                    backgroundColor: AppTheme.emeraldGreen,
+                                  ),
+                                );
+                                // Open test screen directly!
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => TestInterfaceScreen(
+                                      categorySlug: eventTitle,
+                                      isEvent: true,
+                                      eventId: eventId,
+                                    ),
+                                  ),
+                                );
+                              }
+                            } else {
+                              setState(() {
+                                isSubmitting = false;
+                                errorText = response.data != null && response.data['error'] != null
+                                    ? response.data['error']
+                                    : "Failed to join exam";
+                              });
+                            }
+                          } catch (e) {
+                            setState(() {
+                              isSubmitting = false;
+                              errorText = e.toString().contains("400") || e.toString().contains("403")
+                                  ? "Invalid code or exam is not live"
+                                  : "Connection failed. Please retry.";
+                            });
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.neonPurple,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text("Join"),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

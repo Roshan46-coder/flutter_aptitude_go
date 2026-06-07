@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../core/api_client.dart';
 import '../core/theme.dart';
 import 'test_interface.dart';
+import 'candidate_recruiter_view.dart';
 
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
@@ -104,6 +106,8 @@ class _EventsScreenState extends State<EventsScreen>
           MaterialPageRoute(
             builder: (_) => TestInterfaceScreen(
               categorySlug: event['category'] ?? event['id'].toString(),
+              isEvent: true,
+              eventId: event['id'],
             ),
           ),
         ).then((_) => _fetchEvents());
@@ -288,6 +292,30 @@ class _EventsScreenState extends State<EventsScreen>
                   Text('$participants participants',
                       style: const TextStyle(color: Colors.white38, fontSize: 12)),
                 ]),
+                if (event['recruiter_username'] != null) ...[
+                  const SizedBox(height: 4),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CandidateRecruiterView(
+                            username: event['recruiter_username'],
+                            recruiterName: event['recruiter_name'],
+                          ),
+                        ),
+                      );
+                    },
+                    child: Row(children: [
+                      const Icon(Icons.business, size: 13, color: AppTheme.neonBlue),
+                      const SizedBox(width: 6),
+                      Text(
+                        'By ${event['recruiter_name'] ?? event['recruiter_username']}',
+                        style: const TextStyle(color: AppTheme.neonBlue, fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ]),
+                  ),
+                ],
 
                 if (myScore != null) ...[
                   const SizedBox(height: 8),
@@ -300,6 +328,52 @@ class _EventsScreenState extends State<EventsScreen>
                     ),
                     child: Text('Your score: $myScore',
                         style: const TextStyle(color: AppTheme.goldAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+
+                if (event['access_code'] != null && event['access_code'].toString().isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.neonPurple.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.neonPurple.withValues(alpha: 0.25)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.vpn_key_rounded, size: 14, color: AppTheme.neonPurple),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Exam Code: ',
+                              style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              event['access_code'].toString(),
+                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy_rounded, size: 14, color: AppTheme.neonPurple),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: event['access_code'].toString()));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Exam code copied to clipboard!'),
+                                backgroundColor: AppTheme.neonPurple,
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
 

@@ -27,8 +27,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = api.currentUser;
 
     if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.pushReplacementNamed(context, '/');
+      });
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: CircularProgressIndicator(color: AppTheme.neonPurple)),
       );
     }
 

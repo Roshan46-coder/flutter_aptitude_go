@@ -42,7 +42,23 @@ def serialize_user(user):
         'linkedin_url': user.linkedin_url,
         'github_url': user.github_url,
         'avatar_url': user.avatar.url if user.avatar else None,
+        'profile_score': user.profile_score,
     }
+
+def compute_profile_score(profile_data):
+    checked = 0
+    filled = 0
+    fields = ['headline', 'bio', 'location', 'phone', 'resume_path', 'portfolio_url']
+    for f in fields:
+        checked += 1
+        if (profile_data.get(f) or '').strip():
+            filled += 1
+    list_fields = ['education', 'skills', 'projects', 'experience', 'certifications', 'achievements']
+    for f in list_fields:
+        checked += 1
+        if isinstance(profile_data.get(f), list) and len(profile_data[f]) > 0:
+            filled += 1
+    return (filled * 100 // checked) if checked > 0 else 0
 
 # ── AUTHENTICATION & ONBOARDING APIs ────────────────────────────────────────
 @csrf_exempt
@@ -183,11 +199,13 @@ def profile_api(request, username=None):
     attempts = TestAttempt.objects.filter(user=user).order_by('completed_at')
     attempts_list = []
     for a in attempts:
+        pct = round((a.score / a.total_questions * 100), 1) if a.total_questions > 0 else 0
         attempts_list.append({
             'id': a.id,
             'category_name': a.category.name if a.category else 'Solo Match',
             'score': a.score,
             'total_questions': a.total_questions,
+            'percentage': pct,
             'coins_earned': a.coins_earned,
             'exp_earned': a.exp_earned,
             'mode': a.mode,
@@ -260,6 +278,99 @@ def edit_profile_api(request):
     })
 
 @csrf_exempt
+def save_profile_data_api(request):
+    auth_err = check_auth(request)
+    if auth_err: return auth_err
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    user = request.user
+    profile_data = data.get('profile_data', {})
+    user.profile_data = profile_data
+    user.profile_score = compute_profile_score(profile_data)
+    user.save()
+    return JsonResponse({
+        'success': True,
+        'profile_score': user.profile_score,
+        'profile_data': user.profile_data,
+    })
+
+@csrf_exempt
+def get_profile_data_api(request, username=None):
+    auth_err = check_auth(request)
+    if auth_err: return auth_err
+    if username:
+        user = get_object_or_404(CustomUser, username=username)
+    else:
+        user = request.user
+    return JsonResponse({
+        'profile_score': user.profile_score,
+        'profile_data': user.profile_data,
+    })
+
+@csrf_exempt
+def save_recruiter_profile_api(request):
+    auth_err = check_auth(request)
+    if auth_err: return auth_err
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+    if not request.user.is_company:
+        return JsonResponse({'error': 'Recruiters only'}, status=403)
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    user = request.user
+    profile_data = data.get('recruiter_profile_data', {})
+    user.recruiter_profile_data = profile_data
+    if profile_data.get('company_name'):
+        user.organization = profile_data['company_name']
+    if profile_data.get('phone'):
+        pass
+    user.save()
+    return JsonResponse({
+        'success': True,
+        'recruiter_profile_data': user.recruiter_profile_data,
+    })
+
+@csrf_exempt
+def get_recruiter_profile_api(request, username=None):
+    auth_err = check_auth(request)
+    if auth_err: return auth_err
+    if username:
+        user = get_object_or_404(CustomUser, username=username)
+        if not user.is_company:
+            return JsonResponse({'error': 'User is not a recruiter'}, status=400)
+    else:
+        user = request.user
+        if not user.is_company:
+            return JsonResponse({'error': 'User is not a recruiter'}, status=400)
+    stats = get_recruiter_stats(user)
+    return JsonResponse({
+        'recruiter_profile_data': user.recruiter_profile_data,
+        'user': serialize_user(user),
+        'stats': stats,
+    })
+
+def get_recruiter_stats(user):
+    created_events = Event.objects.filter(recruiter=user)
+    total_events = created_events.count()
+    active_events = created_events.filter(is_active=True).count()
+    total_registrations = EventRegistration.objects.filter(event__recruiter=user).count()
+    completed_registrations = EventRegistration.objects.filter(
+        event__recruiter=user, completed_at__isnull=False
+    ).count()
+    return {
+        'total_exams_created': total_events,
+        'active_job_openings': active_events,
+        'total_candidates_hired': completed_registrations,
+        'total_registrations': total_registrations,
+    }
+
+@csrf_exempt
 def upload_certificate_api(request):
     auth_err = check_auth(request)
     if auth_err: return auth_err
@@ -288,6 +399,27 @@ def upload_certificate_api(request):
             'uploaded_at': cert.uploaded_at.isoformat()
         }
     })
+
+@csrf_exempt
+def list_certificates_api(request, username=None):
+    auth_err = check_auth(request)
+    if auth_err: return auth_err
+    if username:
+        user = get_object_or_404(CustomUser, username=username)
+    else:
+        user = request.user
+    certs = []
+    for cert in user.certificates.all().order_by('-uploaded_at'):
+        certs.append({
+            'id': cert.id,
+            'title': cert.title,
+            'file_url': cert.file.url,
+            'file_type': cert.file.name.split('.')[-1] if '.' in cert.file.name else '',
+            'file_size': cert.file.size if cert.file else 0,
+            'uploaded_at': cert.uploaded_at.isoformat(),
+            'is_image': cert.is_image,
+        })
+    return JsonResponse({'certificates': certs})
 
 @csrf_exempt
 def delete_certificate_api(request, certificate_id):
@@ -715,6 +847,80 @@ def process_spin_api(request):
     from gamification.views import process_spin
     return process_spin(request)
 
+# ── RECRUITER DASHBOARD APIs ─────────────────────────────────────────────────
+@csrf_exempt
+def recruiter_dashboard_api(request):
+    auth_err = check_auth(request)
+    if auth_err: return auth_err
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Only GET allowed'}, status=405)
+    user = request.user
+    if not user.is_company:
+        return JsonResponse({'error': 'Recruiters only'}, status=403)
+    total_candidates = CustomUser.objects.filter(is_company=False).count()
+    total_attempts = TestAttempt.objects.count()
+    avg_score = TestAttempt.objects.aggregate(avg=Avg('score'))['avg'] or 0
+    top_talent = (CustomUser.objects.filter(is_company=False)
+        .annotate(avg_score=Avg('test_attempts__score'))
+        .order_by('-avg_score')[:20])
+    top_list = []
+    for u in top_talent:
+        top_list.append({
+            'username': u.username,
+            'first_name': u.first_name,
+            'last_name': u.last_name,
+            'email': u.email,
+            'level': u.level,
+            'profile_score': u.profile_score,
+            'avg_score': round(u.avg_score, 1) if u.avg_score else 0,
+            'avatar_url': u.avatar.url if u.avatar else None,
+        })
+    return JsonResponse({
+        'stats': {
+            'total_candidates': total_candidates,
+            'total_attempts': total_attempts,
+            'avg_score': round(avg_score, 1),
+        },
+        'top_talent': top_list,
+    })
+
+@csrf_exempt
+def recruiter_search_api(request):
+    auth_err = check_auth(request)
+    if auth_err: return auth_err
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Only GET allowed'}, status=405)
+    user = request.user
+    if not user.is_company:
+        return JsonResponse({'error': 'Recruiters only'}, status=403)
+    query = request.GET.get('q', '').strip()
+    role_filter = request.GET.get('role', '')
+    candidates = CustomUser.objects.filter(is_company=False)
+    if query:
+        candidates = candidates.filter(
+            Q(username__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query)
+        )
+    results = []
+    for c in candidates[:50]:
+        avg = TestAttempt.objects.filter(user=c).aggregate(avg=Avg('score'))['avg'] or 0
+        profile_data = c.profile_data or {}
+        skills = profile_data.get('skills', [])
+        results.append({
+            'username': c.username,
+            'first_name': c.first_name,
+            'last_name': c.last_name,
+            'email': c.email,
+            'level': c.level,
+            'profile_score': c.profile_score,
+            'avg_score': round(avg, 1),
+            'skills': skills,
+            'avatar_url': c.avatar.url if c.avatar else None,
+        })
+    return JsonResponse({'results': results})
+
 # ── EVENTS APIs (STUDENTS & RECRUITERS) ──────────────────────────────────────
 def events_dashboard_api(request):
     auth_err = check_auth(request)
@@ -741,6 +947,7 @@ def events_dashboard_api(request):
                 'is_active': ev.is_active,
                 'registrations_count': registrations_count,
                 'completed_count': completed_count,
+                'access_code': ev.access_code,
                 'status': 'LIVE' if ev.is_live else ('UPCOMING' if ev.is_upcoming else 'ENDED')
             })
         return JsonResponse({'recruiter_events': events_list})
@@ -754,6 +961,7 @@ def events_dashboard_api(request):
         completed_event_ids = EventRegistration.objects.filter(user=user, completed_at__isnull=False).values_list('event_id', flat=True)
 
         for ev in all_events:
+            recruiter = ev.recruiter
             student_events.append({
                 'id': ev.id,
                 'title': ev.title,
@@ -767,7 +975,9 @@ def events_dashboard_api(request):
                 'threshold_value': ev.threshold_value,
                 'is_registered': ev.id in registered_event_ids,
                 'is_completed': ev.id in completed_event_ids,
-                'status': 'LIVE' if ev.is_live else ('UPCOMING' if ev.is_upcoming else 'ENDED')
+                'status': 'LIVE' if ev.is_live else ('UPCOMING' if ev.is_upcoming else 'ENDED'),
+                'recruiter_username': recruiter.username,
+                'recruiter_name': f"{recruiter.first_name} {recruiter.last_name}".strip() or recruiter.username,
             })
         return JsonResponse({'student_events': student_events})
 
@@ -792,38 +1002,119 @@ def create_event_api(request):
     description = data.get('description', '')
     start_time_str = data.get('start_time')
     end_time_str = data.get('end_time')
-    total_questions = int(data.get('total_questions', 10))
     time_limit_seconds = int(data.get('time_limit_seconds', 600))
     threshold_type = data.get('threshold_type', 'TIME')
     threshold_value = int(data.get('threshold_value', 0))
+    questions_data = data.get('questions', [])
 
     if not title or not category_id or not start_time_str or not end_time_str:
         return JsonResponse({'error': 'Title, category, start time and end time are required'}, status=400)
 
+    from django.db import transaction
     try:
         category = Category.objects.get(id=category_id)
         start_time = timezone.datetime.fromisoformat(start_time_str)
         end_time = timezone.datetime.fromisoformat(end_time_str)
         
-        event = Event.objects.create(
-            title=title,
-            recruiter=request.user,
-            category=category,
-            description=description,
-            start_time=start_time,
-            end_time=end_time,
-            total_questions=total_questions,
-            time_limit_seconds=time_limit_seconds,
-            threshold_type=threshold_type,
-            threshold_value=threshold_value
-        )
+        with transaction.atomic():
+            event = Event.objects.create(
+                title=title,
+                recruiter=request.user,
+                category=category,
+                description=description,
+                start_time=start_time,
+                end_time=end_time,
+                total_questions=len(questions_data) if questions_data else 0,
+                time_limit_seconds=time_limit_seconds,
+                threshold_type=threshold_type,
+                threshold_value=threshold_value
+            )
+            
+            for q in questions_data:
+                EventQuestion.objects.create(
+                    event=event,
+                    text=q.get('text'),
+                    option_a=q.get('option_a'),
+                    option_b=q.get('option_b'),
+                    option_c=q.get('option_c'),
+                    option_d=q.get('option_d'),
+                    correct_option=q.get('correct_option'),
+                    marks=int(q.get('marks', 1))
+                )
+
         return JsonResponse({
             'success': True,
             'message': 'Event created successfully',
-            'event_id': event.id
+            'event_id': event.id,
+            'access_code': event.access_code
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def generate_exam_code_api(request, event_id):
+    auth_err = check_auth(request)
+    if auth_err: return auth_err
+
+    if not request.user.is_company:
+        return JsonResponse({'error': 'Recruiters only'}, status=403)
+
+    event = get_object_or_404(Event, id=event_id, recruiter=request.user)
+    if not event.access_code:
+        event.access_code = Event.generate_unique_code()
+        event.save()
+    
+    return JsonResponse({
+        'success': True,
+        'access_code': event.access_code
+    })
+
+@csrf_exempt
+def join_exam_api(request):
+    auth_err = check_auth(request)
+    if auth_err: return auth_err
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        data = request.POST
+
+    code = data.get('code', '').strip().upper()
+    if not code:
+        return JsonResponse({'error': 'Exam code is required'}, status=400)
+
+    try:
+        event = Event.objects.get(access_code=code, is_active=True)
+    except Event.DoesNotExist:
+        return JsonResponse({'error': 'Invalid exam code. Please check and try again.'}, status=400)
+
+    now = timezone.now()
+    # Block only if exam has already ended
+    if now > event.end_time:
+        return JsonResponse({'error': 'This exam has already ended and is no longer accepting entries.'}, status=400)
+
+    user = request.user
+
+    # Level logic threshold check
+    if event.threshold_type == 'LEVEL' and user.level < event.threshold_value:
+        return JsonResponse({'error': f"Minimum level {event.threshold_value} required for this event."}, status=400)
+
+    # Time logic (FCFS seat limit check)
+    if event.threshold_type == 'TIME' and event.threshold_value > 0:
+        if event.registrations.count() >= event.threshold_value and not EventRegistration.objects.filter(event=event, user=user).exists():
+            return JsonResponse({'error': 'Event seats are full.'}, status=400)
+
+    registration, created = EventRegistration.objects.get_or_create(event=event, user=user)
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Joined exam successfully',
+        'event_id': event.id,
+        'event_title': event.title
+    })
 
 @csrf_exempt
 def register_event_api(request, event_id):
@@ -862,9 +1153,10 @@ def event_detail_api(request, event_id):
     is_completed = reg.completed_at is not None if reg else False
     score = reg.score if reg else None
 
-    # Fetch event questions (Only if registered, and event is live, and student hasn't finished)
+    # Fetch event questions for registered, non-completed participants
+    # (Timing/live check is enforced at the join step; don't re-gate here)
     questions_list = []
-    if is_registered and event.is_live and not is_completed:
+    if is_registered and not is_completed:
         questions = event.questions.all()
         for idx, q in enumerate(questions, start=1):
             questions_list.append({
@@ -919,8 +1211,9 @@ def submit_event_test_api(request, event_id):
 
     score = 0
     for q in event.questions.all():
+        # Dio serialises int map keys as strings in JSON; handle both
         ans = answers.get(str(q.id)) or answers.get(q.id)
-        if ans and ans.strip().upper() == q.correct_option:
+        if ans and str(ans).strip().upper() == q.correct_option.strip().upper():
             score += q.marks
 
     reg.score = score

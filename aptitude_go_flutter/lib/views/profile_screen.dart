@@ -5,9 +5,12 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/api_client.dart';
 import '../core/theme.dart';
 import 'edit_profile_screen.dart';
+import 'recruiter_profile_screen.dart';
+import 'candidate_recruiter_view.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String? username;
@@ -182,6 +185,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _openCertificateFile(Map<String, dynamic> cert) {
+    final fileUrl = cert['file_url'] as String? ?? cert['local_path'] as String? ?? '';
+    if (fileUrl.isEmpty) return;
+    final isImage = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+        .any((ext) => fileUrl.toLowerCase().endsWith(ext));
+    if (isImage) {
+      Widget imageWidget;
+      if (fileUrl.startsWith('http')) {
+        imageWidget = Image.network(fileUrl, fit: BoxFit.contain);
+      } else {
+        imageWidget = Image.file(File(fileUrl), fit: BoxFit.contain);
+      }
+      showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 4,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: imageWidget,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+    final api = Provider.of<ApiClient>(context, listen: false);
+    final base = api.baseUrl.replaceAll('/api/', '');
+    final fullUrl = fileUrl.startsWith('http') ? fileUrl : '$base$fileUrl';
+    launchUrl(Uri.parse(fullUrl), mode: LaunchMode.externalApplication);
+  }
+
   Future<void> _deleteAccount() async {
     // Capture context-dependent objects before any async gap
     final api = Provider.of<ApiClient>(context, listen: false);
@@ -213,6 +251,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Profile')),
+        body: const Center(child: CircularProgressIndicator(color: AppTheme.neonPurple)),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Profile')),
+        body: Center(child: Text(_error!)),
+      );
+    }
+
+    final user = Map<String, dynamic>.from(_profileData?['user'] as Map? ?? {});
+    final isCompany = user['is_company'] == true;
+
+    if (isCompany) {
+      if (widget.username == null) {
+        return const RecruiterProfileScreen(hideAppBar: false);
+      } else {
+        return CandidateRecruiterView(
+          username: widget.username!,
+          recruiterName: '${user['first_name'] ?? ''} ${user['last_name'] ?? ''}'.trim(),
+        );
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
@@ -233,28 +299,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.neonPurple))
-          : _error != null
-              ? Center(child: Text(_error!))
-              : RefreshIndicator(
-                  onRefresh: _fetchProfile,
-                  color: AppTheme.neonPurple,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    child: _buildProfileContent(),
-                  ),
-                ),
+      body: RefreshIndicator(
+        onRefresh: _fetchProfile,
+        color: AppTheme.neonPurple,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: _buildProfileContent(user),
+        ),
+      ),
     );
   }
 
-  Widget _buildProfileContent() {
-    final user = _profileData!['user'] as Map<String, dynamic>;
+  Widget _buildProfileContent(Map<String, dynamic> user) {
     final attempts = (_profileData!['attempts'] as List?) ?? [];
     final catStats = (_profileData!['category_stats'] as List?) ?? [];
     final certs = (_profileData!['certificates'] as List?) ?? [];
     final isOwnProfile = widget.username == null;
+    final isCandidate = user['is_company'] is bool ? !user['is_company'] : true;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -274,19 +336,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
 
         // Performance chart (only for candidates)
-        if (!user['is_company']) ...[
+        if (isCandidate) ...[
           _buildScoreChart(attempts),
           const SizedBox(height: 20),
         ],
 
         // Category performance
-        if (!user['is_company']) ...[
+        if (isCandidate) ...[
           _buildCategoryStats(catStats),
           const SizedBox(height: 20),
         ],
 
         // Certificates section (own profile only)
-        if (isOwnProfile && !user['is_company']) ...[
+        if (isOwnProfile && isCandidate) ...[
           _buildCertificatesSection(certs),
           const SizedBox(height: 20),
         ],
@@ -408,6 +470,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const Icon(Icons.apartment_outlined, size: 14, color: Colors.white30),
                 const SizedBox(width: 4),
                 Text(user['organization'], style: const TextStyle(color: Colors.white38, fontSize: 13)),
+              ],
+            ),
+          ],
+          if ((user['current_status'] ?? '').isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.work_outline, size: 14, color: Colors.white30),
+                const SizedBox(width: 4),
+                Text(user['current_status'], style: const TextStyle(color: Colors.white38, fontSize: 13)),
+              ],
+            ),
+          ],
+          if ((user['interested_field'] ?? '').isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.trending_up, size: 14, color: Colors.white30),
+                const SizedBox(width: 4),
+                Text('Interested: ${user['interested_field']}',
+                    style: const TextStyle(color: Colors.white38, fontSize: 13)),
               ],
             ),
           ],
@@ -546,7 +631,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         LineChartBarData(
                           spots: attempts.asMap().entries.map((e) =>
                               FlSpot(e.key.toDouble(),
-                                  (e.value['score'] as num).toDouble())).toList(),
+                                  (e.value['score'] as num?)?.toDouble() ?? 0)).toList(),
                           isCurved: true,
                           color: AppTheme.neonPurple,
                           barWidth: 2.5,
@@ -594,7 +679,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             )
           else
             ...catStats.map((stat) {
-              final avg = (stat['avg_score'] as num).toDouble();
+              final avg = (stat['avg_score'] as num?)?.toDouble() ?? 0;
               final max = 10.0;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -667,6 +752,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   ListTile(
                     contentPadding: EdgeInsets.zero,
+                    onTap: () => _openCertificateFile(cert),
                     leading: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -681,10 +767,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: Text(cert['title'] ?? '', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                     subtitle: Text(_formatDate(cert['uploaded_at']),
                         style: const TextStyle(fontSize: 11, color: Colors.white30)),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.white30, size: 20),
-                      onPressed: () => _deleteCertificate(cert['id']),
-                    ),
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      IconButton(
+                        icon: const Icon(Icons.open_in_new, color: Colors.white38, size: 18),
+                        onPressed: () => _openCertificateFile(cert),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.white30, size: 20),
+                        onPressed: () => _deleteCertificate(cert['id']),
+                      ),
+                    ]),
                   ),
                   if (isImage && localPath.isNotEmpty)
                     Padding(

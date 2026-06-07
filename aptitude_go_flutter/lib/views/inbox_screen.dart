@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/api_client.dart';
 import '../core/theme.dart';
+import 'profile_screen.dart';
+import 'candidate_recruiter_view.dart';
 import 'chat_start_screen.dart';
 
 class InboxScreen extends StatefulWidget {
@@ -148,6 +150,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final _msgController = TextEditingController();
   final _scrollController = ScrollController();
   String? _currentUsername;
+  bool _otherIsCompany = false;
 
   @override
   void initState() {
@@ -166,10 +169,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final api = Provider.of<ApiClient>(context, listen: false);
     _currentUsername = api.currentUser?['username'];
     try {
-      final response = await api.get('chat/${widget.conversationId}/');
+      final response = await api.get(
+        'chat/${widget.conversationId}/',
+        queryParameters: {'other_user': widget.otherUsername},
+      );
       if (mounted) {
+        final otherUser = response.data['other_user'] as Map? ?? {};
         setState(() {
           _messages = response.data['messages'] ?? [];
+          _otherIsCompany = otherUser['is_company'] == true;
           _isLoading = false;
         });
         _scrollToBottom();
@@ -195,7 +203,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     try {
       final response = await api.post(
         'chat/${widget.conversationId}/send/',
-        data: {'content': text},
+        data: {'content': text, 'other_user': widget.otherUsername},
       );
       if (mounted && response.data['success'] == true) {
         setState(() => _messages.add(response.data['message']));
@@ -208,12 +216,30 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(children: [
-          const CircleAvatar(radius: 16, backgroundColor: AppTheme.divider,
-              child: Icon(Icons.person, size: 16, color: Colors.white54)),
-          const SizedBox(width: 10),
-          Text(widget.otherUsername, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        ]),
+        title: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => _otherIsCompany
+                    ? CandidateRecruiterView(username: widget.otherUsername, recruiterName: widget.otherUsername)
+                    : ProfileScreen(username: widget.otherUsername),
+              ),
+            );
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircleAvatar(
+                radius: 16,
+                backgroundColor: AppTheme.divider,
+                child: Icon(Icons.person, size: 16, color: Colors.white54),
+              ),
+              const SizedBox(width: 10),
+              Text(widget.otherUsername, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
       ),
       body: Column(
         children: [

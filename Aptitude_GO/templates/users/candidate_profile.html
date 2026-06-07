@@ -66,8 +66,108 @@
         </div>
     </div>
 
+    <!-- Professional Summary -->
+    {% with pd=candidate.profile_data %}
+    {% if pd.bio or pd.headline %}
+    <div class="card" style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1.5rem;">Professional Summary</h3>
+        {% if pd.headline %}
+        <div style="font-size: 1.1rem; font-weight: 600; color: var(--primary-color); margin-bottom: 0.5rem;">{{ pd.headline }}</div>
+        {% endif %}
+        {% if pd.bio %}
+        <p style="color: var(--text-color); opacity: 0.8; line-height: 1.6;">{{ pd.bio }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Education -->
+    {% if pd.education %}
+    <div class="card" style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1.5rem;">Education</h3>
+        {% for edu in pd.education %}
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: rgba(128,128,128,0.05); border-radius: 8px;">
+            <div style="width: 10px; height: 10px; background: var(--primary-color); border-radius: 50%; margin-top: 6px; flex-shrink: 0;"></div>
+            <div>
+                <div style="font-weight: 600;">{{ edu.institution }}</div>
+                <div style="font-size: 0.9rem; opacity: 0.7;">{{ edu.degree }}{% if edu.branch %} · {{ edu.branch }}{% endif %}</div>
+                <div style="font-size: 0.85rem; opacity: 0.6;">{{ edu.start_year }} - {{ edu.grad_year }}{% if edu.gpa %} · GPA: {{ edu.gpa }}{% endif %}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Skills -->
+    {% if pd.skills %}
+    <div class="card" style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1.5rem;">Skills</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% for skill in pd.skills %}
+            <span style="background: rgba(79,70,229,0.1); color: var(--primary-color); padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; border: 1px solid rgba(79,70,229,0.2);">
+                {{ skill.name }}{% if skill.level %} · {{ skill.level }}{% endif %}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Projects -->
+    {% if pd.projects %}
+    <div class="card" style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1.5rem;">Projects</h3>
+        {% for proj in pd.projects %}
+        <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(128,128,128,0.05); border-radius: 8px; border: 1px solid rgba(128,128,128,0.1);">
+            <div style="font-weight: 600; font-size: 1.05rem;">{{ proj.title }}</div>
+            {% if proj.description %}<p style="font-size: 0.9rem; opacity: 0.7; margin: 0.5rem 0;">{{ proj.description }}</p>{% endif %}
+            {% if proj.role %}<div style="font-size: 0.85rem; opacity: 0.6;">Role: {{ proj.role }}</div>{% endif %}
+            {% if proj.techs %}<div style="margin-top: 0.5rem;">{{ proj.techs }}</div>{% endif %}
+            {% if proj.github or proj.live_demo %}
+            <div style="margin-top: 0.5rem; display: flex; gap: 1rem;">
+                {% if proj.github %}<a href="{{ proj.github }}" target="_blank" style="font-size: 0.85rem;">GitHub</a>{% endif %}
+                {% if proj.live_demo %}<a href="{{ proj.live_demo }}" target="_blank" style="font-size: 0.85rem;">Live Demo</a>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Work Experience -->
+    {% if pd.experience %}
+    <div class="card" style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1.5rem;">Work Experience</h3>
+        {% for exp in pd.experience %}
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: rgba(128,128,128,0.05); border-radius: 8px;">
+            <div style="width: 10px; height: 10px; background: #3b82f6; border-radius: 50%; margin-top: 6px; flex-shrink: 0;"></div>
+            <div>
+                <div style="font-weight: 600;">{{ exp.position }} @ {{ exp.company }}</div>
+                {% if exp.duration %}<div style="font-size: 0.85rem; opacity: 0.6;">{{ exp.duration }}</div>{% endif %}
+                {% if exp.responsibilities %}<p style="font-size: 0.9rem; opacity: 0.7; margin: 0.5rem 0;">{{ exp.responsibilities }}</p>{% endif %}
+                {% if exp.achievements %}<div style="font-size: 0.85rem; color: #f59e0b;">{{ exp.achievements }}</div>{% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Achievements -->
+    {% if pd.achievements %}
+    <div class="card" style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1.5rem;">Achievements</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% for ach in pd.achievements %}
+            <div style="background: rgba(245,158,11,0.1); padding: 8px 14px; border-radius: 12px; border: 1px solid rgba(245,158,11,0.2);">
+                <div style="font-weight: 500;">{{ ach.title }}</div>
+                {% if ach.type %}<div style="font-size: 0.8rem; opacity: 0.6;">{{ ach.type }}</div>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+
     <!-- Analytics Section -->
-    <div class="card">
+    <div class="card" style="margin-top: 2rem;">
         <h3 style="margin-bottom: 1.5rem;">Performance Analytics</h3>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">

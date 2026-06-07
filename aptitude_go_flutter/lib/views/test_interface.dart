@@ -15,8 +15,15 @@ import 'test_result.dart';
 
 class TestInterfaceScreen extends StatefulWidget {
   final String categorySlug;
+  final bool isEvent;
+  final int? eventId;
 
-  const TestInterfaceScreen({super.key, required this.categorySlug});
+  const TestInterfaceScreen({
+    super.key,
+    required this.categorySlug,
+    this.isEvent = false,
+    this.eventId,
+  });
 
   @override
   State<TestInterfaceScreen> createState() => _TestInterfaceScreenState();
@@ -145,27 +152,75 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
   Future<void> _loadTestQuestions() async {
     final api = Provider.of<ApiClient>(context, listen: false);
     try {
-      final response = await api.get('tests/practice/${widget.categorySlug}/');
-      if (mounted) {
-        List<dynamic> allQuestions = response.data['questions'] ?? [];
-        allQuestions = List.from(allQuestions);
-        allQuestions.shuffle(Random());
+      if (widget.isEvent) {
+        final response = await api.get('events/${widget.eventId}/');
+        if (mounted) {
+          final raw = response.data;
+          final rawQuestions = raw['questions'] as List<dynamic>? ?? [];
 
-        const int maxQuestions = 20;
-        if (allQuestions.length > maxQuestions) {
-          allQuestions = allQuestions.sublist(0, maxQuestions);
+          // Check if user is not registered (no questions and not registered)
+          final registration = raw['registration'] as Map<String, dynamic>?;
+          final isRegistered = registration?['is_registered'] as bool? ?? false;
+
+          final List<dynamic> mappedQuestions = rawQuestions.map((q) {
+            return {
+              'id': q['id'],
+              'text': q['text'],
+              'time_limit': 60,
+              'is_coding': false,
+              'options': [
+                {'id': 'A', 'text': q['option_a']},
+                {'id': 'B', 'text': q['option_b']},
+                {'id': 'C', 'text': q['option_c']},
+                {'id': 'D', 'text': q['option_d']},
+              ]
+            };
+          }).toList();
+
+          String? err;
+          if (mappedQuestions.isEmpty) {
+            if (!isRegistered) {
+              err = "You are not registered for this exam. Please join with the correct code.";
+            } else {
+              err = "This exam has no questions yet, or you have already completed it.";
+            }
+          }
+
+          setState(() {
+            _testData = raw;
+            _questions = mappedQuestions;
+            _isLoading = false;
+            _error = err;
+          });
+
+          if (_questions.isNotEmpty) {
+            _precacheQuestionImages(api.baseUrl);
+            _showStartDialog();
+          }
         }
+      } else {
+        final response = await api.get('tests/practice/${widget.categorySlug}/');
+        if (mounted) {
+          List<dynamic> allQuestions = response.data['questions'] ?? [];
+          allQuestions = List.from(allQuestions);
+          allQuestions.shuffle(Random());
 
-        setState(() {
-          _testData = response.data;
-          _questions = allQuestions;
-          _isLoading = false;
-          _error = _questions.isEmpty ? "No questions found in this category." : null;
-        });
+          const int maxQuestions = 20;
+          if (allQuestions.length > maxQuestions) {
+            allQuestions = allQuestions.sublist(0, maxQuestions);
+          }
 
-        if (_questions.isNotEmpty) {
-          _precacheQuestionImages(api.baseUrl);
-          _showStartDialog();
+          setState(() {
+            _testData = response.data;
+            _questions = allQuestions;
+            _isLoading = false;
+            _error = _questions.isEmpty ? "No questions found in this category." : null;
+          });
+
+          if (_questions.isNotEmpty) {
+            _precacheQuestionImages(api.baseUrl);
+            _showStartDialog();
+          }
         }
       }
     } catch (e) {
@@ -228,7 +283,9 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
           children: [
             const SizedBox(height: 8),
             Text(
-              "Category: ${_testData?['category']?['name'] ?? widget.categorySlug}",
+              widget.isEvent
+                  ? "Exam: ${_testData?['event']?['title'] ?? 'Private Exam'}"
+                  : "Category: ${_testData?['category']?['name'] ?? widget.categorySlug}",
               style: const TextStyle(fontSize: 14, color: Colors.white70),
             ),
             const SizedBox(height: 6),
@@ -348,10 +405,54 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
     }
   }
 
-  void _submitQuiz({bool autoSubmit = false}) {
+  Future<void> _submitQuiz({bool autoSubmit = false}) async {
     _timer?.cancel();
     _saveCurrentAnswer();
     _stopNoiseMonitoring();
+
+    if (widget.isEvent) {
+      setState(() => _isLoading = true);
+      final api = Provider.of<ApiClient>(context, listen: false);
+      try {
+        // Convert int keys → string keys so backend's answers.get(str(q.id)) works reliably
+        final Map<String, dynamic> stringKeyedAnswers = {
+          for (final entry in _userAnswers.entries)
+            entry.key.toString(): entry.value,
+        };
+        final res = await api.post('events/${widget.eventId}/submit/', data: {
+          'answers': stringKeyedAnswers,
+        });
+        if (mounted) {
+          final score = (res.data['score'] as num?)?.toInt() ?? 0;
+          final resultData = {
+            'score': score.toString(),
+            'correct': score,
+            'total': _questions.length,
+            'coins_earned': 0,
+            'exp_earned': 0,
+            'leveled_up': false,
+            'new_level': 1,
+            'category': widget.categorySlug,
+            'message': 'Event exam completed successfully',
+            'results': [],
+          };
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TestResultScreen(resultData: resultData),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to submit event exam: ${e.toString()}'), backgroundColor: AppTheme.livesRed),
+          );
+          setState(() => _isLoading = false);
+        }
+      }
+      return;
+    }
 
     int correct = 0;
     int total = 0;
@@ -432,7 +533,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
       lives: newLives,
     );
 
-    _saveAttemptLocally(
+    await _saveAttemptLocally(
       correct: correct,
       total: total,
       slug: widget.categorySlug,
@@ -471,16 +572,16 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
     );
   }
 
-  void _saveAttemptLocally({
+  Future<void> _saveAttemptLocally({
     required int correct,
     required int total,
     required String slug,
-  }) {
+  }) async {
     try {
       final catName = _testData?['category']?['name'] as String? ?? slug;
       final now = DateTime.now().toIso8601String();
       final percentage = total > 0 ? double.parse(((correct / total) * 100).toStringAsFixed(1)) : 0.0;
-      HiveDatabase.instance.addAttempt({
+      await HiveDatabase.instance.addAttempt({
         'score': correct,
         'total_questions': total,
         'percentage': percentage,
@@ -503,7 +604,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
   }) {
     try {
       final api = Provider.of<ApiClient>(context, listen: false);
-      api.post('tests/submit/', data: {
+      api.dio.post('tests/submit/', data: {
         'answers': autoSubmit ? {} : _userAnswers,
         'category_slug': widget.categorySlug,
         'question_ids': _questions.map((q) => q['id'] as int).toList(),
@@ -625,7 +726,11 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
 
     if (_error != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text("Practice Test")),
+        appBar: AppBar(
+          title: Text(widget.isEvent
+              ? (_testData?['event']?['title'] ?? 'Private Exam')
+              : 'Practice Test'),
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -702,7 +807,9 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            _testData?['category']['name'] ?? 'Test',
+            widget.isEvent
+                ? (_testData?['event']?['title'] ?? 'Exam')
+                : (_testData?['category']?['name'] ?? 'Test'),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           actions: [
@@ -888,9 +995,9 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
               width: isSelected ? 1.5 : 1,
             ),
           ),
-          child: RadioListTile<int>(
-            value: opt['id'] as int,
-            groupValue: selectedOptionId as int?,
+          child: RadioListTile<dynamic>(
+            value: opt['id'],
+            groupValue: selectedOptionId,
             onChanged: (val) {
               setState(() {
                 _userAnswers[qId] = val;

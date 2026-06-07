@@ -51,11 +51,13 @@ class TestResultScreen extends StatelessWidget {
               _buildScoreSummaryCard(score, total, coins, exp),
               const SizedBox(height: 24),
 
-              Text(
-                "Detailed Answers Review",
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
+              if (results.isNotEmpty) ...[
+                Text(
+                  "Detailed Answers Review",
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+              ],
 
               // Detail breakdowns list
               ...results.map((res) {
@@ -141,16 +143,30 @@ class TestResultScreen extends StatelessWidget {
               }),
               
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.popUntil(context, (route) => route.isFirst);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonPurple,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.popUntil(context, (route) => route.isFirst);
+                  },
+                  icon: const Icon(Icons.home_rounded, size: 20, color: Colors.white),
+                  label: const Text(
+                    "Back to Dashboard",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.neonPurple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 4,
+                  ),
                 ),
-                child: const Text("Close", style: TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 32),
             ],
@@ -188,7 +204,7 @@ class TestResultScreen extends StatelessWidget {
   }
 
   Widget _buildScoreSummaryCard(int score, int total, int coins, int exp) {
-    final double accuracy = (score / total) * 100;
+    final double accuracy = total > 0 ? (score / total) * 100 : 0.0;
     
     return Container(
       padding: const EdgeInsets.all(24),

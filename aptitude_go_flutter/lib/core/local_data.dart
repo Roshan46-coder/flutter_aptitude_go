@@ -21,6 +21,16 @@ class LocalDataProvider {
       if (_dataBox.get('practice_pdfs', defaultValue: []).isEmpty) {
         await _dataBox.put('practice_pdfs', _practicePdfs());
       }
+      // Migration: clear old seeded conversations (id 1 or 2) if they exist
+      final inboxData = _dataBox.get('inbox');
+      if (inboxData is Map && inboxData['conversations'] is List) {
+        final conversations = inboxData['conversations'] as List;
+        bool hasSeed = conversations.any((c) => c['conversation_id'] == 1 || c['conversation_id'] == 2);
+        if (hasSeed) {
+          await _dataBox.put('inbox', {'conversations': []});
+          await _dataBox.put('chat_messages', {});
+        }
+      }
     }
   }
 
@@ -114,6 +124,9 @@ class LocalDataProvider {
         final eventId = int.tryParse(parts[1]) ?? 0;
         return _getEventLeaderboard(eventId);
       }
+      if (_matches(parts, ['events', '*', 'generate-code'])) {
+        return {'success': true, 'access_code': 'EXAM1234'};
+      }
       if (_matches(parts, ['events', '*']) && parts.length == 2) {
         final eventId = int.tryParse(parts[1]) ?? 0;
         return _getEventDetail(eventId);
@@ -123,7 +136,7 @@ class LocalDataProvider {
       }
       if (_matches(parts, ['chat', '*'])) {
         final convId = int.tryParse(parts[1]) ?? 0;
-        return _getChatMessages(convId);
+        return _getChatMessages(convId, otherUser: params?['other_user'] as String?);
       }
       if (_matches(parts, ['gamification', 'store'])) {
         return _getStore();
@@ -134,8 +147,20 @@ class LocalDataProvider {
       if (_matches(parts, ['profile'])) {
         return _getProfile(null);
       }
+      if (_matches(parts, ['profile', 'certificates'])) {
+        return {'certificates': _getAllCertificates()};
+      }
+      if (_matches(parts, ['profile', 'certificates', '*'])) {
+        return _listCertificates(parts[2]);
+      }
       if (_matches(parts, ['profile', '*'])) {
         return _getProfile(parts[1]);
+      }
+      if (_matches(parts, ['profile', 'recruiter', 'data'])) {
+        return _getRecruiterProfileData(null);
+      }
+      if (_matches(parts, ['profile', 'recruiter', 'data', '*'])) {
+        return _getRecruiterProfileData(parts[3]);
       }
       if (_matches(parts, ['auth-status'])) {
         return {'authenticated': true, 'message': 'Authenticated locally'};
@@ -147,7 +172,7 @@ class LocalDataProvider {
         return _getRecruiterDashboard();
       }
       if (_matches(parts, ['recruiter', 'search'])) {
-        return _searchTalent(params?['q'] as String?);
+        return _searchTalent(params?['q'] as String?, role: params?['role'] as String?);
       }
       if (_matches(parts, ['aptix'])) {
         return {'success': true, 'response': 'I am running in offline mode. Ask me anything about aptitude!'};
@@ -171,8 +196,31 @@ class LocalDataProvider {
       if (_matches(parts, ['gamification', 'process-spin'])) {
         return _processSpin();
       }
+      if (_matches(parts, ['events', 'join'])) {
+        return {
+          'success': true,
+          'message': 'Joined exam successfully',
+          'event_id': 3,
+          'event_title': 'Live Speed Quiz'
+        };
+      }
+      if (_matches(parts, ['events', 'create'])) {
+        return {
+          'success': true,
+          'message': 'Event created successfully',
+          'event_id': 5,
+          'access_code': 'MOCKABCD'
+        };
+      }
       if (_matches(parts, ['events', '*', 'register'])) {
         return {'message': 'Registered for event successfully'};
+      }
+      if (_matches(parts, ['events', '*', 'submit'])) {
+        return {
+          'success': true,
+          'message': 'Event test submitted successfully',
+          'score': 10
+        };
       }
       if (_matches(parts, ['chat', '*', 'send'])) {
         final convId = int.tryParse(parts[1]) ?? 0;
@@ -205,6 +253,9 @@ class LocalDataProvider {
       if (_matches(parts, ['profile', 'delete-account'])) {
         return {'success': true, 'message': 'Account deleted'};
       }
+      if (_matches(parts, ['profile', 'recruiter', 'data', 'save'])) {
+        return _saveRecruiterProfileData(data);
+      }
       if (_matches(parts, ['profile', 'upload-certificate'])) {
         return _addCertificate(data);
       }
@@ -231,6 +282,38 @@ class LocalDataProvider {
         return {'success': true, 'message': 'Event deleted'};
       }
       if (_matches(parts, ['recruiter', 'message'])) {
+        final toUser = (data is Map) ? (data['to'] ?? '') : '';
+        final msgContent = (data is Map) ? (data['message'] ?? '') : '';
+        if (toUser.isNotEmpty && msgContent.isNotEmpty) {
+          final currentUser = HiveDatabase.instance.getCurrentUser() ?? {};
+          final sender = currentUser['username'] ?? 'recruiter';
+
+          // Find if there is an existing conversation with toUser in the inbox
+          final inbox = Map<String, dynamic>.from(_dataBox.get('inbox', defaultValue: _inbox()));
+          final conversations = List<Map<String, dynamic>>.from(
+            (inbox['conversations'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []
+          );
+
+          int foundId = -1;
+          for (final conv in conversations) {
+            final participants = List<String>.from(conv['participants'] ?? []);
+            if (participants.contains(sender) && participants.contains(toUser)) {
+              foundId = conv['conversation_id'] as int;
+              break;
+            }
+          }
+
+          if (foundId == -1) {
+            foundId = DateTime.now().millisecondsSinceEpoch;
+          }
+
+          _addMessageToConversation(
+            conversationId: foundId,
+            sender: sender,
+            recipient: toUser,
+            content: msgContent,
+          );
+        }
         return {'success': true, 'message': 'Message sent'};
       }
       if (_matches(parts, ['aptix'])) {
@@ -762,62 +845,173 @@ class LocalDataProvider {
   }
 
   Map<String, dynamic> _getInbox() {
-    final inbox = _dataBox.get('inbox', defaultValue: _inbox());
-    return Map<String, dynamic>.from(inbox);
+    final currentUser = HiveDatabase.instance.getCurrentUser() ?? {};
+    final currentUsername = currentUser['username'] ?? '';
+    
+    final inbox = Map<String, dynamic>.from(_dataBox.get('inbox', defaultValue: _inbox()));
+    final conversations = List<Map<String, dynamic>>.from(
+      (inbox['conversations'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []
+    );
+
+    // Filter conversations to only those involving currentUsername
+    final userConversations = conversations.where((conv) {
+      final participants = List<String>.from(conv['participants'] ?? []);
+      return participants.contains(currentUsername);
+    }).map((conv) {
+      final newConv = Map<String, dynamic>.from(conv);
+      final participants = List<String>.from(conv['participants'] ?? []);
+      
+      // Determine other user
+      String otherUsername = '';
+      if (participants.length == 2) {
+        otherUsername = participants.firstWhere((p) => p != currentUsername, orElse: () => '');
+      } else if (participants.isNotEmpty) {
+        otherUsername = participants.firstWhere((p) => p != currentUsername, orElse: () => participants.first);
+      }
+      
+      newConv['other_user'] = {
+        'username': otherUsername,
+        'avatar_url': null,
+      };
+      
+      return newConv;
+    }).toList();
+
+    return {'conversations': userConversations};
   }
 
   Map<String, dynamic> _inbox() {
-    return {
-      'conversations': [
-        {
-          'conversation_id': 1,
-          'other_user': {'username': 'aptix_bot', 'avatar_url': null},
-          'last_message': {'content': 'Hey! Ready for practice?', 'timestamp': DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String()},
-        },
-        {
-          'conversation_id': 2,
-          'other_user': {'username': 'alice', 'avatar_url': null},
-          'last_message': {'content': 'Great score on the last test!', 'timestamp': DateTime.now().subtract(const Duration(hours: 2)).toIso8601String()},
-        },
-      ],
-    };
+    return {'conversations': []};
   }
 
-  Map<String, dynamic> _getChatMessages(int convId) {
-    final all = _dataBox.get('chat_messages', defaultValue: _chatMessages());
-    return all[convId.toString()] ?? {'messages': []};
+  Map<String, dynamic> _getChatMessages(int convId, {String? otherUser}) {
+    final chatMessages = Map<String, dynamic>.from(_dataBox.get('chat_messages', defaultValue: _chatMessages()));
+    
+    // Check if there is an existing conversation with otherUser in the inbox
+    if (otherUser != null && otherUser.isNotEmpty) {
+      final currentUser = HiveDatabase.instance.getCurrentUser() ?? {};
+      final currentUsername = currentUser['username'] ?? '';
+      
+      final inbox = Map<String, dynamic>.from(_dataBox.get('inbox', defaultValue: _inbox()));
+      final conversations = List<Map<String, dynamic>>.from(
+        (inbox['conversations'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []
+      );
+      
+      for (final conv in conversations) {
+        final participants = List<String>.from(conv['participants'] ?? []);
+        if (participants.contains(currentUsername) && participants.contains(otherUser)) {
+          final existingConvId = conv['conversation_id'] as int;
+          final convKey = existingConvId.toString();
+          if (chatMessages.containsKey(convKey)) {
+            return Map<String, dynamic>.from(chatMessages[convKey]);
+          }
+        }
+      }
+    }
+
+    final convKey = convId.toString();
+    return Map<String, dynamic>.from(chatMessages[convKey] ?? {
+      'messages': [],
+      'participants': otherUser != null ? [otherUser] : []
+    });
   }
 
   Map<String, dynamic> _chatMessages() {
-    return {
-      '1': {
-        'messages': [
-          {'sender': 'aptix_bot', 'content': 'Hey! Ready for practice?', 'timestamp': DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String()},
-          {'sender': 'current_user', 'content': 'Yes, what should I study?', 'timestamp': DateTime.now().subtract(const Duration(minutes: 4)).toIso8601String()},
-          {'sender': 'aptix_bot', 'content': 'Try Quantitative Aptitude for starters!', 'timestamp': DateTime.now().subtract(const Duration(minutes: 3)).toIso8601String()},
-        ],
-      },
-      '2': {
-        'messages': [
-          {'sender': 'alice', 'content': 'Great score on the last test!', 'timestamp': DateTime.now().subtract(const Duration(hours: 2)).toIso8601String()},
-          {'sender': 'current_user', 'content': 'Thanks! You too!', 'timestamp': DateTime.now().subtract(const Duration(hours: 1, minutes: 55)).toIso8601String()},
-        ],
-      },
+    return {};
+  }
+
+  Map<String, dynamic> _addMessageToConversation({
+    required int conversationId,
+    required String sender,
+    required String recipient,
+    required String content,
+  }) {
+    final timestamp = DateTime.now().toIso8601String();
+    
+    // 1. Update inbox conversations list
+    final inbox = Map<String, dynamic>.from(_dataBox.get('inbox', defaultValue: _inbox()));
+    final conversations = List<Map<String, dynamic>>.from(
+      (inbox['conversations'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []
+    );
+
+    int foundIndex = -1;
+    for (int i = 0; i < conversations.length; i++) {
+      final conv = conversations[i];
+      final participants = List<String>.from(conv['participants'] ?? []);
+      // Match by exact conversation ID first
+      if (conv['conversation_id'] == conversationId) {
+        foundIndex = i;
+        break;
+      }
+      // If we don't have the same conversation ID, check if participants match
+      if (participants.contains(sender) && participants.contains(recipient)) {
+        foundIndex = i;
+        break;
+      }
+    }
+
+    if (foundIndex == -1) {
+      conversations.add({
+        'conversation_id': conversationId,
+        'participants': [sender, recipient],
+        'last_message': {
+          'content': content,
+          'timestamp': timestamp,
+          'sender': sender,
+        },
+      });
+    } else {
+      // Use the existing conversation ID if we matched on participants but ID was different
+      final matchedId = conversations[foundIndex]['conversation_id'] as int;
+      conversations[foundIndex]['last_message'] = {
+        'content': content,
+        'timestamp': timestamp,
+        'sender': sender,
+      };
+      // Keep using the matchedId for chatMessages key update
+      conversationId = matchedId;
+    }
+
+    inbox['conversations'] = conversations;
+    _dataBox.put('inbox', inbox);
+
+    // 2. Update chat messages
+    final chatMessages = Map<String, dynamic>.from(_dataBox.get('chat_messages', defaultValue: _chatMessages()));
+    final convKey = conversationId.toString();
+    final convMessages = Map<String, dynamic>.from(chatMessages[convKey] ?? {'messages': [], 'participants': [sender, recipient]});
+    
+    final msgsList = List<Map<String, dynamic>>.from(
+      (convMessages['messages'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []
+    );
+
+    final newMsg = {
+      'sender': sender,
+      'content': content,
+      'timestamp': timestamp,
     };
+    msgsList.add(newMsg);
+
+    convMessages['messages'] = msgsList;
+    convMessages['participants'] = [sender, recipient];
+    chatMessages[convKey] = convMessages;
+    _dataBox.put('chat_messages', chatMessages);
+
+    return newMsg;
   }
 
   Map<String, dynamic> _sendMessage(int convId, dynamic data) {
-    final content = (data is Map) ? (data['content'] ?? '') : '';
-    final ts = DateTime.now().toIso8601String();
-    final all = Map<String, dynamic>.from(_dataBox.get('chat_messages', defaultValue: _chatMessages()));
-    final convKey = convId.toString();
-    final conv = Map<String, dynamic>.from(all[convKey] ?? {'messages': []});
-    final msgs = List<Map<String, dynamic>>.from(conv['messages'] as List);
-    msgs.add({'sender': 'current_user', 'content': content, 'timestamp': ts});
-    conv['messages'] = msgs;
-    all[convKey] = conv;
-    _dataBox.put('chat_messages', all);
-    return {'success': true, 'message': {'sender': 'current_user', 'content': content, 'timestamp': ts}};
+    final content = (data is Map) ? (data['content'] ?? data['message'] ?? '') : '';
+    final otherUser = (data is Map) ? (data['other_user'] ?? '') : '';
+    final sender = HiveDatabase.instance.getCurrentUser()?['username'] ?? 'user';
+    
+    final newMsg = _addMessageToConversation(
+      conversationId: convId,
+      sender: sender,
+      recipient: otherUser,
+      content: content,
+    );
+    
+    return {'success': true, 'message': newMsg};
   }
 
   Map<String, dynamic> _addCertificate(dynamic data) {
@@ -854,6 +1048,53 @@ class LocalDataProvider {
     return {'success': true, 'message': 'Certificate deleted'};
   }
 
+  List<Map<String, dynamic>> _mockCertificates() {
+    return [
+      {
+        'id': 101,
+        'title': 'AWS Cloud Practitioner',
+        'file_url': '',
+        'file_type': 'PNG',
+        'file_size': 0,
+        'uploaded_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+        'is_image': true,
+      },
+      {
+        'id': 102,
+        'title': 'Python for Data Science',
+        'file_url': '',
+        'file_type': 'PDF',
+        'file_size': 0,
+        'uploaded_at': DateTime.now().subtract(const Duration(days: 15)).toIso8601String(),
+        'is_image': false,
+      },
+    ];
+  }
+
+  List<Map<String, dynamic>> _getAllCertificates() {
+    final raw = _dataBox.get('user_certificates', defaultValue: []) as List;
+    if (raw.isEmpty) return _mockCertificates();
+    return raw.map((e) {
+      final c = Map<String, dynamic>.from(e);
+      final fileName = c['filename'] as String? ?? '';
+      final fileType = fileName.contains('.') ? fileName.split('.').last.toUpperCase() : '';
+      return {
+        'id': c['id'],
+        'title': c['title'],
+        'file_url': c['local_path'] ?? c['filename'] ?? '',
+        'file_type': fileType,
+        'file_size': 0,
+        'uploaded_at': c['uploaded_at'] ?? '',
+        'is_image': c['is_image'] == true,
+      };
+    }).toList();
+  }
+
+  Map<String, dynamic> _listCertificates(String username) {
+    final all = _getAllCertificates();
+    return {'certificates': all};
+  }
+
   Map<String, dynamic> _getAttemptHistory() {
     final profiles = _dataBox.get('profiles', defaultValue: _profiles());
     final profile = profiles['current_user'] ?? _profiles()['current_user'];
@@ -866,48 +1107,116 @@ class LocalDataProvider {
   }
 
   Map<String, dynamic> _getProfile(String? username) {
-    final profiles = _dataBox.get('profiles', defaultValue: _profiles());
-    final key = username ?? 'current_user';
-    final profile = Map<String, dynamic>.from(profiles[key] ?? profiles['current_user']);
-    final userData = HiveDatabase.instance.getCurrentUser();
-    if (userData != null && (username == null || username == userData['username'])) {
-      profile['user'] = Map<String, dynamic>.from(profile['user'] ?? {})
-        ..addAll(Map<String, dynamic>.from(userData));
-
-      // Only keep real attempts (submitted by _submitTest) — filter seed/fake data
-      final allAttempts = (profile['attempts'] as List?) ?? [];
-      final realAttempts = allAttempts.where((a) {
-        final m = a as Map?;
-        return m != null && m.containsKey('total_questions');
-      }).toList();
-      profile['attempts'] = realAttempts;
-
-      // Compute category_stats dynamically from real attempts
-      final catMap = <String, List<int>>{};
-      for (final a in realAttempts) {
-        final m = a as Map;
-        final catName = (m['category_name'] as String?) ?? 'General';
-        final score = (m['score'] as num?)?.toInt() ?? 0;
-        catMap.putIfAbsent(catName, () => []).add(score);
+    // 1. Determine target username
+    String targetUsername = '';
+    if (username == null) {
+      final curUser = HiveDatabase.instance.getCurrentUser();
+      if (curUser != null) {
+        targetUsername = curUser['username'] ?? '';
       }
-      profile['category_stats'] = catMap.entries.map((e) {
-        final scores = e.value;
-        final avg = scores.reduce((a, b) => a + b) / scores.length;
-        return {
-          'category_name': e.key,
-          'avg_score': double.parse(avg.toStringAsFixed(1)),
-        };
-      }).toList();
-
-      // Merge seed certificates with user-uploaded ones from Hive box
-      final seedCerts = (profile['certificates'] as List?) ?? [];
-      final boxCerts = (_dataBox.get('user_certificates', defaultValue: []) as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList();
-      final merged = <Map<String, dynamic>>[...seedCerts.cast(), ...boxCerts];
-      profile['certificates'] = merged;
+    } else {
+      targetUsername = username;
     }
-    return profile;
+
+    // 2. Look up in registered users
+    final users = HiveDatabase.instance.getUsers();
+    Map<String, dynamic>? matchUser;
+    for (final u in users) {
+      if (u['username']?.toString().toLowerCase() == targetUsername.toLowerCase()) {
+        matchUser = Map<String, dynamic>.from(u);
+        break;
+      }
+    }
+
+    // If not found in registered users, fall back to current session or default
+    if (matchUser == null) {
+      final curUser = HiveDatabase.instance.getCurrentUser();
+      if (curUser != null && (username == null || curUser['username']?.toString().toLowerCase() == username.toLowerCase())) {
+        matchUser = Map<String, dynamic>.from(curUser);
+      } else {
+        // Mock fallback if user doesn't exist
+        matchUser = {
+          'username': targetUsername.isNotEmpty ? targetUsername : 'unknown',
+          'email': '',
+          'first_name': targetUsername.isNotEmpty ? targetUsername : 'Unknown',
+          'last_name': '',
+          'is_company': false,
+          'organization': '',
+          'level': 1,
+          'exp': 0,
+          'coins': 0,
+          'lives': 5,
+        };
+      }
+    }
+
+    // Ensure we don't return the password
+    matchUser.remove('password');
+
+    // 3. Load user's profile details from Hive box
+    // Get attempts, certificates, and category_stats if present
+    final profiles = _dataBox.get('profiles', defaultValue: _profiles());
+    final profileKey = (username == null || username.toLowerCase() == (HiveDatabase.instance.getCurrentUser()?['username'] as String?)?.toLowerCase())
+        ? 'current_user'
+        : targetUsername.toLowerCase();
+        
+    final userProfile = Map<String, dynamic>.from(profiles[profileKey] ?? {
+      'attempts': [],
+      'category_stats': [],
+      'certificates': [],
+    });
+
+    final realAttempts = (userProfile['attempts'] as List?)
+        ?.map((e) => Map<String, dynamic>.from(e as Map))
+        .where((a) => a.containsKey('total_questions'))
+        .toList() ?? [];
+
+    // Compute category_stats dynamically from real attempts
+    final catMap = <String, List<int>>{};
+    for (final a in realAttempts) {
+      final catName = (a['category_name'] as String?) ?? 'General';
+      final score = (a['score'] as num?)?.toInt() ?? 0;
+      catMap.putIfAbsent(catName, () => []).add(score);
+    }
+    final categoryStats = catMap.entries.map((e) {
+      final scores = e.value;
+      final avg = scores.reduce((a, b) => a + b) / scores.length;
+      return {
+        'category_name': e.key,
+        'avg_score': double.parse(avg.toStringAsFixed(1)),
+      };
+    }).toList();
+
+    // Merge seed certificates with user-uploaded ones from Hive box
+    List<Map<String, dynamic>> mergedCerts = [];
+    final seedCerts = (userProfile['certificates'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
+    final boxCerts = (_dataBox.get('user_certificates', defaultValue: []) as List)
+        .map((e) {
+          final c = Map<String, dynamic>.from(e);
+          final fileName = c['filename'] as String? ?? '';
+          final fileType = fileName.contains('.') ? fileName.split('.').last.toUpperCase() : '';
+          return {
+            'id': c['id'],
+            'title': c['title'],
+            'file_url': c['local_path'] ?? c['filename'] ?? '',
+            'file_type': fileType,
+            'file_size': 0,
+            'uploaded_at': c['uploaded_at'] ?? '',
+            'is_image': c['is_image'] == true,
+          };
+        })
+        .toList();
+    mergedCerts = [...seedCerts, ...boxCerts];
+    if (mergedCerts.isEmpty && username != null) {
+      mergedCerts = _mockCertificates();
+    }
+
+    return {
+      'user': matchUser,
+      'attempts': realAttempts,
+      'category_stats': categoryStats,
+      'certificates': mergedCerts,
+    };
   }
 
   Map<String, dynamic> _profiles() {
@@ -988,26 +1297,97 @@ class LocalDataProvider {
   }
 
   Map<String, dynamic> _getRecruiterDashboard() {
+    final users = HiveDatabase.instance.getUsers();
+    final candidates = users.where((u) =>
+      u['is_company'] != true &&
+      u['is_active'] == true
+    ).toList();
+
+    final profiles = Map<String, dynamic>.from(
+      _dataBox.get('profiles', defaultValue: _profiles()),
+    );
+
+    final topTalent = candidates.map((u) {
+      final username = u['username'] ?? '';
+      final profileKey = username is String ? username.toLowerCase() : '';
+
+      Map<String, dynamic>? userProfile;
+      final raw = profiles[profileKey] ?? profiles['current_user'];
+      if (raw is Map) {
+        userProfile = Map<String, dynamic>.from(raw);
+      }
+
+      final attempts = (userProfile?['attempts'] as List?) ?? [];
+      final totalScore = attempts.fold<num>(0, (s, a) => s + ((a as Map?)?['score'] as num? ?? 0));
+      final avgScore = attempts.isNotEmpty ? (totalScore / attempts.length) : 0.0;
+      return {
+        'username': username,
+        'first_name': u['first_name'] ?? '',
+        'last_name': u['last_name'] ?? '',
+        'avatar_url': u['avatar_url'],
+        'avg_score': double.parse(avgScore.toStringAsFixed(1)),
+        'certificate_count': (userProfile?['certificates'] as List?)?.length ?? 0,
+        'level': u['level'] ?? 1,
+      };
+    }).toList();
+
+    topTalent.sort((a, b) => (b['avg_score'] as double).compareTo(a['avg_score'] as double));
+
     return {
       'stats': {
-        'total_candidates': 18,
+        'total_candidates': candidates.length,
         'total_attempts': 150,
         'avg_score': 78.5,
         'total_certs': 5,
       },
-      'top_talent': [
-        {'username': 'alice', 'first_name': 'Alice', 'last_name': 'W.', 'avatar_url': null, 'avg_score': 92.0, 'certificate_count': 3, 'level': 10},
-        {'username': 'bob', 'first_name': 'Bob', 'last_name': 'M.', 'avatar_url': null, 'avg_score': 88.0, 'certificate_count': 2, 'level': 9},
-        {'username': 'charlie', 'first_name': 'Charlie', 'last_name': 'D.', 'avatar_url': null, 'avg_score': 82.0, 'certificate_count': 1, 'level': 8},
-      ],
+      'top_talent': topTalent,
     };
   }
 
-  Map<String, dynamic> _searchTalent(String? query) {
+  Map<String, dynamic> _searchTalent(String? query, {String? role}) {
     if (query == null || query.isEmpty) {
-      return {'results': ( _getRecruiterDashboard()['top_talent'] as List).take(2).toList()};
+      return {'results': (_getRecruiterDashboard()['top_talent'] as List).take(10).toList()};
     }
-    return {'results': []};
+    final users = HiveDatabase.instance.getUsers();
+    final q = query.toLowerCase();
+    var matches = users.where((u) =>
+      u['is_company'] != true &&
+      u['is_active'] == true &&
+      (
+        (u['username'] as String? ?? '').toLowerCase().contains(q) ||
+        (u['first_name'] as String? ?? '').toLowerCase().contains(q) ||
+        (u['last_name'] as String? ?? '').toLowerCase().contains(q)
+      )
+    );
+    if (role != null && role != 'All') {
+      matches = matches.where((u) =>
+        (u['interested_field'] as String? ?? '').toLowerCase().contains(role.toLowerCase())
+      );
+    }
+    final resultList = matches.map((u) {
+      final username = u['username'] ?? '';
+      final profiles = Map<String, dynamic>.from(
+        _dataBox.get('profiles', defaultValue: _profiles()),
+      );
+      final profileKey = username is String ? username.toLowerCase() : '';
+
+      Map<String, dynamic>? userProfile;
+      final raw = profiles[profileKey] ?? profiles['current_user'];
+      if (raw is Map) {
+        userProfile = Map<String, dynamic>.from(raw);
+      }
+
+      return {
+        'username': username,
+        'first_name': u['first_name'] ?? '',
+        'last_name': u['last_name'] ?? '',
+        'avatar_url': u['avatar_url'],
+        'avg_score': 0.0,
+        'certificate_count': (userProfile?['certificates'] as List?)?.length ?? 0,
+        'level': u['level'] ?? 1,
+      };
+    }).toList();
+    return {'results': resultList};
   }
 
   List<Map<String, String>> _practicePdfs() {
@@ -1123,5 +1503,65 @@ class LocalDataProvider {
 
     // ── Default: guide the user ──
     return 'I\'m here to help you master aptitude skills on Aptitude GO! 🚀\n\nTry asking me about:\n• "Can I get placement from this app?"\n• "How to use this platform?"\n• "Tips to improve my score"\n• "What is Quantitative Aptitude?"\n• "How does the Store work?"\n• "Tell me about events and contests"\n\nWhat would you like to know? 😊';
+  }
+
+  Map<String, dynamic> _getRecruiterProfileData(String? username) {
+    final curUser = HiveDatabase.instance.getCurrentUser();
+    String targetUsername = username ?? curUser?['username'] ?? '';
+    
+    // Find user details
+    final users = HiveDatabase.instance.getUsers();
+    Map<String, dynamic>? matchUser;
+    for (final u in users) {
+      if (u['username']?.toString().toLowerCase() == targetUsername.toLowerCase()) {
+        matchUser = Map<String, dynamic>.from(u);
+        break;
+      }
+    }
+    
+    if (matchUser == null && curUser != null && curUser['username']?.toString().toLowerCase() == targetUsername.toLowerCase()) {
+      matchUser = Map<String, dynamic>.from(curUser);
+    }
+    
+    if (matchUser == null) {
+      matchUser = {
+        'username': targetUsername,
+        'email': '',
+        'first_name': targetUsername,
+        'last_name': '',
+        'is_company': true,
+        'organization': '',
+      };
+    }
+    
+    matchUser.remove('password');
+    
+    final profile = HiveDatabase.instance.getRecruiterProfile(targetUsername);
+    
+    return {
+      'user': matchUser,
+      'recruiter_profile_data': profile,
+      'stats': {
+        'total_exams_created': 0,
+        'active_job_openings': 0,
+        'total_candidates_hired': 0,
+      }
+    };
+  }
+
+  Map<String, dynamic> _saveRecruiterProfileData(dynamic data) {
+    final curUser = HiveDatabase.instance.getCurrentUser();
+    if (curUser == null) return {'success': false, 'error': 'Not authenticated'};
+    
+    final username = curUser['username'] as String? ?? '';
+    final profileData = Map<String, dynamic>.from(
+      (data is Map && data['recruiter_profile_data'] is Map) 
+          ? data['recruiter_profile_data'] 
+          : (data is Map ? data : {})
+    );
+    
+    HiveDatabase.instance.saveRecruiterProfile(username, profileData);
+    
+    return {'success': true, 'message': 'Recruiter profile saved successfully'};
   }
 }

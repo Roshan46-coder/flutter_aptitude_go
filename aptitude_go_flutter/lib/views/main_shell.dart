@@ -8,6 +8,8 @@ import 'events_screen.dart';
 import 'leaderboard_screen.dart';
 import 'inbox_screen.dart';
 import 'profile_screen.dart';
+import 'candidate_profile_screen.dart';
+import 'recruiter_profile_screen.dart';
 import 'multiplayer_topic_screen.dart';
 import 'admin_dashboard.dart';
 
@@ -59,7 +61,7 @@ class _MainShellState extends State<MainShell> {
         _NavTab('Events',     Icons.event_outlined,       Icons.event,       const EventsScreen()),
         _NavTab('Leaderboard',Icons.leaderboard_outlined, Icons.leaderboard, const LeaderboardScreen()),
         _NavTab('Inbox',      Icons.mail_outline,         Icons.mail,        const InboxScreen()),
-        _NavTab('Profile',    Icons.person_outline,       Icons.person,      const ProfileScreen()),
+        _NavTab('Profile',    Icons.person_outline,       Icons.person,      const RecruiterProfileScreen()),
       ];
     }
 
@@ -69,7 +71,7 @@ class _MainShellState extends State<MainShell> {
       _NavTab('Battle',     Icons.flash_on_outlined,    Icons.flash_on,    const MultiplayerTopicScreen()),
       _NavTab('Events',     Icons.event_outlined,       Icons.event,       const EventsScreen()),
       _NavTab('Ranks',      Icons.leaderboard_outlined, Icons.leaderboard, const LeaderboardScreen()),
-      _NavTab('Profile',    Icons.person_outline,       Icons.person,      const ProfileScreen()),
+      _NavTab('Profile',    Icons.person_outline,       Icons.person,      const CandidateProfileScreen()),
     ];
   }
 

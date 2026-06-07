@@ -1,3 +1,5 @@
+import random
+import string
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -23,8 +25,22 @@ class Event(models.Model):
     threshold_type = models.CharField(max_length=10, choices=THRESHOLD_CHOICES, default='TIME')
     threshold_value = models.IntegerField(default=0, help_text="Level required or Max participants")
     
+    access_code = models.CharField(max_length=12, unique=True, blank=True, default='')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @staticmethod
+    def generate_unique_code():
+        """Generate a unique 8-character alphanumeric exam access code."""
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            if not Event.objects.filter(access_code=code).exists():
+                return code
+
+    def save(self, *args, **kwargs):
+        if not self.access_code:
+            self.access_code = self.generate_unique_code()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title

@@ -4,8 +4,7 @@ import 'core/api_client.dart';
 import 'core/hive_database.dart';
 import 'core/local_data.dart';
 import 'core/theme.dart';
-import 'views/home_screen.dart';
-import 'views/login_screen.dart';
+import 'views/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,15 +27,7 @@ class MyApp extends StatelessWidget {
       title: 'Aptitude GO',
       theme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
-      home: Consumer<ApiClient>(
-        builder: (context, api, _) {
-          if (api.isAuthenticated) {
-            return const HomeScreen();
-          } else {
-            return const LoginScreen();
-          }
-        },
-      ),
+      home: const SplashScreen(),
     );
   }
 }

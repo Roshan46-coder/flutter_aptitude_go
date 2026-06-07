@@ -18,8 +18,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _orgController = TextEditingController();
   final _linkedinController = TextEditingController();
   final _githubController = TextEditingController();
+  final _statusController = TextEditingController();
+  String _selectedField = '';
   bool _isLoading = false;
   String? _error;
+
+  final _fields = ['Developer', 'Data Analyst', 'Designer', 'Manager'];
 
   @override
   void initState() {
@@ -32,6 +36,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _orgController.text = user['organization'] ?? '';
       _linkedinController.text = user['linkedin_url'] ?? '';
       _githubController.text = user['github_url'] ?? '';
+      _statusController.text = user['current_status'] ?? '';
+      final savedField = user['interested_field'] as String? ?? '';
+      _selectedField = _fields.contains(savedField) ? savedField : '';
     }
   }
 
@@ -42,6 +49,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _orgController.dispose();
     _linkedinController.dispose();
     _githubController.dispose();
+    _statusController.dispose();
     super.dispose();
   }
 
@@ -50,15 +58,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() { _error = null; _isLoading = true; });
 
     final api = Provider.of<ApiClient>(context, listen: false);
-    try {
-      final response = await api.post('profile/edit/', data: {
-        'first_name': _firstNameController.text.trim(),
-        'last_name': _lastNameController.text.trim(),
-        'organization': _orgController.text.trim(),
-        'linkedin_url': _linkedinController.text.trim(),
-        'github_url': _githubController.text.trim(),
-      });
 
+    final updates = <String, dynamic>{
+      'first_name': _firstNameController.text.trim(),
+      'last_name': _lastNameController.text.trim(),
+      'organization': _orgController.text.trim(),
+      'linkedin_url': _linkedinController.text.trim(),
+      'github_url': _githubController.text.trim(),
+      'current_status': _statusController.text.trim(),
+      'interested_field': _selectedField,
+    };
+
+    try {
+      final response = await api.post('profile/edit/', data: updates);
       if (mounted) {
         if (response.data['success'] == true) {
           final updatedUser = response.data['user'];
@@ -73,8 +85,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           setState(() { _error = response.data['error'] ?? 'Update failed.'; _isLoading = false; });
         }
       }
-    } catch (e) {
-      setState(() { _error = 'Failed to update profile.'; _isLoading = false; });
+    } catch (_) {
+      // API failed — save locally as fallback
+      api.updateCurrentUser(updates);
+      await HiveDatabase.instance.updateCurrentUser(updates);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saved offline'), backgroundColor: AppTheme.emeraldGreen),
+        );
+        Navigator.pop(context, true);
+      }
     }
   }
 
@@ -150,6 +170,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     hintText: 'Organization',
                     prefixIcon: Icon(Icons.apartment_outlined),
                   ),
+                ),
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _statusController,
+                  decoration: const InputDecoration(
+                    hintText: 'Current Status (e.g. Student, Employed)',
+                    prefixIcon: Icon(Icons.work_outline),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                DropdownButtonFormField<String>(
+                  value: _selectedField.isEmpty ? null : _selectedField,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Interested Field',
+                    prefixIcon: Icon(Icons.trending_up),
+                  ),
+                  items: _fields.map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
+                  onChanged: (v) => setState(() => _selectedField = v ?? ''),
                 ),
                 const SizedBox(height: 16),
 

@@ -443,6 +443,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   )),
                   DropdownButtonFormField<String>(
                     initialValue: difficulty,
+                    isExpanded: true,
                     decoration: const InputDecoration(labelText: 'Difficulty'),
                     items: ['Easy', 'Medium', 'Hard'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
                     onChanged: (v) => setDialogState(() => difficulty = v!),

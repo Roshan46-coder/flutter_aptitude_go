@@ -55,7 +55,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 _buildRoleCard(
                   context,
                   title: "I am a Recruiter",
-                  description: "Create and manage custom aptitude tests, monitor candidate leaderboards, review student certificates, and hire the top performing talent.",
+                  description: "Create and manage custom aptitude tests, monitor candidate leaderboards, and hire the top performing talent.",
                   icon: Icons.business_center_outlined,
                   color: AppTheme.neonBlue,
                   onTap: () {

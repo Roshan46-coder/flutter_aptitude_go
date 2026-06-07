@@ -20,10 +20,12 @@ class ApiClient extends ChangeNotifier {
   Map<String, dynamic>? _currentUser;
   bool _isAuthenticated = false;
   bool _isLoading = false;
+  bool _authInitialized = false;
 
   Map<String, dynamic>? get currentUser => _currentUser;
   bool get isAuthenticated => _isAuthenticated;
   bool get isLoading => _isLoading;
+  bool get authInitialized => _authInitialized;
   String get baseUrl => _baseUrl;
 
   String get wsBaseUrl {
@@ -66,8 +68,13 @@ class ApiClient extends ChangeNotifier {
         responseBody: true,
       ));
     }
+  }
 
-    _loadSavedSession();
+  Future<void> initialize() async {
+    await _loadSavedSession();
+    _authInitialized = true;
+    notifyListeners();
+    debugPrint("ApiClient: initialized, isAuthenticated: $_isAuthenticated");
   }
 
   void updateBaseUrl(String newUrl) {
@@ -82,21 +89,27 @@ class ApiClient extends ChangeNotifier {
   }
 
   Future<void> _loadSavedSession() async {
+    debugPrint("ApiClient._loadSavedSession: Checking Hive for saved session...");
     final user = _db.getCurrentUser();
     if (user != null) {
       _currentUser = user;
       _isAuthenticated = true;
-      notifyListeners();
+      debugPrint("ApiClient._loadSavedSession: Session restored for user: ${user['username']}");
+    } else {
+      debugPrint("ApiClient._loadSavedSession: No saved session found");
     }
   }
 
   Future<void> _saveLocalSession(Map<String, dynamic> userData) async {
     _currentUser = userData;
     _isAuthenticated = true;
+    await _db.saveCurrentUser(userData);
+    debugPrint("ApiClient: Session saved for user: ${userData['username']}");
     notifyListeners();
   }
 
   Future<void> _clearLocalSession() async {
+    debugPrint("ApiClient: Clearing local session");
     _currentUser = null;
     _isAuthenticated = false;
     await _db.clearCurrentUser();
@@ -108,15 +121,17 @@ class ApiClient extends ChangeNotifier {
     _setLoading(true);
     try {
       final result = await _db.loginUser(username, password);
-
       _setLoading(false);
       if (result['success'] == true) {
+        debugPrint("ApiClient.login: Login successful, saving session...");
         await _saveLocalSession(result['user']);
         return {'success': true, 'message': result['message']};
       }
+      debugPrint("ApiClient.login: Login failed: ${result['error']}");
       return {'success': false, 'error': result['error'] ?? 'Login failed'};
     } catch (e) {
       _setLoading(false);
+      debugPrint("ApiClient.login: Exception: $e");
       return {'success': false, 'error': 'Login failed: $e'};
     }
   }
@@ -194,9 +209,8 @@ class ApiClient extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    _setLoading(true);
+    debugPrint("ApiClient.logout: Logging out");
     await _clearLocalSession();
-    _setLoading(false);
   }
 
   Future<bool> checkAuthStatus() async {
@@ -204,10 +218,12 @@ class ApiClient extends ChangeNotifier {
     if (user != null) {
       _currentUser = user;
       _isAuthenticated = true;
+      debugPrint("ApiClient.checkAuthStatus: Authenticated as ${user['username']}");
       notifyListeners();
       return true;
     }
     if (_isAuthenticated) {
+      debugPrint("ApiClient.checkAuthStatus: No saved user, clearing session");
       _clearLocalSession();
     }
     return false;
@@ -234,9 +250,7 @@ class ApiClient extends ChangeNotifier {
     try {
       return await dio.get(path, queryParameters: queryParameters);
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        _clearLocalSession();
-      }
+      debugPrint("ApiClient.get: Error fetching $path: ${e.message}");
       final local = LocalDataProvider.instance.get(_localPath(path), queryParameters: queryParameters);
       if (local != null) {
         return Response(requestOptions: e.requestOptions, data: local, statusCode: 200);
@@ -249,13 +263,24 @@ class ApiClient extends ChangeNotifier {
     try {
       return await dio.post(path, data: data, queryParameters: queryParameters);
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        _clearLocalSession();
-      }
+      debugPrint("ApiClient.post: Error posting to $path: ${e.message}");
       final local = LocalDataProvider.instance.post(_localPath(path), data: data);
       if (local != null) {
         return Response(requestOptions: e.requestOptions, data: local, statusCode: 200);
       }
+      rethrow;
+    }
+  }
+
+  Future<Response> uploadFile(String path, String filePath, String fieldName, {Map<String, dynamic>? extraFields}) async {
+    try {
+      final formData = FormData.fromMap({
+        fieldName: await MultipartFile.fromFile(filePath),
+        if (extraFields != null) ...extraFields,
+      });
+      return await dio.post(path, data: formData);
+    } on DioException catch (e) {
+      debugPrint("ApiClient.uploadFile: Error uploading to $path: ${e.message}");
       rethrow;
     }
   }

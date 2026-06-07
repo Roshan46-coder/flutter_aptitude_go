@@ -22,6 +22,13 @@ class CustomUser(AbstractUser):
     linkedin_url = models.URLField(max_length=255, blank=True, null=True)
     github_url = models.URLField(max_length=255, blank=True, null=True)
 
+    # Profile Data & Score
+    profile_data = models.JSONField(default=dict, blank=True)
+    profile_score = models.PositiveIntegerField(default=0)
+
+    # Recruiter Profile Data
+    recruiter_profile_data = models.JSONField(default=dict, blank=True)
+
     def __str__(self):
         return self.username
 

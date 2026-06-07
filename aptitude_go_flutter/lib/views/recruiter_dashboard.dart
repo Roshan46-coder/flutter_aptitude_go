@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/api_client.dart';
 import '../core/theme.dart';
-import 'profile_screen.dart';
+import 'recruiter_candidate_view.dart';
+import 'recruiter_exam_screen.dart';
+import 'recruiter_profile_screen.dart';
 
 class RecruiterDashboardScreen extends StatefulWidget {
   const RecruiterDashboardScreen({super.key});
@@ -27,7 +29,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _fetchDashboard();
   }
 
@@ -98,7 +100,34 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recruiter Dashboard'),
+        title: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RecruiterProfileScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.account_circle_outlined, color: AppTheme.neonPurple, size: 24),
+                const SizedBox(width: 8),
+                Consumer<ApiClient>(
+                  builder: (context, api, _) {
+                    final name = '${api.currentUser?['first_name'] ?? ''} ${api.currentUser?['last_name'] ?? ''}'.trim();
+                    return Text(
+                      name.isNotEmpty ? 'Welcome, $name' : 'Recruiter Dashboard',
+                      style: const TextStyle(fontSize: 16),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded),
@@ -116,6 +145,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen>
             Tab(text: 'Overview'),
             Tab(text: 'Top Talent'),
             Tab(text: 'Search'),
+            Tab(text: 'Profile'),
           ],
         ),
       ),
@@ -129,6 +159,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen>
                     _buildOverviewTab(),
                     _buildTopTalentTab(),
                     _buildSearchTab(),
+                    const RecruiterProfileScreen(hideAppBar: true),
                   ],
                 ),
     );
@@ -147,19 +178,78 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen>
           children: [
             const Text('Platform Statistics', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 16),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.5,
+            Row(
               children: [
-                _statCard('Total Candidates', '${stats['total_candidates'] ?? 0}', Icons.people_outline, AppTheme.neonPurple),
-                _statCard('Tests Taken', '${stats['total_attempts'] ?? 0}', Icons.quiz_outlined, AppTheme.neonBlue),
-                _statCard('Avg Score', ((stats['avg_score'] ?? 0.0) as num).toStringAsFixed(1), Icons.bar_chart, AppTheme.goldAccent),
-                _statCard('Certifications', '${stats['total_certs'] ?? 0}', Icons.verified, AppTheme.emeraldGreen),
+                Expanded(
+                  child: AspectRatio(
+                    aspectRatio: 1.5,
+                    child: _statCard('Total Candidates', '${stats['total_candidates'] ?? 0}', Icons.people_outline, AppTheme.neonPurple),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AspectRatio(
+                    aspectRatio: 1.5,
+                    child: _statCard('Tests Taken', '${stats['total_attempts'] ?? 0}', Icons.quiz_outlined, AppTheme.neonBlue),
+                  ),
+                ),
               ],
+            ),
+            const SizedBox(height: 12),
+            AspectRatio(
+              aspectRatio: 3.0,
+              child: _statCard('Avg Score', ((stats['avg_score'] ?? 0.0) as num).toStringAsFixed(1), Icons.bar_chart, AppTheme.goldAccent),
+            ),
+            const SizedBox(height: 24),
+            const Text('Exam Management', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.cardBg,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.divider),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Create New Private Exam',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Configure exam questions, duration, thresholds, and generate a secure exam access code for candidates.',
+                          style: TextStyle(color: Colors.white38, fontSize: 12, height: 1.4),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RecruiterExamScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Create Exam', style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.neonPurple,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 0,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -284,7 +374,6 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen>
   }
 
   Widget _talentCard(Map<String, dynamic> user, {int? rank}) {
-    final certs = (user['certificate_count'] as num?)?.toInt() ?? 0;
     final avgScore = (user['avg_score'] as num?)?.toStringAsFixed(1) ?? '—';
 
     return Container(
@@ -338,8 +427,6 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen>
               children: [
                 _badge('⭐ $avgScore', Colors.white24),
                 const SizedBox(width: 6),
-                _badge('🎓 $certs cert${certs != 1 ? 's' : ''}', Colors.white24),
-                const SizedBox(width: 6),
                 _badge('Lv ${user['level'] ?? 1}', AppTheme.neonPurple.withValues(alpha: 0.18)),
               ],
             ),
@@ -353,7 +440,7 @@ class _RecruiterDashboardScreenState extends State<RecruiterDashboardScreen>
               tooltip: 'View Profile',
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => ProfileScreen(username: user['username'])),
+                MaterialPageRoute(builder: (_) => RecruiterCandidateView(username: user['username'])),
               ),
             ),
             IconButton(

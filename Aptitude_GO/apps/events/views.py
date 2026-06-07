@@ -46,6 +46,8 @@ def add_questions(request, event_id):
             question = form.save(commit=False)
             question.event = event
             question.save()
+            event.total_questions = event.questions.count()
+            event.save(update_fields=['total_questions'])
             messages.success(request, 'Question added successfully.')
             
             if 'save_and_add_another' in request.POST:
@@ -159,7 +161,7 @@ def take_event(request, event_id):
 
     if request.method == 'POST':
         score = 0
-        questions = event.questions.all()[:event.total_questions]
+        questions = event.questions.all()
         for q in questions:
             selected_option = request.POST.get(f'question_{q.id}')
             if selected_option and selected_option == q.correct_option:
@@ -172,5 +174,5 @@ def take_event(request, event_id):
         messages.success(request, f"Event completed! You scored {score}.")
         return redirect('event_detail', event_id=event.id)
 
-    questions = event.questions.all()[:event.total_questions]
+    questions = event.questions.all()
     return render(request, 'events/take_event.html', {'event': event, 'questions': questions})
