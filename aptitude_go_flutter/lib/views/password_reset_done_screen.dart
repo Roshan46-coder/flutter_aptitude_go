@@ -98,7 +98,7 @@ class _PasswordResetDoneScreenState extends State<PasswordResetDoneScreen> {
                       children: [
                         Text(
                           'Local App: Your reset code is',
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.60), fontSize: 12),
                         ),
                         const SizedBox(height: 6),
                         SelectableText(

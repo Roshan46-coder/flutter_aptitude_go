@@ -192,7 +192,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(18), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(18), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(
         children: [
           GestureDetector(
@@ -216,7 +216,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
               ? '@${_userData['username'] ?? ''}'
               : '${_userData['first_name']} ${_userData['last_name']}',
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text('@${_userData['username'] ?? ''}', style: const TextStyle(color: Colors.white38, fontSize: 13)),
+          Text('@${_userData['username'] ?? ''}', style: TextStyle(color: context.onSurface.withValues(alpha: 0.38), fontSize: 13)),
         ],
       ),
     );
@@ -226,7 +226,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     final pct = _completionPct();
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Row(
         children: [
           const Icon(Icons.pie_chart_outline, color: AppTheme.neonPurple, size: 22),
@@ -234,7 +234,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Profile Completion', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
-            ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct / 100, backgroundColor: AppTheme.divider, valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.neonPurple), minHeight: 6)),
+            ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct / 100, backgroundColor: Theme.of(context).dividerColor, valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.neonPurple), minHeight: 6)),
           ])),
           const SizedBox(width: 12),
           Text('$pct%', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.neonPurple)),
@@ -265,7 +265,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     final skillCount = (_profile['skills'] as List?)?.length ?? 0;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Quick Overview', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         const SizedBox(height: 12),
@@ -292,7 +292,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
         Icon(icon, color: color, size: 22),
         const SizedBox(height: 4),
         Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color), overflow: TextOverflow.ellipsis),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white38), overflow: TextOverflow.ellipsis),
+        Text(label, style: TextStyle(fontSize: 10, color: context.onSurface.withValues(alpha: 0.38)), overflow: TextOverflow.ellipsis),
       ]),
     ));
   }
@@ -315,7 +315,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     final phoneC = TextEditingController(text: _profile['phone'] ?? '');
     final bioC = TextEditingController(text: _profile['bio'] ?? '');
     final result = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: AppTheme.cardBg, title: const Text('Edit Personal Info'),
+      backgroundColor: Theme.of(context).cardColor, title: const Text('Edit Personal Info'),
       content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
         TextField(controller: headlineC, decoration: const InputDecoration(hintText: 'Professional Headline')),
         const SizedBox(height: 12),
@@ -377,7 +377,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     final syC = TextEditingController(text: item['start_year'] ?? '');
     final gyC = TextEditingController(text: item['grad_year'] ?? '');
     final result = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: AppTheme.cardBg, title: Text(isNew ? 'Add Education' : 'Edit Education'),
+      backgroundColor: Theme.of(context).cardColor, title: Text(isNew ? 'Add Education' : 'Edit Education'),
       content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
         TextField(controller: instC, decoration: const InputDecoration(hintText: 'Institution Name')),
         const SizedBox(height: 10),
@@ -433,7 +433,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     final levels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
     String selectedLevel = 'Intermediate';
     final result = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: AppTheme.cardBg, title: const Text('Add Skill'),
+      backgroundColor: Theme.of(context).cardColor, title: const Text('Add Skill'),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         TextField(controller: nameC, decoration: const InputDecoration(hintText: 'Skill name')),
         const SizedBox(height: 12),
@@ -488,7 +488,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     final liveC = TextEditingController(text: item['live_demo'] ?? '');
     final durC = TextEditingController(text: item['duration'] ?? '');
     final result = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: AppTheme.cardBg, title: Text(isNew ? 'Add Project' : 'Edit Project'),
+      backgroundColor: Theme.of(context).cardColor, title: Text(isNew ? 'Add Project' : 'Edit Project'),
       content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
         TextField(controller: tc, decoration: const InputDecoration(hintText: 'Project Title')),
         const SizedBox(height: 10),
@@ -549,7 +549,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     final respC = TextEditingController(text: item['responsibilities'] ?? '');
     final achC = TextEditingController(text: item['achievements'] ?? '');
     final result = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: AppTheme.cardBg, title: Text(isNew ? 'Add Experience' : 'Edit Experience'),
+      backgroundColor: Theme.of(context).cardColor, title: Text(isNew ? 'Add Experience' : 'Edit Experience'),
       content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
         TextField(controller: coC, decoration: const InputDecoration(hintText: 'Company Name')),
         const SizedBox(height: 10),
@@ -579,9 +579,9 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
   Widget _buildCertificatesSection() {
     return _sectionCard('Certificates', Icons.verified_outlined, null, [
       if (_uploadedCertificates.isEmpty)
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
-          child: Center(child: Text('No Certificates Uploaded', style: TextStyle(color: Colors.white24))),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Center(child: Text('No Certificates Uploaded', style: TextStyle(color: context.onSurface.withValues(alpha: 0.24)))),
         )
       else
         ...(_uploadedCertificates.asMap().entries.map((entry) {
@@ -596,9 +596,9 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.surface,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.divider),
+              border: Border.all(color: Theme.of(context).dividerColor),
             ),
             child: Row(
               children: [
@@ -618,7 +618,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(fileName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 2),
-                    Text('$fileType · $formattedDate', style: const TextStyle(fontSize: 11, color: Colors.white38)),
+                    Text('$fileType · $formattedDate', style: TextStyle(fontSize: 11, color: context.onSurface.withValues(alpha: 0.38))),
                   ]),
                 ),
                 if (fileUrl.isNotEmpty)
@@ -656,7 +656,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.cardBg,
+        backgroundColor: Theme.of(context).cardColor,
         title: const Text('Upload Certificate'),
         content: TextField(
           controller: nameC,
@@ -708,7 +708,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.cardBg,
+        backgroundColor: Theme.of(context).cardColor,
         title: const Text('Delete Certificate'),
         content: const Text('Are you sure you want to delete this certificate?'),
         actions: [
@@ -783,7 +783,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     final gc = TextEditingController(text: _profile['github_url'] ?? _userData['github_url'] ?? '');
     final lc = TextEditingController(text: _profile['linkedin_url'] ?? _userData['linkedin_url'] ?? '');
     final result = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: AppTheme.cardBg, title: const Text('Resume & Portfolio'),
+      backgroundColor: Theme.of(context).cardColor, title: const Text('Resume & Portfolio'),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         ElevatedButton.icon(onPressed: () async {
           final res = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf', 'doc', 'docx']);
@@ -841,7 +841,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     String empType = (savedEmp != null && empTypes.contains(savedEmp)) ? savedEmp : empTypes[0];
     String avail = (savedAvail != null && availTypes.contains(savedAvail)) ? savedAvail : availTypes[0];
     final result = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: AppTheme.cardBg, title: const Text('Career Preferences'),
+      backgroundColor: Theme.of(context).cardColor, title: const Text('Career Preferences'),
       content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
         TextField(controller: rolesC, decoration: const InputDecoration(hintText: 'Preferred Roles (comma separated)')),
         const SizedBox(height: 10),
@@ -898,7 +898,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
     String type = types[0];
     final dc = TextEditingController();
     final result = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: AppTheme.cardBg, title: const Text('Add Achievement'),
+      backgroundColor: Theme.of(context).cardColor, title: const Text('Add Achievement'),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         TextField(controller: tc, decoration: const InputDecoration(hintText: 'Title')),
         const SizedBox(height: 10),
@@ -931,9 +931,9 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
       SizedBox(
         height: 140,
         child: _attempts.isEmpty
-            ? const Center(child: Text('No attempts yet', style: TextStyle(color: Colors.white24)))
+            ? Center(child: Text('No attempts yet', style: TextStyle(color: context.onSurface.withValues(alpha: 0.24))))
             : LineChart(LineChartData(
-                gridData: FlGridData(show: true, getDrawingHorizontalLine: (_) => FlLine(color: AppTheme.divider, strokeWidth: 1), getDrawingVerticalLine: (_) => FlLine(color: Colors.transparent)),
+                gridData: FlGridData(show: true, getDrawingHorizontalLine: (_) => FlLine(color: Theme.of(context).dividerColor, strokeWidth: 1), getDrawingVerticalLine: (_) => FlLine(color: Colors.transparent)),
                 titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [LineChartBarData(
@@ -960,7 +960,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
   Widget _sectionCard(String title, IconData icon, VoidCallback? onEdit, List<Widget> children) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Row(children: [Icon(icon, color: AppTheme.neonPurple, size: 20), const SizedBox(width: 8),
@@ -976,8 +976,8 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
   Widget _infoRow(String label, String value) {
     return Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [Text('$label: ', style: const TextStyle(color: Colors.white38, fontSize: 12)),
-        Expanded(child: Text(value, style: const TextStyle(fontSize: 12, color: Colors.white70)))],
+      children: [Text('$label: ', style: TextStyle(color: context.onSurface.withValues(alpha: 0.38), fontSize: 12)),
+        Expanded(child: Text(value, style: TextStyle(fontSize: 12, color: context.onSurface.withValues(alpha: 0.70))))],
     ));
   }
 
@@ -987,7 +987,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
       decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10), border: Border.all(color: color.withValues(alpha: 0.2))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color), overflow: TextOverflow.ellipsis),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white38), overflow: TextOverflow.ellipsis),
+        Text(label, style: TextStyle(fontSize: 10, color: context.onSurface.withValues(alpha: 0.38)), overflow: TextOverflow.ellipsis),
       ]),
     ));
   }

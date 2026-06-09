@@ -65,8 +65,6 @@ class _CandidateRecruiterViewState extends State<CandidateRecruiterView> {
     final avatarUrl = _userData['avatar_url']?.toString().isNotEmpty == true
         ? _userData['avatar_url'].toString() : null;
     final exams = _stats['total_exams_created'] ?? 0;
-    final active = _stats['active_job_openings'] ?? 0;
-    final hired = _stats['total_candidates_hired'] ?? 0;
 
     return Scaffold(
       appBar: AppBar(title: Text(displayName)),
@@ -76,7 +74,7 @@ class _CandidateRecruiterViewState extends State<CandidateRecruiterView> {
           children: [
             _buildHeader(avatarUrl, displayName),
             const SizedBox(height: 16),
-            _buildStats(exams, active, hired),
+            _buildStats(exams),
             const SizedBox(height: 16),
             _infoCard('Contact Information', Icons.contact_mail_outlined, [
               _infoRow('Email', _userData['email'] ?? ''),
@@ -96,7 +94,7 @@ class _CandidateRecruiterViewState extends State<CandidateRecruiterView> {
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(_profile['company_description'],
-                      style: const TextStyle(fontSize: 13, color: Colors.white70, height: 1.5)),
+                      style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70), height: 1.5)),
                 ),
               ]),
             ],
@@ -111,11 +109,11 @@ class _CandidateRecruiterViewState extends State<CandidateRecruiterView> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
         gradient: LinearGradient(
-          colors: [AppTheme.neonBlue.withValues(alpha: 0.05), AppTheme.cardBg],
+          colors: [AppTheme.neonBlue.withValues(alpha: 0.05), Theme.of(context).cardColor],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
       ),
@@ -159,13 +157,13 @@ class _CandidateRecruiterViewState extends State<CandidateRecruiterView> {
     );
   }
 
-  Widget _buildStats(dynamic exams, dynamic active, dynamic hired) {
+  Widget _buildStats(dynamic exams) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,12 +178,6 @@ class _CandidateRecruiterViewState extends State<CandidateRecruiterView> {
           const SizedBox(height: 14),
           Row(children: [
             _statCard('Exams Created', '$exams', Icons.quiz_outlined, AppTheme.neonPurple),
-            const SizedBox(width: 8),
-            _statCard('Active Openings', '$active', Icons.work_outline, AppTheme.neonBlue),
-          ]),
-          const SizedBox(height: 8),
-          Row(children: [
-            _statCard('Candidates Hired', '$hired', Icons.person_add_alt, AppTheme.emeraldGreen),
             const SizedBox(width: 8),
             const Spacer(),
           ]),
@@ -206,7 +198,7 @@ class _CandidateRecruiterViewState extends State<CandidateRecruiterView> {
         Icon(icon, color: color, size: 22),
         const SizedBox(height: 4),
         Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: color)),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white38)),
+        Text(label, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38))),
       ]),
     ));
   }
@@ -215,9 +207,9 @@ class _CandidateRecruiterViewState extends State<CandidateRecruiterView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
@@ -236,12 +228,12 @@ class _CandidateRecruiterViewState extends State<CandidateRecruiterView> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(width: 140, child: Text('$label:', style: const TextStyle(color: Colors.white38, fontSize: 13))),
+        SizedBox(width: 140, child: Text('$label:', style: TextStyle(color: context.onSurface.withValues(alpha: 0.38), fontSize: 13))),
         Expanded(child: Text(
           value,
           style: TextStyle(
             fontSize: 13,
-            color: isMissing ? Colors.white24 : Colors.white70,
+            color: isMissing ? context.onSurface.withValues(alpha: 0.24) : context.onSurface.withValues(alpha: 0.70),
             fontStyle: isMissing ? FontStyle.italic : FontStyle.normal,
           ),
         )),

@@ -69,10 +69,10 @@ class _ChatStartScreenState extends State<ChatStartScreen> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search for a user...',
-                prefixIcon: const Icon(Icons.search, color: Colors.white30),
+                prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.white30),
+                        icon: Icon(Icons.clear, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)),
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _searchResults = []);
@@ -92,7 +92,7 @@ class _ChatStartScreenState extends State<ChatStartScreen> {
                           _searchController.text.isEmpty
                               ? 'Type a username to start a conversation'
                               : 'No users found',
-                          style: const TextStyle(color: Colors.white30),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)),
                         ),
                       )
                     : ListView.builder(
@@ -103,9 +103,9 @@ class _ChatStartScreenState extends State<ChatStartScreen> {
                           return Container(
                             margin: const EdgeInsets.only(bottom: 10),
                             decoration: BoxDecoration(
-                              color: AppTheme.cardBg,
+                              color: Theme.of(context).cardColor,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppTheme.divider),
+                              border: Border.all(color: Theme.of(context).dividerColor),
                             ),
                             child: ListTile(
                               leading: CircleAvatar(
@@ -121,7 +121,7 @@ class _ChatStartScreenState extends State<ChatStartScreen> {
                                     : '${user['first_name']} ${user['last_name']}',
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              subtitle: Text('@${user['username'] ?? ''}', style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                              subtitle: Text('@${user['username'] ?? ''}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 12)),
                               trailing: ElevatedButton(
                                 onPressed: () => _startChat(user['username']),
                                 style: ElevatedButton.styleFrom(

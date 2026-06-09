@@ -27,8 +27,6 @@ class RecruiterPreviewScreen extends StatelessWidget {
     final avatarUrl = userData['avatar_url']?.toString().isNotEmpty == true
         ? userData['avatar_url'].toString() : null;
     final exams = stats['total_exams_created'] ?? 0;
-    final active = stats['active_job_openings'] ?? 0;
-    final hired = stats['total_candidates_hired'] ?? 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -58,29 +56,29 @@ class RecruiterPreviewScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildHeader(avatarUrl, displayName),
+            _buildHeader(context, avatarUrl, displayName),
             const SizedBox(height: 16),
-            _buildStats(exams, active, hired),
+            _buildStats(context, exams),
             const SizedBox(height: 16),
-            _infoCard('Contact', Icons.contact_mail_outlined, [
-              _infoRow('Email', userData['email'] ?? ''),
-              _infoRow('Company Email', _display('company_email')),
-              _infoRow('Phone', _display('phone')),
+            _infoCard(context, 'Contact', Icons.contact_mail_outlined, [
+              _infoRow(context, 'Email', userData['email'] ?? ''),
+              _infoRow(context, 'Company Email', _display('company_email')),
+              _infoRow(context, 'Phone', _display('phone')),
             ]),
             const SizedBox(height: 12),
-            _infoCard('Company', Icons.business_outlined, [
-              _infoRow('Company Name', _display('company_name')),
-              _infoRow('Designation', _display('designation')),
-              _infoRow('Location', _display('location')),
-              _infoRow('Website', _display('company_website')),
+            _infoCard(context, 'Company', Icons.business_outlined, [
+              _infoRow(context, 'Company Name', _display('company_name')),
+              _infoRow(context, 'Designation', _display('designation')),
+              _infoRow(context, 'Location', _display('location')),
+              _infoRow(context, 'Website', _display('company_website')),
             ]),
             if (_val(profile['company_description']).isNotEmpty) ...[
               const SizedBox(height: 12),
-              _infoCard('About Company', Icons.info_outline, [
+              _infoCard(context, 'About Company', Icons.info_outline, [
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(profile['company_description'],
-                    style: const TextStyle(fontSize: 13, color: Colors.white70, height: 1.5)),
+                    style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70), height: 1.5)),
                 ),
               ]),
             ],
@@ -91,15 +89,15 @@ class RecruiterPreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(String? avatarUrl, String name) {
+  Widget _buildHeader(BuildContext context, String? avatarUrl, String name) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
         gradient: LinearGradient(
-          colors: [AppTheme.neonBlue.withValues(alpha: 0.05), AppTheme.cardBg],
+          colors: [AppTheme.neonBlue.withValues(alpha: 0.05), Theme.of(context).cardColor],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
       ),
@@ -143,13 +141,13 @@ class RecruiterPreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStats(dynamic exams, dynamic active, dynamic hired) {
+  Widget _buildStats(BuildContext context, dynamic exams) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,13 +161,7 @@ class RecruiterPreviewScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Row(children: [
-            _statCard('Exams Created', '$exams', Icons.quiz_outlined, AppTheme.neonPurple),
-            const SizedBox(width: 8),
-            _statCard('Active Openings', '$active', Icons.work_outline, AppTheme.neonBlue),
-          ]),
-          const SizedBox(height: 8),
-          Row(children: [
-            _statCard('Hired', '$hired', Icons.person_add_alt, AppTheme.emeraldGreen),
+            _statCard(context, 'Exams Created', '$exams', Icons.quiz_outlined, AppTheme.neonPurple),
             const SizedBox(width: 8),
             const Spacer(),
           ]),
@@ -178,7 +170,7 @@ class RecruiterPreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _statCard(String label, String value, IconData icon, Color color) {
+  Widget _statCard(BuildContext context, String label, String value, IconData icon, Color color) {
     return Expanded(child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -190,18 +182,18 @@ class RecruiterPreviewScreen extends StatelessWidget {
         Icon(icon, color: color, size: 22),
         const SizedBox(height: 4),
         Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: color)),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white38)),
+        Text(label, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38))),
       ]),
     ));
   }
 
-  Widget _infoCard(String title, IconData icon, List<Widget> children) {
+  Widget _infoCard(BuildContext context, String title, IconData icon, List<Widget> children) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
@@ -215,17 +207,17 @@ class RecruiterPreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _infoRow(String label, String value) {
+  Widget _infoRow(BuildContext context, String label, String value) {
     final isMissing = value == 'Not Provided';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(width: 130, child: Text('$label:', style: const TextStyle(color: Colors.white38, fontSize: 13))),
+        SizedBox(width: 130, child: Text('$label:', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 13))),
         Expanded(child: Text(
           value,
           style: TextStyle(
             fontSize: 13,
-            color: isMissing ? Colors.white24 : Colors.white70,
+            color: isMissing ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24) : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70),
             fontStyle: isMissing ? FontStyle.italic : FontStyle.normal,
           ),
         )),

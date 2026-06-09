@@ -7,7 +7,9 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/api_client.dart';
+import '../core/hive_database.dart';
 import '../core/theme.dart';
+import 'login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'recruiter_profile_screen.dart';
 import 'candidate_recruiter_view.dart';
@@ -111,10 +113,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {
       // 2. Fall back to local Hive storage
       try {
+        final currentUsername = api.currentUser?['username'] ?? '';
         final resp = await api.post('profile/upload-certificate/', data: {
           'title': titleController.text.trim(),
           'filename': file.name,
           'local_path': localPath,
+          'username': currentUsername,
         });
         success = resp.data['success'] == true;
       } catch (_) {}
@@ -246,6 +250,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _logout() async {
     final api = Provider.of<ApiClient>(context, listen: false);
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const LoginScreen(),
+        transitionDuration: Duration.zero,
+      ),
+      (route) => false,
+    );
     await api.logout();
   }
 
@@ -372,12 +385,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: hasGoldenFrame
               ? const Color(0xFFFFD700)
-              : AppTheme.divider,
+              : Theme.of(context).dividerColor,
           width: hasGoldenFrame ? 2.2 : 1,
         ),
         boxShadow: hasGoldenFrame
@@ -432,7 +445,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: BoxDecoration(
                       color: AppTheme.neonPurple,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.cardBg, width: 1.5),
+                      border: Border.all(color: Theme.of(context).cardColor, width: 1.5),
                     ),
                     child: const Text(
                       'PRO',
@@ -458,18 +471,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ],
           ),
-          Text(
-            '@${user['username'] ?? ''}',
-            style: const TextStyle(color: Colors.white38, fontSize: 14),
-          ),
+            Text(
+              '@${user['username'] ?? ''}',
+              style: TextStyle(color: context.onSurface.withValues(alpha: 0.38), fontSize: 14),
+            ),
           if ((user['organization'] ?? '').isNotEmpty) ...[
             const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.apartment_outlined, size: 14, color: Colors.white30),
+                Icon(Icons.apartment_outlined, size: 14, color: context.onSurface.withValues(alpha: 0.30)),
                 const SizedBox(width: 4),
-                Text(user['organization'], style: const TextStyle(color: Colors.white38, fontSize: 13)),
+                Text(user['organization'], style: TextStyle(color: context.onSurface.withValues(alpha: 0.38), fontSize: 13)),
               ],
             ),
           ],
@@ -478,9 +491,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.work_outline, size: 14, color: Colors.white30),
+                Icon(Icons.work_outline, size: 14, color: context.onSurface.withValues(alpha: 0.30)),
                 const SizedBox(width: 4),
-                Text(user['current_status'], style: const TextStyle(color: Colors.white38, fontSize: 13)),
+                Text(user['current_status'], style: TextStyle(color: context.onSurface.withValues(alpha: 0.38), fontSize: 13)),
               ],
             ),
           ],
@@ -489,10 +502,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.trending_up, size: 14, color: Colors.white30),
+                Icon(Icons.trending_up, size: 14, color: context.onSurface.withValues(alpha: 0.30)),
                 const SizedBox(width: 4),
                 Text('Interested: ${user['interested_field']}',
-                    style: const TextStyle(color: Colors.white38, fontSize: 13)),
+                    style: TextStyle(color: context.onSurface.withValues(alpha: 0.38), fontSize: 13)),
               ],
             ),
           ],
@@ -505,7 +518,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               border: Border.all(color: AppTheme.neonPurple.withValues(alpha: 0.3)),
             ),
             child: Text(
-              'Level ${user['level'] ?? 1}',
+              'Level ${HiveDatabase.levelInfo(user['exp'] ?? 0)[0]}',
               style: const TextStyle(color: AppTheme.neonPurple, fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
@@ -521,8 +534,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(width: 12),
         _statCard('${user['lives'] ?? 0}/5', 'Lives', Icons.favorite, AppTheme.livesRed),
         const SizedBox(width: 12),
-        _statCard('${user['exp'] ?? 0}', 'XP', Icons.stars, AppTheme.neonPurple),
+        _xpProgressCard(user['exp'] ?? 0),
       ],
+    );
+  }
+
+  Widget _xpProgressCard(int totalExp) {
+    final info = HiveDatabase.levelInfo(totalExp);
+    final int xpIntoLevel = info[1];
+    final int xpForNextLevel = info[2];
+    final double pct = totalExp > 0 ? (xpIntoLevel / xpForNextLevel * 100) : 0.0;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Theme.of(context).dividerColor),
+        ),
+        child: Column(
+          children: [
+            const Icon(Icons.stars, color: AppTheme.neonPurple, size: 22),
+            const SizedBox(height: 6),
+            Text('$xpIntoLevel / $xpForNextLevel', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('${pct.toStringAsFixed(1)}%', style: TextStyle(color: AppTheme.neonPurple.withValues(alpha: 0.7), fontSize: 11)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -531,16 +569,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: AppTheme.cardBg,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.divider),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
         child: Column(
           children: [
             Icon(icon, color: color, size: 22),
             const SizedBox(height: 6),
             Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            Text(label, style: const TextStyle(color: Colors.white30, fontSize: 11)),
+            Text(label, style: TextStyle(color: context.onSurface.withValues(alpha: 0.30), fontSize: 11)),
           ],
         ),
       ),
@@ -551,9 +589,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,7 +614,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Icon(icon, size: 16, color: AppTheme.neonBlue),
           const SizedBox(width: 8),
-          Text('$label: ', style: const TextStyle(color: Colors.white54, fontSize: 13)),
+          Text('$label: ', style: TextStyle(color: context.onSurface.withValues(alpha: 0.54), fontSize: 13)),
           Expanded(
             child: Text(
               url,
@@ -593,9 +631,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -609,10 +647,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.bar_chart_outlined, color: Colors.white24, size: 36),
+                        Icon(Icons.bar_chart_outlined, color: context.onSurface.withValues(alpha: 0.24), size: 36),
                         const SizedBox(height: 8),
                         Text('No attempts yet',
-                            style: TextStyle(color: Colors.white24, fontSize: 13)),
+                            style: TextStyle(color: context.onSurface.withValues(alpha: 0.24), fontSize: 13)),
                       ],
                     ),
                   )
@@ -621,7 +659,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       gridData: FlGridData(
                         show: true,
                         getDrawingHorizontalLine: (_) =>
-                            FlLine(color: AppTheme.divider, strokeWidth: 1),
+                            FlLine(color: Theme.of(context).dividerColor, strokeWidth: 1),
                         getDrawingVerticalLine: (_) =>
                             FlLine(color: Colors.transparent),
                       ),
@@ -654,9 +692,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -669,10 +707,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.pie_chart_outline, color: Colors.white24, size: 36),
+                    Icon(Icons.pie_chart_outline, color: context.onSurface.withValues(alpha: 0.24), size: 36),
                     const SizedBox(height: 8),
                     Text('No category data yet',
-                        style: TextStyle(color: Colors.white24, fontSize: 13)),
+                        style: TextStyle(color: context.onSurface.withValues(alpha: 0.24), fontSize: 13)),
                   ],
                 ),
               ),
@@ -692,7 +730,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Expanded(
                           child: Text(stat['category_name'] ?? '',
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 13, color: Colors.white70)),
+                              style: TextStyle(fontSize: 13, color: context.onSurface.withValues(alpha: 0.70))),
                         ),
                         Text('${avg.toStringAsFixed(1)}/10',
                             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.neonPurple)),
@@ -701,7 +739,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 4),
                     LinearProgressIndicator(
                       value: (avg / max).clamp(0.0, 1.0),
-                      backgroundColor: AppTheme.divider,
+                      backgroundColor: Theme.of(context).dividerColor,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         avg >= 7 ? AppTheme.emeraldGreen : (avg >= 4 ? AppTheme.neonBlue : AppTheme.livesRed),
                       ),
@@ -721,9 +759,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -740,9 +778,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           if (certs.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text('No certificates uploaded yet.', style: TextStyle(color: Colors.white30, fontSize: 13)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text('No certificates uploaded yet.', style: TextStyle(color: context.onSurface.withValues(alpha: 0.30), fontSize: 13)),
             )
           else
             ...certs.map((cert) {
@@ -766,14 +804,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     title: Text(cert['title'] ?? '', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                     subtitle: Text(_formatDate(cert['uploaded_at']),
-                        style: const TextStyle(fontSize: 11, color: Colors.white30)),
+                        style: TextStyle(fontSize: 11, color: context.onSurface.withValues(alpha: 0.30))),
                     trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                       IconButton(
-                        icon: const Icon(Icons.open_in_new, color: Colors.white38, size: 18),
+                        icon: Icon(Icons.open_in_new, color: context.onSurface.withValues(alpha: 0.38), size: 18),
                         onPressed: () => _openCertificateFile(cert),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.white30, size: 20),
+                        icon: Icon(Icons.delete_outline, color: context.onSurface.withValues(alpha: 0.30), size: 20),
                         onPressed: () => _deleteCertificate(cert['id']),
                       ),
                     ]),

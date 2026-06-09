@@ -65,7 +65,7 @@ class _EmailSentScreenState extends State<EmailSentScreen> {
                     "Since this is a local app, tap \"Verify Now\" to activate your account.",
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white54,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                         ),
                   ),
                 const SizedBox(height: 48),

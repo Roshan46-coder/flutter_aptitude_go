@@ -167,10 +167,10 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg, borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.divider),
+        color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Theme.of(context).dividerColor),
         gradient: LinearGradient(
-          colors: [AppTheme.neonPurple.withValues(alpha: 0.05), AppTheme.cardBg],
+          colors: [AppTheme.neonPurple.withValues(alpha: 0.05), Theme.of(context).cardColor],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
       ),
@@ -189,13 +189,13 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
           Padding(padding: const EdgeInsets.only(top: 4), child: Text(_profile['headline'], style: const TextStyle(color: AppTheme.neonPurple, fontSize: 14))),
         if ((_candidateUser['email'] ?? '').isNotEmpty)
           Padding(padding: const EdgeInsets.only(top: 4), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            const Icon(Icons.email_outlined, size: 14, color: Colors.white30), const SizedBox(width: 4),
-            Flexible(child: Text(_candidateUser['email'], style: const TextStyle(color: Colors.white38, fontSize: 13), overflow: TextOverflow.ellipsis)),
+            Icon(Icons.email_outlined, size: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)), const SizedBox(width: 4),
+            Flexible(child: Text(_candidateUser['email'], style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 13), overflow: TextOverflow.ellipsis)),
           ])),
         if ((_profile['location'] ?? '').isNotEmpty)
           Padding(padding: const EdgeInsets.only(top: 4), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            const Icon(Icons.location_on, size: 14, color: Colors.white30), const SizedBox(width: 4),
-            Flexible(child: Text(_profile['location'], style: const TextStyle(color: Colors.white38, fontSize: 13), overflow: TextOverflow.ellipsis)),
+            Icon(Icons.location_on, size: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)), const SizedBox(width: 4),
+            Flexible(child: Text(_profile['location'], style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 13), overflow: TextOverflow.ellipsis)),
           ])),
         const SizedBox(height: 10),
         Container(
@@ -231,14 +231,14 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
     final expCount = (_profile['experience'] as List?)?.length ?? 0;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Quick Overview', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         const SizedBox(height: 12),
         Row(children: [
           _overviewCard('Profile Score', '$pct%', Icons.pie_chart, AppTheme.neonPurple),
           const SizedBox(width: 8),
-          _overviewCard('Level', '${_candidateUser['level'] ?? 1}', Icons.bolt, AppTheme.goldAccent),
+          _overviewCard('Level', '${HiveDatabase.levelInfo(_candidateUser['exp'] ?? 0)[0]}', Icons.bolt, AppTheme.goldAccent),
         ]),
         const SizedBox(height: 8),
         Row(children: [
@@ -258,7 +258,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
         Icon(icon, color: color, size: 22),
         const SizedBox(height: 4),
         Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color), overflow: TextOverflow.ellipsis),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white38), overflow: TextOverflow.ellipsis),
+        Text(label, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)), overflow: TextOverflow.ellipsis),
       ]),
     ));
   }
@@ -270,11 +270,11 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
     if (bio.isEmpty && fields.isEmpty && status.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Professional Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         const SizedBox(height: 12),
-        if (bio.isNotEmpty) Text(bio, style: const TextStyle(fontSize: 13, color: Colors.white70, height: 1.4)),
+        if (bio.isNotEmpty) Text(bio, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70), height: 1.4)),
         if (status.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: _tag(status, AppTheme.neonBlue)),
         if (fields.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: _tag('Interested: $fields', AppTheme.neonPurple)),
       ]),
@@ -294,7 +294,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
     if (list.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Education', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         const SizedBox(height: 12),
@@ -306,8 +306,8 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(e['institution'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              Text('${e['degree'] ?? ''} · ${e['branch'] ?? ''}', style: const TextStyle(fontSize: 12, color: Colors.white54)),
-              Text('${e['start_year'] ?? ''} - ${e['grad_year'] ?? ''} · GPA: ${e['gpa'] ?? '-'}', style: const TextStyle(fontSize: 11, color: Colors.white30)),
+              Text('${e['degree'] ?? ''} · ${e['branch'] ?? ''}', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54))),
+              Text('${e['start_year'] ?? ''} - ${e['grad_year'] ?? ''} · GPA: ${e['gpa'] ?? '-'}', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30))),
             ])),
           ]),
         )),
@@ -321,7 +321,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
     final levelColors = {'Beginner': Colors.blue, 'Intermediate': AppTheme.neonBlue, 'Advanced': AppTheme.neonPurple, 'Expert': AppTheme.goldAccent};
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Skills', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         const SizedBox(height: 12),
@@ -347,18 +347,18 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
     if (list.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Projects', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         const SizedBox(height: 12),
         ...list.map((p) => Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.divider)),
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: Theme.of(context).dividerColor)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(p['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-            if ((p['description'] ?? '').isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: Text(p['description'], style: const TextStyle(fontSize: 12, color: Colors.white54))),
-            if ((p['role'] ?? '').isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: Text('Role: ${p['role']}', style: const TextStyle(fontSize: 11, color: Colors.white38))),
+            if ((p['description'] ?? '').isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: Text(p['description'], style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)))),
+            if ((p['role'] ?? '').isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: Text('Role: ${p['role']}', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)))),
             if ((p['techs'] ?? '').isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: _tag('${p['techs']}', AppTheme.neonBlue)),
             if ((p['github'] ?? '').isNotEmpty || (p['live_demo'] ?? '').isNotEmpty) ...[
               const SizedBox(height: 6),
@@ -380,7 +380,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
     if (list.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Work Experience', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         const SizedBox(height: 12),
@@ -392,8 +392,8 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('${e['position'] ?? ''} @ ${e['company'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              Text(e['duration'] ?? '', style: const TextStyle(fontSize: 11, color: Colors.white38)),
-              if ((e['responsibilities'] ?? '').isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: Text(e['responsibilities'], style: const TextStyle(fontSize: 12, color: Colors.white54))),
+              Text(e['duration'] ?? '', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38))),
+              if ((e['responsibilities'] ?? '').isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: Text(e['responsibilities'], style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)))),
               if ((e['achievements'] ?? '').isNotEmpty) Padding(padding: const EdgeInsets.only(top: 2), child: Text('🏆 ${e['achievements']}', style: const TextStyle(fontSize: 11, color: AppTheme.goldAccent))),
             ])),
           ]),
@@ -406,7 +406,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
     if (_candidateCertificates.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Uploaded Certificates', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         const SizedBox(height: 12),
@@ -421,7 +421,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.divider)),
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(10), border: Border.all(color: Theme.of(context).dividerColor)),
             child: Row(children: [
               Container(
                 width: 40, height: 40,
@@ -431,7 +431,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
               const SizedBox(width: 10),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(fileName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text('$fileType · $date', style: const TextStyle(fontSize: 11, color: Colors.white38)),
+                Text('$fileType · $date', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38))),
               ])),
               if (fileUrl.isNotEmpty)
                 IconButton(
@@ -482,7 +482,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
   Widget _buildPerformanceAnalytics() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           const Icon(Icons.assessment_outlined, color: AppTheme.neonPurple, size: 20),
@@ -491,9 +491,9 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
         ]),
         const SizedBox(height: 12),
         if (_candidateAttempts.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Center(child: Text('No Test Scores Available', style: TextStyle(color: Colors.white24))),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Center(child: Text('No Test Scores Available', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)))),
           )
         else
           ...(_candidateAttempts.reversed.map((a) {
@@ -509,9 +509,9 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppTheme.divider),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
@@ -533,7 +533,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
                   const SizedBox(width: 6),
                   _scoreChip('Percentage', '${pct.toStringAsFixed(1)}%', AppTheme.neonBlue),
                   const SizedBox(width: 6),
-                  _scoreChip('Date', date, Colors.white38),
+                  _scoreChip('Date', date, Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)),
                 ]),
               ]),
             );
@@ -548,7 +548,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
       decoration: BoxDecoration(color: color.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(6)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: color), overflow: TextOverflow.ellipsis),
-        Text(label, style: const TextStyle(fontSize: 9, color: Colors.white38), overflow: TextOverflow.ellipsis),
+        Text(label, style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)), overflow: TextOverflow.ellipsis),
       ]),
     ));
   }
@@ -560,7 +560,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
       'Publication': Icons.article, 'Badge': Icons.verified};
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.divider)),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Achievements', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         const SizedBox(height: 12),
@@ -572,7 +572,7 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
             const SizedBox(width: 6),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(a['title'] ?? '', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-              if ((a['type'] ?? '').isNotEmpty) Text(a['type'], style: const TextStyle(fontSize: 10, color: Colors.white38)),
+              if ((a['type'] ?? '').isNotEmpty) Text(a['type'], style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38))),
             ]),
           ]),
         )).toList()),
@@ -586,8 +586,8 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         decoration: BoxDecoration(
-          color: AppTheme.cardBg.withValues(alpha: 0.95),
-          border: const Border(top: BorderSide(color: AppTheme.divider)),
+          color: Theme.of(context).cardColor.withValues(alpha: 0.95),
+          border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, -4))],
         ),
         child: Row(children: [

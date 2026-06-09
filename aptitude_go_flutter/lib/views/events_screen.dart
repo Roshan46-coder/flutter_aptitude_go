@@ -88,31 +88,18 @@ class _EventsScreenState extends State<EventsScreen>
   }
 
   Future<void> _startEventExam(Map<String, dynamic> event) async {
-    final api = Provider.of<ApiClient>(context, listen: false);
-    try {
-      final res = await api.get('events/${event['id']}/');
-      final questions = res.data['questions'] as List<dynamic>?;
-      if (questions == null || questions.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No questions available for this event.')),
-          );
-        }
-        return;
-      }
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => TestInterfaceScreen(
-              categorySlug: event['category'] ?? event['id'].toString(),
-              isEvent: true,
-              eventId: event['id'],
-            ),
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => TestInterfaceScreen(
+            categorySlug: event['category'] ?? event['id'].toString(),
+            isEvent: true,
+            eventId: event['id'],
           ),
-        ).then((_) => _fetchEvents());
-      }
-    } catch (_) {}
+        ),
+      ).then((_) => _fetchEvents());
+    }
   }
 
   @override
@@ -159,14 +146,14 @@ class _EventsScreenState extends State<EventsScreen>
                   : isUpcoming ? Icons.upcoming_outlined
                   : Icons.history,
               size: 56,
-              color: Colors.white12,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
             ),
             const SizedBox(height: 14),
             Text(
               isActive ? 'No live events right now.'
                   : isUpcoming ? 'No upcoming events.'
                   : 'No past events.',
-              style: const TextStyle(color: Colors.white30),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)),
             ),
           ],
         ),
@@ -201,12 +188,12 @@ class _EventsScreenState extends State<EventsScreen>
         ? AppTheme.emeraldGreen
         : isUpcoming
             ? AppTheme.neonPurple
-            : Colors.white24;
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: accentColor.withValues(alpha: 0.3)),
         boxShadow: isActive
@@ -265,7 +252,7 @@ class _EventsScreenState extends State<EventsScreen>
                 if ((event['description'] ?? '').isNotEmpty) ...[
                   Text(
                     event['description'],
-                    style: const TextStyle(color: Colors.white54, fontSize: 13, height: 1.5),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 13, height: 1.5),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -274,7 +261,7 @@ class _EventsScreenState extends State<EventsScreen>
 
                 // Time info
                 Row(children: [
-                  const Icon(Icons.calendar_today_outlined, size: 13, color: Colors.white30),
+                  Icon(Icons.calendar_today_outlined, size: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)),
                   const SizedBox(width: 6),
                   Text(
                     isActive
@@ -282,15 +269,15 @@ class _EventsScreenState extends State<EventsScreen>
                         : isPast
                             ? 'Ended: ${_formatDate(event['end_time'])}'
                             : 'Starts: ${_formatDate(event['start_time'])}',
-                    style: const TextStyle(color: Colors.white38, fontSize: 12),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 12),
                   ),
                 ]),
                 const SizedBox(height: 4),
                 Row(children: [
-                  const Icon(Icons.people_outline, size: 13, color: Colors.white30),
+                  Icon(Icons.people_outline, size: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)),
                   const SizedBox(width: 6),
                   Text('$participants participants',
-                      style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 12)),
                 ]),
                 if (event['recruiter_username'] != null) ...[
                   const SizedBox(height: 4),
@@ -347,13 +334,13 @@ class _EventsScreenState extends State<EventsScreen>
                           children: [
                             const Icon(Icons.vpn_key_rounded, size: 14, color: AppTheme.neonPurple),
                             const SizedBox(width: 8),
-                            const Text(
+                            Text(
                               'Exam Code: ',
-                              style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w500),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12, fontWeight: FontWeight.w500),
                             ),
                             Text(
                               event['access_code'].toString(),
-                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1.0),
                             ),
                           ],
                         ),
@@ -409,8 +396,8 @@ class _EventsScreenState extends State<EventsScreen>
         icon: const Icon(Icons.leaderboard_outlined, size: 16),
         label: const Text('View Leaderboard'),
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.white38,
-          side: const BorderSide(color: Colors.white12),
+          foregroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
+          side: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12)),
         ),
       );
     }
@@ -527,15 +514,15 @@ class _EventLeaderboardScreenState extends State<EventLeaderboardScreen> {
                         ? Colors.grey
                         : rank == 3
                             ? Colors.brown[300]!
-                            : Colors.white24;
+: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24);
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardBg,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: rank <= 3 ? medalColor.withValues(alpha: 0.3) : AppTheme.divider,
+                      color: rank <= 3 ? medalColor.withValues(alpha: 0.3) : Theme.of(context).dividerColor,
                     ),
                   ),
                   child: Row(
@@ -546,7 +533,7 @@ class _EventLeaderboardScreenState extends State<EventLeaderboardScreen> {
                             ? Text(rank == 1 ? '🥇' : rank == 2 ? '🥈' : '🥉',
                                 style: const TextStyle(fontSize: 22), textAlign: TextAlign.center)
                             : Text('#$rank',
-                                style: const TextStyle(color: Colors.white24, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), fontWeight: FontWeight.bold),
                                 textAlign: TextAlign.center),
                       ),
                       const SizedBox(width: 12),

@@ -107,7 +107,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
   Widget _buildBoard(List<dynamic> entries) {
     if (entries.isEmpty) {
-      return const Center(child: Text('No data yet.', style: TextStyle(color: Colors.white30)));
+      return Center(child: Text('No data yet.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30))));
     }
 
     return RefreshIndicator(
@@ -144,7 +144,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 child: FilterChip(
                   label: Text(cat['name'] ?? '',
                       style: TextStyle(
-                        color: selected ? AppTheme.neonPurple : Colors.white38,
+                        color: selected ? AppTheme.neonPurple : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                         fontSize: 12,
                       )),
                   selected: selected,
@@ -152,17 +152,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                     setState(() { _selectedCategoryId = cat['id']; _categoryBoard = []; });
                     _fetchCategoryBoard(cat['id']);
                   },
-                  backgroundColor: AppTheme.cardBg,
+                  backgroundColor: Theme.of(context).cardColor,
                   selectedColor: AppTheme.neonPurple.withValues(alpha: 0.12),
                   checkmarkColor: AppTheme.neonPurple,
-                  side: BorderSide(color: selected ? AppTheme.neonPurple.withValues(alpha: 0.4) : AppTheme.divider),
+                  side: BorderSide(color: selected ? AppTheme.neonPurple.withValues(alpha: 0.4) : Theme.of(context).dividerColor),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
               );
             },
           ),
         ),
-        const Divider(color: AppTheme.divider, height: 1),
+        Divider(color: Theme.of(context).dividerColor, height: 1),
         Expanded(
           child: _isCategoryLoading
               ? const Center(child: CircularProgressIndicator(color: AppTheme.neonPurple))
@@ -178,7 +178,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     if (rank == 1)      { medalColor = AppTheme.goldAccent;   medal = '🥇'; }
     else if (rank == 2) { medalColor = Colors.grey;            medal = '🥈'; }
     else if (rank == 3) { medalColor = Colors.brown[300]!;     medal = '🥉'; }
-    else                { medalColor = Colors.white12;          medal = null; }
+    else                { medalColor = Theme.of(context).dividerColor;          medal = null; }
 
     final score = entry['avg_score'] ?? entry['score'] ?? 0;
     final attempts = entry['attempts'] ?? 0;
@@ -197,14 +197,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               ? AppTheme.neonPurple.withValues(alpha: 0.08)
               : rank <= 3
                   ? medalColor.withValues(alpha: 0.05)
-                  : AppTheme.cardBg,
+                  : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isMe
                 ? AppTheme.neonPurple.withValues(alpha: 0.4)
                 : rank <= 3
                     ? medalColor.withValues(alpha: 0.2)
-                    : AppTheme.divider,
+                    : Theme.of(context).dividerColor,
             width: isMe ? 1.5 : 1,
           ),
         ),
@@ -218,7 +218,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   : Text(
                       '#$rank',
                       style: TextStyle(
-                        color: isMe ? AppTheme.neonPurple : Colors.white24,
+                        color: isMe ? AppTheme.neonPurple : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24),
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -251,7 +251,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                       entry['username'] ?? '',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: isMe ? AppTheme.neonPurple : Colors.white,
+                        color: isMe ? AppTheme.neonPurple : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     if (isMe) ...[
@@ -268,7 +268,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   ]),
                   Text(
                     'Lv ${entry['level'] ?? 1} · $attempts tests',
-                    style: const TextStyle(color: Colors.white30, fontSize: 11),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30), fontSize: 11),
                   ),
                 ],
               ),
@@ -281,12 +281,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 Text(
                   score is double ? score.toStringAsFixed(1) : '$score',
                   style: TextStyle(
-                    color: rank == 1 ? AppTheme.goldAccent : Colors.white70,
+                    color: rank == 1 ? AppTheme.goldAccent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70),
                     fontWeight: FontWeight.bold,
                     fontSize: 17,
                   ),
                 ),
-                const Text('avg score', style: TextStyle(color: Colors.white24, fontSize: 10)),
+                Text('avg score', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), fontSize: 10)),
               ],
             ),
           ],

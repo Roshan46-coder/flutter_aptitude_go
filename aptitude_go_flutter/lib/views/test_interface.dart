@@ -7,7 +7,6 @@ import 'dart:math';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:noise_meter/noise_meter.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../core/api_client.dart';
 import '../core/theme.dart';
 import '../core/hive_database.dart';
@@ -161,6 +160,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
           // Check if user is not registered (no questions and not registered)
           final registration = raw['registration'] as Map<String, dynamic>?;
           final isRegistered = registration?['is_registered'] as bool? ?? false;
+          final isCompleted = registration?['is_completed'] as bool? ?? false;
 
           final List<dynamic> mappedQuestions = rawQuestions.map((q) {
             return {
@@ -168,6 +168,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
               'text': q['text'],
               'time_limit': 60,
               'is_coding': false,
+              'marks': q['marks'] ?? 1,
               'options': [
                 {'id': 'A', 'text': q['option_a']},
                 {'id': 'B', 'text': q['option_b']},
@@ -176,13 +177,17 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
               ]
             };
           }).toList();
+          final seenEvent = <int>{};
+          mappedQuestions.retainWhere((q) => seenEvent.add(q['id'] as int));
 
           String? err;
           if (mappedQuestions.isEmpty) {
             if (!isRegistered) {
               err = "You are not registered for this exam. Please join with the correct code.";
+            } else if (isCompleted) {
+              err = "You have already completed this exam.";
             } else {
-              err = "This exam has no questions yet, or you have already completed it.";
+              err = "This exam has no questions yet.";
             }
           }
 
@@ -203,6 +208,8 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
         if (mounted) {
           List<dynamic> allQuestions = response.data['questions'] ?? [];
           allQuestions = List.from(allQuestions);
+          final seenPractice = <int>{};
+          allQuestions.retainWhere((q) => seenPractice.add(q['id'] as int));
           allQuestions.shuffle(Random());
 
           const int maxQuestions = 20;
@@ -268,7 +275,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardBg,
+        backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
@@ -284,19 +291,19 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
             const SizedBox(height: 8),
             Text(
               widget.isEvent
-                  ? "Exam: ${_testData?['event']?['title'] ?? 'Private Exam'}"
+                  ?               "Exam: ${_testData?['event']?['title'] ?? 'Private Exam'}"
                   : "Category: ${_testData?['category']?['name'] ?? widget.categorySlug}",
-              style: const TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: context.onSurface.withValues(alpha: 0.70)),
             ),
             const SizedBox(height: 6),
             Text(
               "Questions: ${_questions.length}",
-              style: const TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: context.onSurface.withValues(alpha: 0.70)),
             ),
             const SizedBox(height: 6),
             Text(
               "Time per question: 60 seconds",
-              style: const TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: context.onSurface.withValues(alpha: 0.70)),
             ),
             const SizedBox(height: 16),
             Container(
@@ -306,14 +313,14 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppTheme.neonPurple.withValues(alpha: 0.2)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.lightbulb_outline, color: AppTheme.neonPurple, size: 18),
-                  SizedBox(width: 8),
+                  const Icon(Icons.lightbulb_outline, color: AppTheme.neonPurple, size: 18),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       "Switching apps or loud noise will be flagged. Two violations will auto-submit your test.",
-                      style: TextStyle(fontSize: 12, color: Colors.white54),
+                      style: TextStyle(fontSize: 12, color: context.onSurface.withValues(alpha: 0.54)),
                     ),
                   ),
                 ],
@@ -327,7 +334,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: const Text("Cancel", style: TextStyle(color: Colors.white38)),
+            child: Text("Cancel", style: TextStyle(color: context.onSurface.withValues(alpha: 0.38))),
           ),
           ElevatedButton.icon(
             onPressed: () {
@@ -338,7 +345,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
             label: const Text("Start Exam"),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.neonPurple,
-              foregroundColor: Colors.white,
+              foregroundColor: context.onSurface,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -348,7 +355,15 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
     );
   }
 
-  void _startExam() {
+  void _startExam() async {
+    final api = Provider.of<ApiClient>(context, listen: false);
+    await HiveDatabase.instance.checkAndRestoreLives();
+    final freshUser = HiveDatabase.instance.getCurrentUser();
+    if (freshUser != null) {
+      api.updateCurrentUser({'lives': freshUser['lives'], 'last_life_reset_date': freshUser['last_life_reset_date']});
+      final lives = (freshUser['lives'] as num?)?.toInt() ?? 0;
+      debugPrint("💙 Exam start: user has $lives lives");
+    }
     setState(() => _examStarted = true);
     _startNoiseMonitoring();
     _startQuestionTimer();
@@ -424,17 +439,19 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
         });
         if (mounted) {
           final score = (res.data['score'] as num?)?.toInt() ?? 0;
+          final totalMarks = _questions.fold<int>(0, (sum, q) => sum + ((q['marks'] as int?) ?? 1));
+
           final resultData = {
             'score': score.toString(),
             'correct': score,
-            'total': _questions.length,
+            'total': totalMarks,
             'coins_earned': 0,
             'exp_earned': 0,
             'leveled_up': false,
             'new_level': 1,
             'category': widget.categorySlug,
             'message': 'Event exam completed successfully',
-            'results': [],
+            'results': <Map<String, dynamic>>[],
           };
           Navigator.pushReplacement(
             context,
@@ -521,7 +538,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
     final currentLives = (api.currentUser?['lives'] as num?)?.toInt() ?? 5;
 
     final newExp = currentExp + expEarned;
-    final newLevel = 1 + (newExp ~/ 100);
+    final newLevel = HiveDatabase.levelInfo(newExp)[0];
     final leveledUp = newLevel > currentLevel;
     final newCoins = currentCoins + coinsEarned;
     final newLives = currentLives > 0 ? currentLives - 1 : 0;
@@ -695,7 +712,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
                       errorBuilder: (ctx2, e2, st2) => Container(
                         height: 120,
                         alignment: Alignment.center,
-                        child: const Icon(Icons.image_outlined, color: Colors.white24, size: 40),
+                        child: Icon(Icons.image_outlined, color: context.onSurface.withValues(alpha: 0.24), size: 40),
                       ),
                     ),
                   ),
@@ -761,7 +778,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
               const SizedBox(height: 16),
               Text(
                 "Preparing ${_questions.length} questions...",
-                style: const TextStyle(color: Colors.white54, fontSize: 14),
+                style: TextStyle(color: context.onSurface.withValues(alpha: 0.54), fontSize: 14),
               ),
             ],
           ),
@@ -822,10 +839,10 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: isNoiseHigh ? AppTheme.livesRed.withValues(alpha: 0.15) : AppTheme.divider,
+                        color: isNoiseHigh ? AppTheme.livesRed.withValues(alpha: 0.15) : Theme.of(context).dividerColor,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isNoiseHigh ? AppTheme.livesRed : Colors.white12,
+                          color: isNoiseHigh ? AppTheme.livesRed : context.onSurface.withValues(alpha: 0.12),
                         ),
                       ),
                       child: Row(
@@ -834,7 +851,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
                           Icon(
                             isNoiseHigh ? Icons.mic_off : Icons.mic,
                             size: 14,
-                            color: isNoiseHigh ? AppTheme.livesRed : Colors.white54,
+                            color: isNoiseHigh ? AppTheme.livesRed : context.onSurface.withValues(alpha: 0.54),
                           ),
                           const SizedBox(width: 4),
                           SizedBox(
@@ -843,7 +860,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
                               borderRadius: BorderRadius.circular(2),
                               child: LinearProgressIndicator(
                                 value: noiseLevel,
-                                backgroundColor: AppTheme.surface,
+                                backgroundColor: Theme.of(context).colorScheme.surface,
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   isNoiseHigh ? AppTheme.livesRed : AppTheme.neonPurple,
                                 ),
@@ -863,22 +880,22 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _secondsLeft <= 10 ? AppTheme.livesRed.withValues(alpha: 0.15) : AppTheme.divider,
+                    color: _secondsLeft <= 10 ? AppTheme.livesRed.withValues(alpha: 0.15) : context.onSurface.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: _secondsLeft <= 10 ? AppTheme.livesRed : Colors.white12,
+                      color: _secondsLeft <= 10 ? AppTheme.livesRed : context.onSurface.withValues(alpha: 0.20),
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.timer_outlined, size: 16, color: _secondsLeft <= 10 ? AppTheme.livesRed : Colors.white70),
+                      Icon(Icons.timer_outlined, size: 16, color: _secondsLeft <= 10 ? AppTheme.livesRed : context.onSurface.withValues(alpha: 0.60)),
                       const SizedBox(width: 4),
                       Text(
                         "$_secondsLeft s",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: _secondsLeft <= 10 ? AppTheme.livesRed : Colors.white,
+                          color: _secondsLeft <= 10 ? AppTheme.livesRed : context.onSurface,
                         ),
                       ),
                     ],
@@ -894,14 +911,14 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
             children: [
               LinearProgressIndicator(
                 value: (_currentQuestionIndex + 1) / _questions.length,
-                backgroundColor: AppTheme.divider,
+                backgroundColor: Theme.of(context).dividerColor,
                 valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.neonPurple),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: Text(
                   "Question ${_currentQuestionIndex + 1} of ${_questions.length}",
-                  style: const TextStyle(fontSize: 12, color: Colors.white30),
+                  style: TextStyle(fontSize: 12, color: context.onSurface.withValues(alpha: 0.30)),
                 ),
               ),
 
@@ -917,7 +934,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
                           padding: const EdgeInsets.all(20.0),
                           child: RichText(
                             text: TextSpan(
-                              style: const TextStyle(fontSize: 16, height: 1.5, fontWeight: FontWeight.w500, color: Colors.white),
+                              style: TextStyle(fontSize: 16, height: 1.5, fontWeight: FontWeight.w500, color: context.onSurface),
                               children: _buildQuestionSpans(currentQ['text'] ?? '', apiBaseUrl),
                             ),
                           ),
@@ -936,8 +953,8 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
 
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: AppTheme.divider)),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -957,13 +974,13 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
                           children: [
                             Text(
                               isLastQuestion ? "Submit" : "Next",
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: context.onSurface),
                             ),
                             const SizedBox(width: 8),
                             Icon(
                               isLastQuestion ? Icons.check_circle_outline : Icons.arrow_forward_ios,
                               size: 18,
-                              color: Colors.white,
+                              color: context.onSurface,
                             ),
                           ],
                         ),
@@ -988,10 +1005,10 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.neonPurple.withValues(alpha: 0.08) : AppTheme.cardBg,
+            color: isSelected ? AppTheme.neonPurple.withValues(alpha: 0.08) : Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? AppTheme.neonPurple : AppTheme.divider,
+              color: isSelected ? AppTheme.neonPurple : Theme.of(context).dividerColor,
               width: isSelected ? 1.5 : 1,
             ),
           ),
@@ -1005,7 +1022,7 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
             },
             title: Text(
               opt['text'] ?? '',
-              style: const TextStyle(fontSize: 14, color: Colors.white),
+              style: TextStyle(fontSize: 14, color: context.onSurface),
             ),
             activeColor: AppTheme.neonPurple,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -1019,18 +1036,18 @@ class _TestInterfaceScreenState extends State<TestInterfaceScreen> with WidgetsB
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           "Type your code answer below:",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white70),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: context.onSurface.withValues(alpha: 0.70)),
         ),
         const SizedBox(height: 10),
         TextField(
           controller: _codeController,
           maxLines: 8,
-          style: const TextStyle(fontFamily: 'monospace', fontSize: 13, color: Colors.white),
+          style: TextStyle(fontFamily: 'monospace', fontSize: 13, color: context.onSurface),
           decoration: InputDecoration(
             hintText: "def solve(n):\n    # Type code here...",
-            fillColor: AppTheme.surface,
+            fillColor: Theme.of(context).colorScheme.surface,
           ),
         ),
       ],
@@ -1067,8 +1084,8 @@ class _SvgImage extends StatelessWidget {
           fit: BoxFit.contain,
           errorBuilder: (ctx2, e2, st2) => SizedBox(
             height: height,
-            child: const Center(
-              child: Icon(Icons.image_outlined, color: Colors.white24, size: 40),
+            child: Center(
+              child: Icon(Icons.image_outlined, color: context.onSurface.withValues(alpha: 0.24), size: 40),
             ),
           ),
         ),

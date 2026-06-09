@@ -1,6 +1,6 @@
 {
-    "name": "aptitude_go_flutter",
-    "short_name": "aptitude_go_flutter",
+    "name": "Aptitude",
+    "short_name": "Aptitude",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

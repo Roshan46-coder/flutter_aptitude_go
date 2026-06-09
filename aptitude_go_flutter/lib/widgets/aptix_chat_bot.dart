@@ -4,6 +4,7 @@ import '../core/api_client.dart';
 import '../core/theme.dart';
 import '../core/hive_database.dart';
 import '../core/local_data.dart';
+import 'robot_avatar.dart';
 
 class AptixChatBotSheet extends StatefulWidget {
   const AptixChatBotSheet({super.key});
@@ -14,7 +15,7 @@ class AptixChatBotSheet extends StatefulWidget {
 
 class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
   final List<Map<String, String>> _messages = [
-    {'role': 'bot', 'content': 'Hello! I am Aptix, your AI Aptitude mentor. 🧠 Ask me any concepts, but I won\'t give direct answers to live questions! 😉'}
+    {'role': 'bot', 'content': 'Hello! I\'m Aptix, your AI Platform Guide for Aptitude GO. 🤖 I can help you with registration, exams, levels, certificates, recruiter features, and everything about the platform. What would you like to know?'}
   ];
   final _msgController = TextEditingController();
   final _scrollController = ScrollController();
@@ -23,11 +24,23 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
   @override
   void initState() {
     super.initState();
-    _loadChatHistory();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadChatHistory();
+    });
+  }
+
+  String _getUsername() {
+    try {
+      final api = Provider.of<ApiClient>(context, listen: false);
+      return api.currentUser?['username']?.toString() ?? 'anonymous';
+    } catch (_) {
+      return 'anonymous';
+    }
   }
 
   void _loadChatHistory() {
-    final cached = HiveDatabase.instance.getCachedChatMessages();
+    final username = _getUsername();
+    final cached = HiveDatabase.instance.getCachedChatMessages(username: username);
     if (cached.isNotEmpty) {
       setState(() {
         _messages.addAll(cached);
@@ -59,6 +72,8 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
     final text = _msgController.text.trim();
     if (text.isEmpty || _isSending) return;
 
+    final username = _getUsername();
+
     // Capture context-dependent objects BEFORE any async gaps
     final api = Provider.of<ApiClient>(context, listen: false);
     final aptixUrl = api.baseUrl.replaceAll('/api/', '/api/aptix/');
@@ -72,7 +87,7 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
     _scrollToBottom();
 
     // Cache the user message immediately in Hive database
-    await HiveDatabase.instance.saveChatMessage(userMsg);
+    await HiveDatabase.instance.saveChatMessage(userMsg, username: username);
 
     try {
       final response = await api.post(aptixUrl, data: {'message': text});
@@ -85,7 +100,7 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
               'content': response.data['response'].toString()
             };
             _messages.add(botMsg);
-            HiveDatabase.instance.saveChatMessage(botMsg);
+            HiveDatabase.instance.saveChatMessage(botMsg, username: username);
           } else {
             _messages.add({'role': 'bot', 'content': 'Sorry, I encountered an issue. Please try again. 😞'});
           }
@@ -103,7 +118,7 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
           _isSending = false;
           _messages.add(botMsg);
         });
-        HiveDatabase.instance.saveChatMessage(botMsg);
+        HiveDatabase.instance.saveChatMessage(botMsg, username: username);
         _scrollToBottom();
       }
     }
@@ -113,7 +128,7 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         title: const Text("Clear conversation?"),
         content: const Text("This will permanently delete all chat history with Aptix from this device."),
         actions: [
@@ -134,13 +149,14 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
     );
 
     if (confirmed == true) {
-      await HiveDatabase.instance.clearChatHistory();
+      final username = _getUsername();
+      await HiveDatabase.instance.clearChatHistory(username: username);
       if (mounted) {
         setState(() {
           _messages.clear();
           _messages.add({
             'role': 'bot',
-            'content': 'Hello! I am Aptix, your AI Aptitude mentor. 🧠 Ask me any concepts, but I won\'t give direct answers to live questions! 😉'
+            'content':             'Hello! I\'m Aptix, your AI Platform Guide for Aptitude GO. 🤖 I can help you with registration, exams, levels, certificates, recruiter features, and everything about the platform. What would you like to know?'
           });
         });
       }
@@ -155,9 +171,9 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
     return Container(
       height: mq.size.height * 0.65 + bottomInset,
       padding: EdgeInsets.only(bottom: bottomInset),
-      decoration: const BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -167,7 +183,7 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white24,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -177,14 +193,7 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.neonPurple.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.bolt, color: AppTheme.neonPurple),
-                ),
+                const RobotAvatar(size: 40, autoAnimate: true),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -195,25 +204,25 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        "AI Aptitude Mentor",
-                        style: TextStyle(color: Colors.white30, fontSize: 12),
+                        "AI Platform Guide",
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30), fontSize: 12),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_sweep_outlined, color: Colors.white30),
+                  icon: Icon(Icons.delete_sweep_outlined, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)),
                   tooltip: "Clear Conversation",
                   onPressed: _clearChatHistory,
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                  icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
                   onPressed: () => Navigator.pop(context),
                 )
               ],
             ),
           ),
-          const Divider(color: AppTheme.divider),
+          Divider(color: Theme.of(context).dividerColor),
 
           // Messages list
           Expanded(
@@ -249,8 +258,8 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
                     onSubmitted: (_) => _sendMessage(),
                     decoration: InputDecoration(
                       hintText: "Ask Aptix a concept question...",
-                      hintStyle: const TextStyle(color: Colors.white30),
-                      fillColor: AppTheme.cardBg,
+                      hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)),
+                      fillColor: Theme.of(context).cardColor,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
                   ),
@@ -278,18 +287,18 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         decoration: BoxDecoration(
-          color: isBot ? AppTheme.cardBg : AppTheme.neonPurple.withValues(alpha: 0.15),
+          color: isBot ? Theme.of(context).cardColor : AppTheme.neonPurple.withValues(alpha: 0.15),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
             bottomLeft: Radius.circular(isBot ? 4 : 16),
             bottomRight: Radius.circular(isBot ? 16 : 4),
           ),
-          border: isBot ? Border.all(color: AppTheme.divider) : null,
+          border: isBot ? Border.all(color: Theme.of(context).dividerColor) : null,
         ),
         child: Text(
           content,
-          style: const TextStyle(fontSize: 14, height: 1.4, color: Colors.white),
+          style: TextStyle(fontSize: 14, height: 1.4, color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
     );
@@ -302,9 +311,9 @@ class _AptixChatBotSheetState extends State<AptixChatBotSheet> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: AppTheme.cardBg,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.divider),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
         child: const SizedBox(
           width: 24,
@@ -368,8 +377,8 @@ class _DotAnimationState extends State<_DotAnimation> with SingleTickerProviderS
           width: 5,
           height: 5,
           margin: EdgeInsets.only(bottom: _animation.value * 6),
-          decoration: const BoxDecoration(
-            color: Colors.white54,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
             shape: BoxShape.circle,
           ),
         );

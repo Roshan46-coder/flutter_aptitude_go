@@ -344,21 +344,21 @@ class _PracticeArenaState extends State<PracticeArena> {
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                       child: TextField(
                         controller: _searchController,
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: context.onSurface),
                         decoration: InputDecoration(
                           hintText: "Search PDFs...",
-                          hintStyle: const TextStyle(color: Colors.white30),
-                          prefixIcon: const Icon(Icons.search, color: Colors.white38),
+                          hintStyle: TextStyle(color: context.onSurface.withValues(alpha: 0.30)),
+                          prefixIcon: Icon(Icons.search, color: context.onSurface.withValues(alpha: 0.38)),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.clear, color: Colors.white38),
+                                  icon: Icon(Icons.clear, color: context.onSurface.withValues(alpha: 0.38)),
                                   onPressed: () {
                                     _searchController.clear();
                                   },
                                 )
                               : null,
                           filled: true,
-                          fillColor: AppTheme.cardBg,
+                          fillColor: Theme.of(context).cardColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -379,7 +379,7 @@ class _PracticeArenaState extends State<PracticeArena> {
                                 _searchController.text.isEmpty
                                     ? "No practice PDFs available yet."
                                     : "No PDFs match your search.",
-                                style: const TextStyle(color: Colors.white30),
+                                style: TextStyle(color: context.onSurface.withValues(alpha: 0.30)),
                               ),
                             )
                           : ListView.builder(
@@ -409,7 +409,7 @@ class _PracticeArenaState extends State<PracticeArena> {
                                     ),
                                     subtitle: Text(
                                       size,
-                                      style: const TextStyle(fontSize: 12, color: Colors.white30),
+                                      style: TextStyle(fontSize: 12, color: context.onSurface.withValues(alpha: 0.30)),
                                     ),
                                     trailing: isDownloading
                                         ? SizedBox(
@@ -425,12 +425,12 @@ class _PracticeArenaState extends State<PracticeArena> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               IconButton(
-                                                icon: const Icon(Icons.open_in_new, color: Colors.white54, size: 20),
+                                                icon: Icon(Icons.open_in_new, color: context.onSurface.withValues(alpha: 0.54), size: 20),
                                                 onPressed: () => _downloadAndOpenPdf(name, isView: true),
                                                 tooltip: "View",
                                               ),
                                               IconButton(
-                                                icon: const Icon(Icons.file_download_outlined, color: Colors.white54, size: 20),
+                                                icon: Icon(Icons.file_download_outlined, color: context.onSurface.withValues(alpha: 0.54), size: 20),
                                                 onPressed: () => _downloadAndOpenPdf(name, isView: false),
                                                 tooltip: "Download",
                                               ),

@@ -37,7 +37,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 _buildRoleCard(
                   context,
                   title: "I am a Candidate",
-                  description: "Solve solo tests, challenge opponents in 1v1 multiplayer matches, climb the global leaderboard, and get noticed by recruiters.",
+                  description: "Solve solo tests, earn certificates, climb the global leaderboard, and get noticed by recruiters.",
                   icon: Icons.school_outlined,
                   color: AppTheme.neonPurple,
                   onTap: () {
@@ -89,9 +89,9 @@ class RoleSelectionScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: AppTheme.cardBg,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.divider, width: 1),
+          border: Border.all(color: Theme.of(context).dividerColor, width: 1),
           boxShadow: [
             BoxShadow(
               color: color.withValues(alpha: 0.05),
@@ -119,7 +119,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
+                          color: context.onSurface,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -135,7 +135,7 @@ class RoleSelectionScreen extends StatelessWidget {
             ),
             Icon(
               Icons.chevron_right_rounded,
-              color: Colors.white.withValues(alpha: 0.3),
+              color: context.onSurface.withValues(alpha: 0.30),
             ),
           ],
         ),

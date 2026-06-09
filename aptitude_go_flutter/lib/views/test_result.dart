@@ -43,12 +43,12 @@ class TestResultScreen extends StatelessWidget {
             children: [
               // Celebration Level Up Banner
               if (leveledUp) ...[
-                _buildLevelUpBanner(resultData['new_level'] ?? 2),
+                _buildLevelUpBanner(context, resultData['new_level'] ?? 2),
                 const SizedBox(height: 20),
               ],
 
               // Main Summary Score Card
-              _buildScoreSummaryCard(score, total, coins, exp),
+              _buildScoreSummaryCard(context, score, total, coins, exp),
               const SizedBox(height: 24),
 
               if (results.isNotEmpty) ...[
@@ -88,13 +88,13 @@ class TestResultScreen extends StatelessWidget {
                             const SizedBox(width: 8),
                             Expanded(
                               child: RichText(
-                                text: TextSpan(
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                    height: 1.4,
-                                  ),
+                              text: TextSpan(
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: context.onSurface,
+                                  height: 1.4,
+                                ),
                                   children: _buildQuestionSpans(res['question_text'] ?? '', apiBaseUrl),
                                 ),
                               ),
@@ -102,29 +102,29 @@ class TestResultScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        const Divider(color: AppTheme.divider, height: 1),
+                        Divider(color: Theme.of(context).dividerColor, height: 1),
                         const SizedBox(height: 12),
                         
                         // Answer Details
                         if (isCoding) ...[
-                          const Text("Your Code Answer:", style: TextStyle(color: Colors.white30, fontSize: 11)),
+                          Text("Your Code Answer:", style: TextStyle(color: context.onSurface.withValues(alpha: 0.30), fontSize: 11)),
                           const SizedBox(height: 4),
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppTheme.background,
+                              color: Theme.of(context).scaffoldBackgroundColor,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               res['user_code'] != null && res['user_code'].toString().isNotEmpty
                                   ? res['user_code']
                                   : "[No Answer Typed]",
-                              style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.white70),
+                              style: TextStyle(fontFamily: 'monospace', fontSize: 12, color: context.onSurface.withValues(alpha: 0.70)),
                             ),
                           ),
                         ] else ...[
-                          _buildSelectedAndCorrectOptionInfo(res),
+                          _buildSelectedAndCorrectOptionInfo(context, res),
                         ],
                         
                         if (res['explanation'] != null && res['explanation'].toString().isNotEmpty) ...[
@@ -133,7 +133,7 @@ class TestResultScreen extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             res['explanation'].toString().replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n'),
-                            style: const TextStyle(fontSize: 12, color: Colors.white54, height: 1.4),
+                            style: TextStyle(fontSize: 12, color: context.onSurface.withValues(alpha: 0.54), height: 1.4),
                           ),
                         ]
                       ],
@@ -150,18 +150,18 @@ class TestResultScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.popUntil(context, (route) => route.isFirst);
                   },
-                  icon: const Icon(Icons.home_rounded, size: 20, color: Colors.white),
-                  label: const Text(
+                  icon: Icon(Icons.home_rounded, size: 20, color: context.onSurface),
+                  label: Text(
                     "Back to Dashboard",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: Colors.white,
+                      color: context.onSurface,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.neonPurple,
-                    foregroundColor: Colors.white,
+                    foregroundColor: context.onSurface,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 4,
@@ -176,7 +176,7 @@ class TestResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLevelUpBanner(int newLevel) {
+  Widget _buildLevelUpBanner(BuildContext context, int newLevel) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -196,22 +196,22 @@ class TestResultScreen extends StatelessWidget {
           Text(
             "You reached Level $newLevel! Keep cracking aptitude problems.",
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
+            style: TextStyle(color: context.onSurface.withValues(alpha: 0.70), fontSize: 13),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildScoreSummaryCard(int score, int total, int coins, int exp) {
+  Widget _buildScoreSummaryCard(BuildContext context, int score, int total, int coins, int exp) {
     final double accuracy = total > 0 ? (score / total) * 100 : 0.0;
     
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         children: [
@@ -219,7 +219,7 @@ class TestResultScreen extends StatelessWidget {
             "$score / $total",
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 44, color: AppTheme.neonPurple),
           ),
-          const Text("Score", style: TextStyle(color: Colors.white30, fontSize: 13)),
+          Text("Score", style: TextStyle(color: context.onSurface.withValues(alpha: 0.30), fontSize: 13)),
           const SizedBox(height: 8),
           Text(
             "Accuracy: ${accuracy.toStringAsFixed(0)}%",
@@ -232,7 +232,7 @@ class TestResultScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Divider(color: AppTheme.divider),
+          Divider(color: Theme.of(context).dividerColor),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -244,9 +244,9 @@ class TestResultScreen extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     "+ $coins",
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: context.onSurface),
                   ),
-                  const Text("Coins", style: TextStyle(color: Colors.white30, fontSize: 11)),
+                  Text("Coins", style: TextStyle(color: context.onSurface.withValues(alpha: 0.30), fontSize: 11)),
                 ],
               ),
               // XP Reward
@@ -256,9 +256,9 @@ class TestResultScreen extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     "+ $exp",
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: context.onSurface),
                   ),
-                  const Text("EXP", style: TextStyle(color: Colors.white30, fontSize: 11)),
+                  Text("EXP", style: TextStyle(color: context.onSurface.withValues(alpha: 0.30), fontSize: 11)),
                 ],
               ),
             ],
@@ -268,7 +268,7 @@ class TestResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSelectedAndCorrectOptionInfo(Map<String, dynamic> res) {
+  Widget _buildSelectedAndCorrectOptionInfo(BuildContext context, Map<String, dynamic> res) {
     final selectedOpt = res['selected_option'];
     final correctOpt = res['correct_option'];
 
@@ -277,7 +277,7 @@ class TestResultScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Text("Your Choice: ", style: TextStyle(color: Colors.white30, fontSize: 12)),
+            Text("Your Choice: ", style: TextStyle(color: context.onSurface.withValues(alpha: 0.30), fontSize: 12)),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
@@ -294,7 +294,7 @@ class TestResultScreen extends StatelessWidget {
         const SizedBox(height: 6),
         Row(
           children: [
-            const Text("Correct Option: ", style: TextStyle(color: Colors.white30, fontSize: 12)),
+            Text("Correct Option: ", style: TextStyle(color: context.onSurface.withValues(alpha: 0.30), fontSize: 12)),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
@@ -378,7 +378,7 @@ class TestResultScreen extends StatelessWidget {
                 errorBuilder: (ctx2, e2, st2) => Container(
                   height: 120,
                   alignment: Alignment.center,
-                  child: const Icon(Icons.image_outlined, color: Colors.white24, size: 40),
+                  child: Icon(Icons.image_outlined, color: ctx2.onSurface.withValues(alpha: 0.24), size: 40),
                 ),
               ),
             ),

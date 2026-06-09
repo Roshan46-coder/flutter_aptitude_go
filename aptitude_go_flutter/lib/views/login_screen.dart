@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/api_client.dart';
 import '../core/theme.dart';
+import 'home_screen.dart';
+import 'otp_verification_screen.dart';
 import 'password_reset_request_screen.dart';
 import 'role_selection_screen.dart';
+import '../widgets/logo_gesture_detector.dart';
+import '../widgets/admin_login_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,7 +33,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    debugPrint("🔵 LOGIN BTN: pressed with username='${_usernameController.text.trim()}'");
+    if (!_formKey.currentState!.validate()) {
+      debugPrint("🔵 LOGIN BTN: form validation failed");
+      return;
+    }
     
     setState(() {
       _errorMessage = null;
@@ -37,18 +45,26 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final api = Provider.of<ApiClient>(context, listen: false);
+    debugPrint("🔵 LOGIN BTN: calling api.login()...");
     final result = await api.login(
       _usernameController.text.trim(),
       _passwordController.text,
     );
+    debugPrint("🔵 LOGIN BTN: api.login() returned success=${result['success']}, error=${result['error']}");
 
     if (mounted) {
       if (result['success'] == true) {
-        // Navigation is handled automatically by the MaterialApp home router observing ApiClient.isAuthenticated
+        debugPrint("🔵 LOGIN BTN: Login successful — navigating to HomeScreen");
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
       } else {
         final error = result['error'] as String? ?? 'Login failed';
         final inactive = error.toLowerCase().contains('inactive') ||
             error.toLowerCase().contains('verify');
+        debugPrint("🔵 LOGIN BTN: Login failed — error='$error', inactive=$inactive");
         setState(() {
           _errorMessage = error;
           _isAccountInactive = inactive;
@@ -67,49 +83,142 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     setState(() => _isResending = true);
     final api = Provider.of<ApiClient>(context, listen: false);
-    final result = await api.resendVerificationEmail(email);
+    final result = await api.sendOtp(email: email, purpose: 'verify');
     if (mounted) {
       setState(() => _isResending = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['success'] == true
-              ? result['message'] ?? 'Verification email sent!'
-              : result['error'] ?? 'Failed to resend.'),
-          backgroundColor: result['success'] == true ? Colors.green.shade700 : Colors.red.shade700,
-        ),
-      );
+      if (result['success'] == true) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationScreen(email: email, purpose: 'verify'),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error'] ?? 'Failed to resend.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
     }
   }
 
   void _showSettingsDialog() {
     final api = Provider.of<ApiClient>(context, listen: false);
     final urlController = TextEditingController(text: api.baseUrl);
+    final testEmailController = TextEditingController();
+    bool isTesting = false;
+    String? testResult;
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text("Backend Server Settings"),
-          content: TextField(
-            controller: urlController,
-            decoration: const InputDecoration(
-              labelText: "API Base URL",
-              hintText: "http://127.0.0.1:8000/api/",
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                api.updateBaseUrl(urlController.text.trim());
-                Navigator.pop(context);
-              },
-              child: const Text("Save"),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text("Backend Server Settings"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("API Server", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: urlController,
+                      decoration: const InputDecoration(
+                        labelText: "API Base URL",
+                        hintText: "http://127.0.0.1:8000/api/",
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text("Test Email Delivery", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: testEmailController,
+                      decoration: const InputDecoration(
+                        labelText: "Send test OTP to",
+                        hintText: "your@email.com",
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    if (testResult != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: testResult!.contains('sent') || testResult!.contains('Success')
+                              ? Colors.green.shade50
+                              : Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          testResult!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: testResult!.contains('sent') || testResult!.contains('Success')
+                                ? Colors.green.shade800
+                                : Colors.red.shade800,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: isTesting
+                            ? null
+                            : () async {
+                                final email = testEmailController.text.trim();
+                                if (email.isEmpty) {
+                                  setDialogState(() => testResult = 'Enter an email address first');
+                                  return;
+                                }
+                                setDialogState(() {
+                                  isTesting = true;
+                                  testResult = 'Sending...';
+                                });
+                                final result = await api.testEmail(email);
+                                setDialogState(() {
+                                  isTesting = false;
+                                  if (result['success'] == true) {
+                                    testResult =
+                                        'Sent! OTP: ${result['otp_debug'] ?? 'N/A'}\nCheck $email inbox/spam.';
+                                  } else {
+                                    testResult = 'Failed: ${result['error'] ?? 'Unknown error'}';
+                                  }
+                                });
+                              },
+                        icon: isTesting
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.email_outlined, size: 18),
+                        label: Text(isTesting ? 'Sending...' : 'Send Test Email'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    api.updateBaseUrl(urlController.text.trim());
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Save"),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -140,10 +249,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // App branding logo
-                  Icon(
-                    Icons.offline_bolt_rounded,
-                    size: 80,
-                    color: AppTheme.neonPurple,
+                  LogoGestureDetector(
+                    onTrigger: () async {
+                      final api = Provider.of<ApiClient>(context, listen: false);
+                      final nav = Navigator.of(context);
+                      await showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => const AdminLoginDialog(),
+                      );
+                      if (api.isAuthenticated) {
+                        nav.pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (context) => const HomeScreen()),
+                          (route) => false,
+                        );
+                      }
+                    },
+                    child: const Icon(
+                      Icons.offline_bolt_rounded,
+                      size: 80,
+                      color: AppTheme.neonPurple,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -186,9 +312,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   )
                                 : TextButton.icon(
                                     onPressed: _resendEmail,
-                                    icon: const Icon(Icons.email_outlined, size: 16, color: AppTheme.neonPurple),
+                                    icon: const Icon(Icons.verified_outlined, size: 16, color: AppTheme.neonPurple),
                                     label: const Text(
-                                      'Resend Verification Email',
+                                      'Verify Email with OTP',
                                       style: TextStyle(color: AppTheme.neonPurple, fontSize: 13),
                                     ),
                                   ),
@@ -268,11 +394,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       );
                     },
-                    child: const Text(
+                    child: Text(
                       "Forgot Password?",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.white38,
+                        color: context.onSurface.withValues(alpha: 0.38),
                         fontSize: 13,
                       ),
                     ),

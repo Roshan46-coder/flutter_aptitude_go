@@ -7,7 +7,7 @@ import '../core/theme.dart';
 import '../core/hive_database.dart';
 import 'reward_wheel.dart';
 import 'test_interface.dart';
-import 'multiplayer_topic_screen.dart';
+
 
 class CandidateDashboard extends StatefulWidget {
   const CandidateDashboard({super.key});
@@ -22,6 +22,7 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
   List<dynamic> _attempts = [];
   bool _isLoading = true;
   bool _spinEligible = false;
+  DateTime? _lastSpinDate;
   bool _attemptsLoading = false;
   String? _error;
 
@@ -77,6 +78,8 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
           _generalCategories = catResponse.data['general_categories'] ?? [];
           _companyCategories = catResponse.data['company_categories'] ?? [];
           _spinEligible = spinResponse.data['eligible'] ?? false;
+          final lastSpin = spinResponse.data['last_spin'] as String?;
+          _lastSpinDate = lastSpin != null ? DateTime.tryParse(lastSpin) : null;
           _attempts = attempts;
           _attemptsLoading = false;
           _isLoading = false;
@@ -114,11 +117,25 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
     final api = Provider.of<ApiClient>(context);
     final user = api.currentUser!;
 
-    // XP calculation for percentage bar (level logic: 100 XP per level in Django)
     final int xp = user['exp'] ?? 0;
-    final int nextLevelXp = 100;
-    final int currentLevelProgress = xp % nextLevelXp;
-    final double xpPercentage = (currentLevelProgress / nextLevelXp).clamp(0.0, 1.0);
+    final info = HiveDatabase.levelInfo(xp);
+    final int currentLevel = info[0];
+    final int xpIntoLevel = info[1];
+    final int xpForNextLevel = info[2];
+    final double xpPercentage = (xpIntoLevel / xpForNextLevel).clamp(0.0, 1.0);
+
+    String spinCountdown = '';
+    if (!_spinEligible && _lastSpinDate != null) {
+      final next = _lastSpinDate!.add(const Duration(days: 7));
+      final remaining = next.difference(DateTime.now());
+      if (remaining.isNegative) {
+        spinCountdown = 'Available now!';
+      } else {
+        final d = remaining.inDays;
+        final h = remaining.inHours.remainder(24);
+        spinCountdown = 'Next spin in ${d}d ${h}h';
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -165,7 +182,7 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
       body: RefreshIndicator(
         onRefresh: _fetchDashboardData,
         color: AppTheme.neonPurple,
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.neonPurple))
             : SingleChildScrollView(
@@ -175,7 +192,7 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // User stats card
-                    _buildUserStatsCard(user, xpPercentage, currentLevelProgress),
+                    _buildUserStatsCard(user, xpPercentage, xpIntoLevel, xpForNextLevel, currentLevel),
                     const SizedBox(height: 20),
 
                     // Join Private Exam Card
@@ -183,14 +200,10 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                     const SizedBox(height: 20),
 
                     // Spin wheel promotion alert
-                    if (_spinEligible) ...[
-                      _buildSpinAlertCard(),
-                      const SizedBox(height: 20),
-                    ],
+                    _buildSpinAlertCard(spinCountdown),
+                    const SizedBox(height: 20),
 
-                    // Multiplayer Entry Card
-                    _buildMultiplayerEntryCard(),
-                    const SizedBox(height: 24),
+
 
                     // Score History Chart
                     if (_attempts.length >= 2) ...[
@@ -204,7 +217,7 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                         child: Text(
                           _error!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white54),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
                         ),
                       )
                     ] else ...[
@@ -238,14 +251,14 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.neonPurple.withValues(alpha: 0.3)),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.cardBg,
+            Theme.of(context).cardColor,
             AppTheme.neonPurple.withValues(alpha: 0.04),
           ],
         ),
@@ -269,9 +282,9 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   "Enter a secure 8-digit access code to register and join a private exam.",
-                  style: TextStyle(fontSize: 13, color: Colors.white54),
+                  style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
                 ),
               ],
             ),
@@ -304,7 +317,7 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              backgroundColor: AppTheme.cardBg,
+              backgroundColor: Theme.of(context).cardColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
               title: const Row(
                 children: [
@@ -317,25 +330,25 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     "Enter the 8-character secure access code provided by your recruiter.",
-                    style: TextStyle(color: Colors.white54, fontSize: 13, height: 1.4),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 13, height: 1.4),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: controller,
                     maxLength: 8,
                     autofocus: true,
-                    style: const TextStyle(
+                    style: TextStyle(
                       letterSpacing: 4.0,
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     textAlign: TextAlign.center,
                     decoration: InputDecoration(
                       hintText: "CODE1234",
-                      hintStyle: const TextStyle(letterSpacing: 2.0, color: Colors.white24, fontSize: 16),
+                      hintStyle: TextStyle(letterSpacing: 2.0, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), fontSize: 16),
                       errorText: errorText,
                       counterText: "",
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -347,7 +360,7 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
               actions: [
                 TextButton(
                   onPressed: isSubmitting ? null : () => Navigator.pop(context),
-                  child: const Text("Cancel", style: TextStyle(color: Colors.white38)),
+                  child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38))),
                 ),
                 ElevatedButton(
                   onPressed: isSubmitting
@@ -430,13 +443,13 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
     );
   }
 
-  Widget _buildUserStatsCard(Map<String, dynamic> user, double xpPercent, int currentXp) {
+  Widget _buildUserStatsCard(Map<String, dynamic> user, double xpPercent, int xpIntoLevel, int xpForNextLevel, int currentLevel) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -459,7 +472,7 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "Level ${user['level'] ?? 1}",
+                  "Level $currentLevel",
                   style: const TextStyle(color: AppTheme.neonPurple, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 8),
@@ -467,14 +480,14 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                   lineHeight: 6.0,
                   percent: xpPercent,
                   padding: EdgeInsets.zero,
-                  backgroundColor: AppTheme.divider,
+                  backgroundColor: Theme.of(context).dividerColor,
                   progressColor: AppTheme.neonPurple,
                   barRadius: const Radius.circular(3),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "$currentXp / 100 XP",
-                  style: const TextStyle(fontSize: 11, color: Colors.white30),
+                  "$xpIntoLevel / $xpForNextLevel XP",
+                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)),
                 ),
               ],
             ),
@@ -484,7 +497,8 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
     );
   }
 
-  Widget _buildSpinAlertCard() {
+  Widget _buildSpinAlertCard(String countdown) {
+    final effectivelyEligible = _spinEligible || _lastSpinDate == null;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
@@ -496,98 +510,45 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.stars, color: AppTheme.goldAccent, size: 28),
+          Icon(Icons.stars, color: AppTheme.goldAccent, size: 28),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Monthly Spin Available!",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                Text(
+                  effectivelyEligible ? "Weekly Spin Available!" : "Spin wheel locked",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 Text(
-                  "Spin the lucky wheel and win coins or lives.",
-                  style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7)),
+                  effectivelyEligible
+                      ? "Spin the lucky wheel and win coins or lives."
+                      : countdown.isNotEmpty ? countdown : "Come back later for your next spin.",
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70)),
                 ),
               ],
             ),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const RewardWheelScreen()),
-              );
-              if (result == true) {
-                _fetchDashboardData();
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.neonPurple,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
+          if (effectivelyEligible)
+            ElevatedButton(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const RewardWheelScreen()),
+                );
+                if (result == true) {
+                  _fetchDashboardData();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.neonPurple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
+              ),
+              child: const Text("Spin Now", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
-            child: const Text("Spin Now", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMultiplayerEntryCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.people_outline, color: AppTheme.neonBlue, size: 22),
-                    const SizedBox(width: 8),
-                    Text(
-                      "Multiplayer Arena",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  "Challenge a live opponent, win 40 coins, and race for accuracy.",
-                  style: TextStyle(fontSize: 13, color: Colors.white38),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MultiplayerTopicScreen()),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.neonBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
-            ),
-            child: const Text("Play VS", style: TextStyle(fontWeight: FontWeight.bold)),
-          )
         ],
       ),
     );
@@ -602,9 +563,9 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -629,7 +590,7 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                       gridData: FlGridData(
                         show: true,
                         getDrawingHorizontalLine: (_) =>
-                            FlLine(color: AppTheme.divider, strokeWidth: 1),
+                            FlLine(color: Theme.of(context).dividerColor, strokeWidth: 1),
                         getDrawingVerticalLine: (_) =>
                             FlLine(color: Colors.transparent),
                       ),
@@ -641,8 +602,8 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                             getTitlesWidget: (value, meta) {
                               return Text(
                                 '${value.toInt()}%',
-                                style: const TextStyle(
-                                  color: Colors.white24,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24),
                                   fontSize: 10,
                                 ),
                               );
@@ -671,8 +632,8 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                                 padding: const EdgeInsets.only(top: 6),
                                 child: Text(
                                   label,
-                                  style: const TextStyle(
-                                    color: Colors.white24,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24),
                                     fontSize: 9,
                                   ),
                                 ),
@@ -714,11 +675,11 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                                   attempt?['category_name'] as String? ?? '';
                               return LineTooltipItem(
                                 '${spot.y.toStringAsFixed(0)}%\n$catName',
-                                const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11,
-                                ),
+                              TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
                               );
                             }).toList();
                           },
@@ -742,7 +703,7 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-        Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.white30)),
+        Text(subtitle, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30))),
         const SizedBox(height: 12),
         
         // Grid View of Categories
@@ -794,7 +755,7 @@ class _CandidateDashboardState extends State<CandidateDashboard> {
                           const SizedBox(height: 4),
                           Text(
                             "${cat['q_count'] ?? 0} Questions",
-                            style: const TextStyle(fontSize: 10, color: Colors.white30),
+                            style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)),
                           ),
                         ],
                       )

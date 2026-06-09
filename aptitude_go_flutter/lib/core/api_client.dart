@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:flutter/foundation.dart';
+import 'email_service.dart';
 import 'hive_database.dart';
 import 'local_data.dart';
 
@@ -90,11 +91,12 @@ class ApiClient extends ChangeNotifier {
 
   Future<void> _loadSavedSession() async {
     debugPrint("ApiClient._loadSavedSession: Checking Hive for saved session...");
+    await _db.checkAndRestoreLives();
     final user = _db.getCurrentUser();
     if (user != null) {
       _currentUser = user;
       _isAuthenticated = true;
-      debugPrint("ApiClient._loadSavedSession: Session restored for user: ${user['username']}");
+      debugPrint("ApiClient._loadSavedSession: Session restored for user: ${user['username']}, lives: ${user['lives']}");
     } else {
       debugPrint("ApiClient._loadSavedSession: No saved session found");
     }
@@ -112,26 +114,32 @@ class ApiClient extends ChangeNotifier {
     debugPrint("ApiClient: Clearing local session");
     _currentUser = null;
     _isAuthenticated = false;
+    _isLoading = false;
     await _db.clearCurrentUser();
     notifyListeners();
   }
 
   // ── AUTH APIs (Hive-local) ─────────────────────────────────────────────────
   Future<Map<String, dynamic>> login(String username, String password) async {
+    debugPrint("🔵 API LOGIN: called with username='$username'");
     _setLoading(true);
     try {
       final result = await _db.loginUser(username, password);
       _setLoading(false);
+      debugPrint("🔵 API LOGIN: loginUser returned success=${result['success']}, error=${result['error']}");
       if (result['success'] == true) {
-        debugPrint("ApiClient.login: Login successful, saving session...");
+        debugPrint("🔵 API LOGIN: Login successful, saving session...");
+        debugPrint("🔵 API LOGIN: user data: username='${result['user']?['username']}', email='${result['user']?['email']}', is_company=${result['user']?['is_company']}");
+        await _db.checkAndRestoreLives();
         await _saveLocalSession(result['user']);
+        debugPrint("🔵 API LOGIN: Session saved, notifying listeners...");
         return {'success': true, 'message': result['message']};
       }
-      debugPrint("ApiClient.login: Login failed: ${result['error']}");
+      debugPrint("🔵 API LOGIN: Login failed: ${result['error']}");
       return {'success': false, 'error': result['error'] ?? 'Login failed'};
     } catch (e) {
       _setLoading(false);
-      debugPrint("ApiClient.login: Exception: $e");
+      debugPrint("🔵 API LOGIN: Exception: $e");
       return {'success': false, 'error': 'Login failed: $e'};
     }
   }
@@ -210,10 +218,49 @@ class ApiClient extends ChangeNotifier {
 
   Future<void> logout() async {
     debugPrint("ApiClient.logout: Logging out");
+
+    // Capture current username before clearing session
+    final username = _currentUser?['username']?.toString();
+
+    // Clear user-specific cached data
+    if (username != null && username.isNotEmpty) {
+      await _db.clearChatHistory(username: username);
+      debugPrint("ApiClient.logout: Cleared chat history for user '$username'");
+    }
+
+    // Clear the session (current_user from Hive, in-memory state)
     await _clearLocalSession();
+
+    // Notify all listeners to refresh with empty/null state
+    notifyListeners();
+    debugPrint("ApiClient.logout: Logout complete");
+  }
+
+  /// Clears all cached data for the current user without logging out.
+  /// Used when switching accounts.
+  Future<void> clearUserCache() async {
+    final username = _currentUser?['username']?.toString();
+    if (username != null && username.isNotEmpty) {
+      await _db.clearChatHistory(username: username);
+      debugPrint("ApiClient.clearUserCache: Cleared chat history for user '$username'");
+    }
+  }
+
+  Future<void> loginAsAdmin() async {
+    final adminUser = {
+      'id': 1,
+      'username': 'admin',
+      'email': 'admin@test.com',
+      'is_company': false,
+      'is_staff': true,
+      'is_superuser': true,
+      'is_active': true,
+    };
+    await _saveLocalSession(adminUser);
   }
 
   Future<bool> checkAuthStatus() async {
+    await _db.checkAndRestoreLives();
     final user = _db.getCurrentUser();
     if (user != null) {
       _currentUser = user;
@@ -235,6 +282,104 @@ class ApiClient extends ChangeNotifier {
 
   Future<Map<String, dynamic>> resendVerificationEmail(String email) async {
     return await _db.resendVerification(email);
+  }
+
+  // ── TEST EMAIL ──────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> testEmail(String email) async {
+    try {
+      final response = await post('test-email/', data: {'email': email});
+      final data = response.data as Map<String, dynamic>;
+      return {
+        'success': data['success'] == true,
+        'error': data['error'],
+        'otp_debug': data['otp_debug'],
+        'smtp_host': data['smtp_host'],
+        'smtp_port': data['smtp_port'],
+        'smtp_user': data['smtp_user'],
+        'tls': data['tls'],
+        'message': data['message'],
+      };
+    } on DioException catch (e) {
+      if (e.response?.data is Map) {
+        final errData = e.response!.data as Map;
+        return {'success': false, 'error': errData['error'] ?? 'Server error'};
+      }
+      return {'success': false, 'error': 'Cannot connect to server: ${e.message}'};
+    }
+  }
+
+  // ── OTP APIs (Direct SMTP via EmailService + Hive verification) ──────────
+  Future<Map<String, dynamic>> sendOtp({
+    required String email,
+    required String purpose,
+  }) async {
+    _setLoading(true);
+    try {
+      if (!EmailService.instance.isReady) {
+        await EmailService.instance.init();
+      }
+
+      // Generate OTP and store in Hive first
+      final genResult = await _db.generateLocalOtp(email: email, purpose: purpose);
+      if (genResult['success'] != true) {
+        _setLoading(false);
+        return genResult;
+      }
+
+      final otpCode = genResult['otp_debug'] as String;
+      debugPrint('[OTP] Generated OTP for $email: $otpCode');
+
+      // Send via SMTP
+      final emailResult = await EmailService.instance.sendOtpEmail(
+        toEmail: email,
+        otp: otpCode,
+        purpose: purpose,
+      );
+
+      _setLoading(false);
+
+      if (emailResult['success'] == true) {
+        debugPrint('[OTP] Email sent successfully to $email');
+        return {
+          'success': true,
+          'message': 'OTP sent to $email. Check your inbox (and spam folder).',
+          'otp_debug': otpCode,
+        };
+      } else {
+        // Email sending failed - remove the stored OTP so user can retry
+        await _db.clearOtp();
+        debugPrint('[OTP] Email sending FAILED: ${emailResult['error']}');
+        return {
+          'success': false,
+          'error': emailResult['error'] ?? 'Failed to send email. Check SMTP credentials in .env file.',
+        };
+      }
+    } catch (e) {
+      _setLoading(false);
+      debugPrint('[OTP] Unexpected error in sendOtp: $e');
+      return {'success': false, 'error': 'Failed to send OTP: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyOtp({
+    required String email,
+    required String otp,
+    required String purpose,
+  }) async {
+    _setLoading(true);
+    final result = await _db.verifyLocalOtp(email: email, otp: otp, purpose: purpose);
+    _setLoading(false);
+    return result;
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String password,
+  }) async {
+    _setLoading(true);
+    final result = await _db.resetLocalPassword(email: email, password: password);
+    _setLoading(false);
+    return result;
   }
 
   String _localPath(String path) {
@@ -264,7 +409,7 @@ class ApiClient extends ChangeNotifier {
       return await dio.post(path, data: data, queryParameters: queryParameters);
     } on DioException catch (e) {
       debugPrint("ApiClient.post: Error posting to $path: ${e.message}");
-      final local = LocalDataProvider.instance.post(_localPath(path), data: data);
+      final local = await LocalDataProvider.instance.post(_localPath(path), data: data);
       if (local != null) {
         return Response(requestOptions: e.requestOptions, data: local, statusCode: 200);
       }

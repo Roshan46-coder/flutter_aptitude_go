@@ -70,13 +70,13 @@ class _InboxScreenState extends State<InboxScreen> {
           : _error != null
               ? Center(child: Text(_error!))
               : _conversations.isEmpty
-                  ? const Center(child: Text('No conversations yet.', style: TextStyle(color: Colors.white30)))
+                  ? Center(child: Text('No conversations yet.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30))))
                   : RefreshIndicator(
                       onRefresh: _fetchInbox,
                       color: AppTheme.neonPurple,
                       child: ListView.separated(
                         itemCount: _conversations.length,
-                        separatorBuilder: (_, _) => const Divider(color: AppTheme.divider, height: 1),
+                        separatorBuilder: (_, _) => Divider(color: Theme.of(context).dividerColor, height: 1),
                         itemBuilder: (context, index) {
                           final conv = _conversations[index];
                           final other = conv['other_user'];
@@ -98,12 +98,12 @@ class _InboxScreenState extends State<InboxScreen> {
                               lastMsg?['content'] ?? 'No messages yet',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white38, fontSize: 13),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 13),
                             ),
                             trailing: lastMsg != null
                                 ? Text(
                                     _formatTime(lastMsg['timestamp']),
-                                    style: const TextStyle(color: Colors.white24, fontSize: 11),
+                                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), fontSize: 11),
                                   )
                                 : null,
                             onTap: () => Navigator.push(
@@ -230,10 +230,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 16,
-                backgroundColor: AppTheme.divider,
-                child: Icon(Icons.person, size: 16, color: Colors.white54),
+                backgroundColor: Theme.of(context).dividerColor,
+                child: Icon(Icons.person, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
               ),
               const SizedBox(width: 10),
               Text(widget.otherUsername, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -260,23 +260,23 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
                           decoration: BoxDecoration(
-                            color: isMe ? AppTheme.neonPurple.withValues(alpha: 0.18) : AppTheme.cardBg,
+                            color: isMe ? AppTheme.neonPurple.withValues(alpha: 0.18) : Theme.of(context).cardColor,
                             borderRadius: BorderRadius.only(
                               topLeft: const Radius.circular(16),
                               topRight: const Radius.circular(16),
                               bottomLeft: Radius.circular(isMe ? 16 : 4),
                               bottomRight: Radius.circular(isMe ? 4 : 16),
                             ),
-                            border: isMe ? null : Border.all(color: AppTheme.divider),
+                            border: isMe ? null : Border.all(color: Theme.of(context).dividerColor),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(msg['content'] ?? '', style: const TextStyle(fontSize: 14, color: Colors.white)),
+                              Text(msg['content'] ?? '', style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface)),
                               const SizedBox(height: 4),
                               Text(
                                 _formatTime(msg['timestamp']),
-                                style: const TextStyle(fontSize: 10, color: Colors.white30),
+                                style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.30)),
                               ),
                             ],
                           ),
@@ -287,9 +287,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: AppTheme.divider)),
-              color: AppTheme.surface,
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+              color: Theme.of(context).colorScheme.surface,
             ),
             child: Row(children: [
               Expanded(
@@ -297,10 +297,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   controller: _msgController,
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => _sendMessage(),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Type a message...',
-                    fillColor: AppTheme.cardBg,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    fillColor: Theme.of(context).cardColor,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                 ),
               ),

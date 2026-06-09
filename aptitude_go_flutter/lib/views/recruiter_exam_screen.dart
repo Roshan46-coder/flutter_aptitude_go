@@ -239,7 +239,7 @@ class _RecruiterExamScreenState extends State<RecruiterExamScreen> {
       barrierDismissible: false,
       builder: (ctx) {
         return AlertDialog(
-          backgroundColor: AppTheme.cardBg,
+          backgroundColor: Theme.of(context).cardColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Column(
             children: [
@@ -255,10 +255,10 @@ class _RecruiterExamScreenState extends State<RecruiterExamScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 "Provide this secure code to candidates to join the exam.",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white54, fontSize: 13),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 13),
               ),
               const SizedBox(height: 20),
               Container(
@@ -419,11 +419,11 @@ class _RecruiterExamScreenState extends State<RecruiterExamScreen> {
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
                           children: [
-                            const Row(
+                            Row(
                               children: [
-                                Icon(Icons.play_circle_outline, size: 16, color: Colors.white54),
-                                SizedBox(width: 8),
-                                Text("Exam Starts:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white70)),
+                                Icon(Icons.play_circle_outline, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
+                                const SizedBox(width: 8),
+                                Text("Exam Starts:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70))),
                               ],
                             ),
                             const SizedBox(height: 8),
@@ -447,11 +447,11 @@ class _RecruiterExamScreenState extends State<RecruiterExamScreen> {
                               ],
                             ),
                             const SizedBox(height: 16),
-                            const Row(
+                            Row(
                               children: [
-                                Icon(Icons.stop_circle_outlined, size: 16, color: Colors.white54),
-                                SizedBox(width: 8),
-                                Text("Exam Ends (Cut-off):", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white70)),
+                                Icon(Icons.stop_circle_outlined, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
+                                const SizedBox(width: 8),
+                                Text("Exam Ends (Cut-off):", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70))),
                               ],
                             ),
                             const SizedBox(height: 8),
@@ -525,7 +525,7 @@ class _RecruiterExamScreenState extends State<RecruiterExamScreen> {
                     _sectionHeader("Add Exam Questions (${_questions.length} added)"),
                     const SizedBox(height: 12),
                     Card(
-                      color: AppTheme.cardBg.withValues(alpha: 0.6),
+                      color: Theme.of(context).cardColor.withValues(alpha: 0.6),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
@@ -604,9 +604,9 @@ class _RecruiterExamScreenState extends State<RecruiterExamScreen> {
 
                     // --- QUESTIONS LIST ---
                     if (_questions.isNotEmpty) ...[
-                      const Text(
+                      Text(
                         "Exam Questions Overview",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white70),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70)),
                       ),
                       const SizedBox(height: 8),
                       ListView.builder(
@@ -627,7 +627,7 @@ class _RecruiterExamScreenState extends State<RecruiterExamScreen> {
                                 padding: const EdgeInsets.only(top: 8.0),
                                 child: Text(
                                   "A: ${q['option_a']} | B: ${q['option_b']} | C: ${q['option_c']} | D: ${q['option_d']}\nCorrect: Option ${q['correct_option']} | Marks: ${q['marks']}",
-                                  style: const TextStyle(color: Colors.white38, fontSize: 12),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 12),
                                 ),
                               ),
                               trailing: IconButton(

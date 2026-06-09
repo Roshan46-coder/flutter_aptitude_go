@@ -99,7 +99,7 @@ class OnboardingInterestScreen extends StatelessWidget {
                             Icon(
                               Icons.arrow_forward_ios_rounded,
                               size: 16,
-                              color: Colors.white.withValues(alpha: 0.3),
+                              color: context.onSurface.withValues(alpha: 0.30),
                             ),
                           ],
                         ),

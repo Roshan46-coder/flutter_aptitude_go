@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/api_client.dart';
 import '../core/theme.dart';
+import '../widgets/floating_pill_nav_bar.dart';
+import '../widgets/robot_avatar.dart';
+import 'login_screen.dart';
 import 'candidate_dashboard.dart';
 import 'practice_arena.dart';
 import 'store.dart';
 import 'inbox_screen.dart';
 import 'profile_screen.dart';
-import 'recruiter_dashboard.dart';
+import 'recruiter_main_shell.dart';
 import 'admin_dashboard.dart';
 import '../widgets/aptix_chat_bot.dart';
 
@@ -28,11 +31,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) Navigator.pushReplacementNamed(context, '/');
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => const LoginScreen(),
+              transitionDuration: Duration.zero,
+            ),
+            (route) => false,
+          );
+        }
       });
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: AppTheme.neonPurple)),
-      );
+      return const SizedBox.shrink();
     }
 
     // Role-based routing
@@ -41,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (user['is_company'] == true) {
-      return const RecruiterDashboardScreen();
+      return const RecruiterMainShell();
     }
 
     // Candidate Screens Navigation Shell
@@ -58,63 +68,32 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _currentIndex,
         children: screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppTheme.divider, width: 0.5)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: AppTheme.surface,
-          selectedItemColor: AppTheme.neonPurple,
-          unselectedItemColor: Colors.white30,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard_rounded),
-              label: "Practice",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.menu_book_outlined),
-              activeIcon: Icon(Icons.menu_book_rounded),
-              label: "Arena",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_bag_outlined),
-              activeIcon: Icon(Icons.shopping_bag_rounded),
-              label: "Store",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              activeIcon: Icon(Icons.chat_bubble_rounded),
-              label: "Chat",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.account_circle_outlined),
-              activeIcon: Icon(Icons.account_circle_rounded),
-              label: "Profile",
-            ),
-          ],
-        ),
+      bottomNavigationBar: FloatingPillNavBar(
+        currentIndex: _currentIndex,
+        onTap: (i) => setState(() => _currentIndex = i),
+        items: const [
+          FloatingPillNavItem(label: 'Practice', icon: Icons.dashboard_outlined,    activeIcon: Icons.dashboard_rounded),
+          FloatingPillNavItem(label: 'Arena',    icon: Icons.menu_book_outlined,    activeIcon: Icons.menu_book_rounded),
+          FloatingPillNavItem(label: 'Store',    icon: Icons.shopping_bag_outlined, activeIcon: Icons.shopping_bag_rounded),
+          FloatingPillNavItem(label: 'Chat',     icon: Icons.chat_bubble_outline,   activeIcon: Icons.chat_bubble_rounded),
+          FloatingPillNavItem(label: 'Profile',  icon: Icons.account_circle_outlined, activeIcon: Icons.account_circle_rounded),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => const AptixChatBotSheet(),
-          );
-        },
-        backgroundColor: AppTheme.neonPurple,
-        child: const Icon(Icons.bolt_rounded, size: 28, color: Colors.white),
+      floatingActionButton: SizedBox(
+        width: 56,
+        height: 56,
+        child: FloatingActionButton(
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => const AptixChatBotSheet(),
+            );
+          },
+          backgroundColor: AppTheme.neonPurple,
+          child: const RobotAvatar(size: 32, accentColor: Colors.white, autoAnimate: true),
+        ),
       ),
     );
   }

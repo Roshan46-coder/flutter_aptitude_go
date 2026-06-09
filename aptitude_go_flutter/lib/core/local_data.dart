@@ -63,7 +63,6 @@ class LocalDataProvider {
     await _dataBox.put('inbox', _inbox());
     await _dataBox.put('chat_messages', _chatMessages());
     await _dataBox.put('profiles', _profiles());
-    await _dataBox.put('gamification_status', {'eligible': true, 'last_spin': null});
     await _dataBox.put('practice_pdfs', _practicePdfs());
     debugPrint("LocalDataProvider: seeded all data");
   }
@@ -75,9 +74,9 @@ class LocalDataProvider {
     return _routeGet(parts, queryParameters);
   }
 
-  dynamic post(String path, {dynamic data}) {
+  Future<dynamic> post(String path, {dynamic data}) async {
     final parts = _normalizePath(path);
-    return _routePost(parts, data);
+    return await _routePost(parts, data);
   }
 
   List<String> _normalizePath(String path) {
@@ -148,7 +147,9 @@ class LocalDataProvider {
         return _getProfile(null);
       }
       if (_matches(parts, ['profile', 'certificates'])) {
-        return {'certificates': _getAllCertificates()};
+        final user = HiveDatabase.instance.getCurrentUser();
+        final username = (user?['username'] as String?) ?? '';
+        return _listCertificates(username);
       }
       if (_matches(parts, ['profile', 'certificates', '*'])) {
         return _listCertificates(parts[2]);
@@ -171,8 +172,15 @@ class LocalDataProvider {
       if (_matches(parts, ['recruiter', 'dashboard'])) {
         return _getRecruiterDashboard();
       }
+      if (_matches(parts, ['recruiter', 'exam-results', '*'])) {
+        final eventId = int.tryParse(parts[2]) ?? 0;
+        return _getExamCandidates(eventId);
+      }
       if (_matches(parts, ['recruiter', 'search'])) {
         return _searchTalent(params?['q'] as String?, role: params?['role'] as String?);
+      }
+      if (_matches(parts, ['recruiter', 'top-people'])) {
+        return _getTopPeople();
       }
       if (_matches(parts, ['aptix'])) {
         return {'success': true, 'response': 'I am running in offline mode. Ask me anything about aptitude!'};
@@ -183,7 +191,7 @@ class LocalDataProvider {
     return null;
   }
 
-  dynamic _routePost(List<String> parts, dynamic data) {
+  Future<dynamic> _routePost(List<String> parts, dynamic data) async {
     if (parts.isNotEmpty && parts[0] == 'api') parts = parts.sublist(1);
     try {
       if (_matches(parts, ['tests', 'submit'])) {
@@ -197,30 +205,37 @@ class LocalDataProvider {
         return _processSpin();
       }
       if (_matches(parts, ['events', 'join'])) {
+        // Look up the event by access code – do NOT hardcode event_id!
+        final code = (data is Map) ? (data['code'] as String? ?? '').toUpperCase() : '';
+        final eventsBoxData = _dataBox.get('events', defaultValue: _events());
+        final studentEvents = (eventsBoxData['student_events'] as List?) ?? [];
+        for (final e in studentEvents) {
+          if (e is Map) {
+            final storedCode = (e['access_code'] as String? ?? '').toUpperCase();
+            if (storedCode == code) {
+              return {
+                'success': true,
+                'message': 'Joined exam successfully',
+                'event_id': e['id'],
+                'event_title': e['title'] ?? 'Private Exam',
+              };
+            }
+          }
+        }
         return {
-          'success': true,
-          'message': 'Joined exam successfully',
-          'event_id': 3,
-          'event_title': 'Live Speed Quiz'
+          'success': false,
+          'error': 'Invalid or expired exam code. Please check the code and try again.',
         };
       }
       if (_matches(parts, ['events', 'create'])) {
-        return {
-          'success': true,
-          'message': 'Event created successfully',
-          'event_id': 5,
-          'access_code': 'MOCKABCD'
-        };
+        return _createEvent(data);
       }
       if (_matches(parts, ['events', '*', 'register'])) {
         return {'message': 'Registered for event successfully'};
       }
       if (_matches(parts, ['events', '*', 'submit'])) {
-        return {
-          'success': true,
-          'message': 'Event test submitted successfully',
-          'score': 10
-        };
+        final eventId = int.tryParse(parts[1]) ?? 0;
+        return _submitEventTest(eventId, data);
       }
       if (_matches(parts, ['chat', '*', 'send'])) {
         final convId = int.tryParse(parts[1]) ?? 0;
@@ -241,12 +256,19 @@ class LocalDataProvider {
       if (_matches(parts, ['profile', 'edit'])) {
         final updates = Map<String, dynamic>.from(data as Map);
         HiveDatabase.instance.updateCurrentUser(updates);
+        final user = HiveDatabase.instance.getCurrentUser();
+        final username = (user?['username'] as String?) ?? 'anon';
         final profiles = _dataBox.get('profiles', defaultValue: _profiles());
-        final live = Map<String, dynamic>.from(profiles['current_user'] ?? _profiles()['current_user']);
+        final profileKey = username.toLowerCase();
+        final live = Map<String, dynamic>.from(profiles[profileKey] ?? profiles['current_user'] ?? {});
         final userLive = Map<String, dynamic>.from(live['user'] ?? {});
         userLive.addAll(updates);
         live['user'] = userLive;
-        profiles['current_user'] = live;
+        // Always write to the correct username key
+        if (profiles.containsKey('current_user') && profileKey != 'current_user') {
+          profiles.remove('current_user');
+        }
+        profiles[profileKey] = live;
         _dataBox.put('profiles', profiles);
         return {'success': true, 'message': 'Profile updated locally'};
       }
@@ -263,24 +285,112 @@ class LocalDataProvider {
         final certId = int.tryParse(parts[2]) ?? 0;
         return _deleteCertificate(certId);
       }
-      if (_matches(parts, ['admin', 'approve-user', '*']) || _matches(parts, ['admin', 'delete-user', '*'])) {
-        return {'success': true, 'message': 'User updated'};
+
+      if (_matches(parts, ['admin', 'approve-user', '*'])) {
+        final userId = int.tryParse(parts[2]) ?? 0;
+        final authBox = Hive.box('auth_box');
+        final users = List<Map<String, dynamic>>.from(
+          (authBox.get('registered_users', defaultValue: []) as List).map((e) => Map<String, dynamic>.from(e as Map))
+        );
+        final index = users.indexWhere((u) => u['id'] == userId);
+        if (index != -1) {
+          users[index]['is_active'] = true;
+          await authBox.put('registered_users', users);
+        }
+        return {'success': true, 'message': 'User approved'};
       }
+
+      if (_matches(parts, ['admin', 'delete-user', '*'])) {
+        final userId = int.tryParse(parts[2]) ?? 0;
+        final authBox = Hive.box('auth_box');
+        final users = List<Map<String, dynamic>>.from(
+          (authBox.get('registered_users', defaultValue: []) as List).map((e) => Map<String, dynamic>.from(e as Map))
+        );
+        users.removeWhere((u) => u['id'] == userId);
+        await authBox.put('registered_users', users);
+        return {'success': true, 'message': 'User deleted'};
+      }
+
       if (_matches(parts, ['admin', 'toggle-malpractice'])) {
-        return {'success': true, 'message': 'Anti-malpractice toggled', 'anti_malpractice_enabled': true};
+        final current = _dataBox.get('anti_malpractice_enabled', defaultValue: false);
+        final next = !current;
+        await _dataBox.put('anti_malpractice_enabled', next);
+        return {'success': true, 'message': 'Anti-malpractice toggled', 'anti_malpractice_enabled': next};
       }
+
       if (_matches(parts, ['admin', 'add-question'])) {
+        final text = (data is Map) ? (data['text'] ?? '') : '';
+        final optionsList = (data is Map) ? (data['options'] as List? ?? []) : [];
+        final correctIdx = (data is Map) ? (data['correct_index'] ?? 0) : 0;
+        final difficulty = (data is Map) ? (data['difficulty'] ?? 'Medium') : 'Medium';
+        final categoryId = (data is Map) ? (data['category_id'] ?? 1) : 1;
+        
+        final categorySlug = _categories.firstWhere((c) => c['id'] == categoryId, orElse: () => _categories[0])['slug'] as String;
+        
+        final qData = Map<String, dynamic>.from(_dataBox.get('question_data', defaultValue: {}));
+        final catQuestions = List<dynamic>.from(qData[categorySlug] ?? []);
+        
+        final newId = DateTime.now().millisecondsSinceEpoch;
+        final formattedOptions = optionsList.asMap().entries.map((e) => {
+          'id': e.key,
+          'text': e.value.toString(),
+        }).toList();
+        
+        final newQ = {
+          'id': newId,
+          'text': text,
+          'options': formattedOptions,
+          'correct_index': correctIdx,
+          'difficulty': difficulty,
+          'category_name': _categories.firstWhere((c) => c['id'] == categoryId, orElse: () => _categories[0])['name'] as String,
+        };
+        
+        catQuestions.add(newQ);
+        qData[categorySlug] = catQuestions;
+        await _dataBox.put('question_data', qData);
+        
         return {'success': true, 'message': 'Question added'};
       }
+
       if (_matches(parts, ['admin', 'delete-question', '*'])) {
+        final qId = int.tryParse(parts[2]) ?? 0;
+        final qData = Map<String, dynamic>.from(_dataBox.get('question_data', defaultValue: {}));
+        
+        bool deleted = false;
+        qData.forEach((key, val) {
+          if (val is List) {
+            final list = List<dynamic>.from(val);
+            final index = list.indexWhere((q) => (q is Map && q['id'] == qId));
+            if (index != -1) {
+              list.removeAt(index);
+              qData[key] = list;
+              deleted = true;
+            }
+          }
+        });
+        
+        if (deleted) {
+          await _dataBox.put('question_data', qData);
+        }
         return {'success': true, 'message': 'Question deleted'};
       }
+
       if (_matches(parts, ['admin', 'create-event']) || _matches(parts, ['events', 'create'])) {
-        return {'success': true, 'message': 'Event created', 'event_id': 1};
+        return _createEvent(data);
       }
+
       if (_matches(parts, ['admin', 'delete-event', '*'])) {
+        final eventId = int.tryParse(parts[2]) ?? 0;
+        final eventsBoxData = _dataBox.get('events', defaultValue: _events());
+        final studentEvents = List<dynamic>.from(eventsBoxData['student_events'] ?? []);
+        
+        studentEvents.removeWhere((e) => e is Map && e['id'] == eventId);
+        eventsBoxData['student_events'] = studentEvents;
+        await _dataBox.put('events', eventsBoxData);
+        
         return {'success': true, 'message': 'Event deleted'};
       }
+
       if (_matches(parts, ['recruiter', 'message'])) {
         final toUser = (data is Map) ? (data['to'] ?? '') : '';
         final msgContent = (data is Map) ? (data['message'] ?? '') : '';
@@ -391,6 +501,8 @@ class LocalDataProvider {
     final all = _questions;
     final raw = all[slug] as List<dynamic>? ?? [];
     final questions = raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    final seen = <int>{};
+    questions.retainWhere((q) => seen.add(q['id'] as int));
     final name = _categories.firstWhere(
       (c) => c['slug'] == slug,
       orElse: () => _companyCategories.firstWhere(
@@ -461,7 +573,7 @@ class LocalDataProvider {
     }
 
     final newExp = currentExp + expEarned;
-    final newLevel = 1 + (newExp ~/ 100);
+    final newLevel = HiveDatabase.levelInfo(newExp)[0];
     final leveledUp = newLevel > currentLevel;
     final newCoins = currentCoins + coinsEarned;
     final newLives = currentLives > 0 ? currentLives - 1 : 0;
@@ -484,9 +596,10 @@ class LocalDataProvider {
       return slug;
     }();
 
+    final currentUsername = (userData?['username'] as String?) ?? 'anon';
     final profiles = _dataBox.get('profiles', defaultValue: _profiles());
-    final profileKey = 'current_user';
-    final profile = Map<String, dynamic>.from(profiles[profileKey] ?? _profiles()[profileKey]);
+    // Check both the current username key and the legacy 'current_user' key
+    final profile = Map<String, dynamic>.from(profiles[currentUsername] ?? profiles['current_user'] ?? {'attempts': [], 'certificates': []});
     final attempts = List<Map<String, dynamic>>.from(
       (profile['attempts'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? [],
     );
@@ -498,7 +611,7 @@ class LocalDataProvider {
       'completed_at': DateTime.now().toIso8601String(),
     });
     profile['attempts'] = attempts;
-    profiles[profileKey] = profile;
+    profiles[currentUsername] = profile;
     _dataBox.put('profiles', profiles);
 
     return {
@@ -619,7 +732,29 @@ class LocalDataProvider {
   }
 
   Map<String, dynamic> _getSpinStatus() {
-    return _dataBox.get('gamification_status', defaultValue: {'eligible': true, 'last_spin': null});
+    final user = HiveDatabase.instance.getCurrentUser();
+    final username = user?['username'] as String?;
+
+    if (username == null || user?['is_company'] == true || user?['is_superuser'] == true) {
+      return {'eligible': false, 'last_spin': null};
+    }
+
+    final key = 'spin_status_$username';
+    final raw = _dataBox.get(key, defaultValue: <String, dynamic>{'last_spin': null});
+    final data = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{'last_spin': null};
+    final lastSpin = data['last_spin'] as String?;
+
+    if (lastSpin == null || lastSpin.isEmpty) {
+      return {'eligible': true, 'last_spin': null};
+    }
+
+    final lastDate = DateTime.tryParse(lastSpin);
+    if (lastDate == null) {
+      return {'eligible': true, 'last_spin': null};
+    }
+
+    final eligible = DateTime.now().difference(lastDate).inDays >= 7;
+    return {'eligible': eligible, 'last_spin': lastSpin};
   }
 
   Map<String, dynamic> _processSpin() {
@@ -632,7 +767,11 @@ class LocalDataProvider {
       {'index': 5, 'label': '+1 Life'},
     ];
     final idx = DateTime.now().millisecondsSinceEpoch % 6;
-    _dataBox.put('gamification_status', {'eligible': false, 'last_spin': DateTime.now().toIso8601String()});
+    final user = HiveDatabase.instance.getCurrentUser();
+    final username = user?['username'] as String?;
+    if (username != null && username.isNotEmpty) {
+      _dataBox.put('spin_status_$username', {'last_spin': DateTime.now().toIso8601String()});
+    }
     return {
       'success': true,
       'reward_index': idx,
@@ -675,159 +814,117 @@ class LocalDataProvider {
 
 
   Map<String, dynamic> _events() {
-    final now = DateTime.now();
+    // No hardcoded mock events. Real events are synced via API or created via _createEvent.
     return {
-      'upcoming': [
-        {
-          'id': 1,
-          'title': 'Weekly Challenge',
-          'description': 'Test your skills in this week\'s aptitude challenge.',
-          'start_time': now.add(const Duration(days: 7)).toIso8601String(),
-          'end_time': now.add(const Duration(days: 8)).toIso8601String(),
-          'is_registered': false,
-          'is_live': false,
-          'has_completed': false,
-          'my_score': null,
-          'participant_count': 42,
-          'category_slug': 'quantitative-aptitude',
-        },
-        {
-          'id': 2,
-          'title': 'Tech Titans Contest',
-          'description': 'A contest for tech enthusiasts.',
-          'start_time': now.add(const Duration(days: 14)).toIso8601String(),
-          'end_time': now.add(const Duration(days: 15)).toIso8601String(),
-          'is_registered': true,
-          'is_live': false,
-          'has_completed': false,
-          'my_score': null,
-          'participant_count': 128,
-          'category_slug': 'programming-logic',
-        },
-      ],
-      'active': [
-        {
-          'id': 3,
-          'title': 'Live Speed Quiz',
-          'description': 'Answer as fast as you can! Live event happening now.',
-          'start_time': now.subtract(const Duration(hours: 1)).toIso8601String(),
-          'end_time': now.add(const Duration(hours: 2)).toIso8601String(),
-          'is_registered': false,
-          'is_live': true,
-          'has_completed': false,
-          'my_score': null,
-          'participant_count': 256,
-          'category_slug': 'logical-reasoning',
-        },
-      ],
-      'past': [
-        {
-          'id': 4,
-          'title': 'Last Month Marathon',
-          'description': 'The grand marathon from last month.',
-          'start_time': now.subtract(const Duration(days: 30)).toIso8601String(),
-          'end_time': now.subtract(const Duration(days: 29)).toIso8601String(),
-          'is_registered': true,
-          'is_live': false,
-          'has_completed': true,
-          'my_score': 85,
-          'participant_count': 512,
-          'category_slug': 'verbal-ability',
-        },
-      ],
+      'student_events': [],
     };
   }
 
   Map<String, dynamic> _getEventsForDashboard() {
-    // Returns data in Django /api/events/dashboard/ format
-    final now = DateTime.now();
-    return {
-      'student_events': [
-        {
-          'id': 1,
-          'title': 'Weekly Challenge',
-          'description': 'Test your skills in this week\'s aptitude challenge.',
-          'category': 'Quantitative Aptitude',
-          'start_time': now.add(const Duration(days: 7)).toIso8601String(),
-          'end_time': now.add(const Duration(days: 8)).toIso8601String(),
-          'total_questions': 10,
-          'time_limit_seconds': 600,
-          'threshold_type': null,
-          'threshold_value': null,
-          'is_registered': false,
-          'is_completed': false,
-          'status': 'UPCOMING',
-        },
-        {
-          'id': 2,
-          'title': 'Tech Titans Contest',
-          'description': 'A contest for tech enthusiasts.',
-          'category': 'Programming Logic',
-          'start_time': now.add(const Duration(days: 14)).toIso8601String(),
-          'end_time': now.add(const Duration(days: 15)).toIso8601String(),
-          'total_questions': 10,
-          'time_limit_seconds': 600,
-          'threshold_type': 'LEVEL',
-          'threshold_value': 3,
-          'is_registered': true,
-          'is_completed': false,
-          'status': 'UPCOMING',
-        },
-        {
-          'id': 3,
-          'title': 'Live Speed Quiz',
-          'description': 'Answer as fast as you can! Live event happening now.',
-          'category': 'Logical Reasoning',
-          'start_time': now.subtract(const Duration(hours: 1)).toIso8601String(),
-          'end_time': now.add(const Duration(hours: 2)).toIso8601String(),
-          'total_questions': 10,
-          'time_limit_seconds': 300,
-          'threshold_type': null,
-          'threshold_value': null,
-          'is_registered': false,
-          'is_completed': false,
-          'status': 'LIVE',
-        },
-        {
-          'id': 4,
-          'title': 'Last Month Marathon',
-          'description': 'The grand marathon from last month.',
-          'category': 'Verbal Ability',
-          'start_time': now.subtract(const Duration(days: 30)).toIso8601String(),
-          'end_time': now.subtract(const Duration(days: 29)).toIso8601String(),
-          'total_questions': 15,
-          'time_limit_seconds': 900,
-          'threshold_type': null,
-          'threshold_value': null,
-          'is_registered': true,
-          'is_completed': true,
-          'status': 'ENDED',
-        },
-      ],
-    };
+    // Returns events stored in Hive box. No hardcoded mock events.
+    final eventsBoxData = _dataBox.get('events');
+    if (eventsBoxData == null) {
+      return {'student_events': []};
+    }
+    final eventsMap = Map<String, dynamic>.from(eventsBoxData);
+    final studentEvents = (eventsMap['student_events'] as List?) ?? [];
+    return {'student_events': studentEvents};
   }
 
   Map<String, dynamic> _getEventDetail(int eventId) {
+    // Look up from Hive-stored events (only includes API-created or locally-created exams)
+    final eventsBoxData = _dataBox.get('events');
+    if (eventsBoxData == null) {
+      final now = DateTime.now();
+      return {
+        'event': {
+          'id': eventId,
+          'title': 'Event #$eventId',
+          'description': 'No exams available offline. Connect to the server.',
+          'start_time': now.toIso8601String(),
+          'end_time': now.add(const Duration(hours: 2)).toIso8601String(),
+          'time_limit_seconds': 600,
+          'is_live': false,
+          'total_questions': 0,
+        },
+        'registration': {
+          'is_registered': false,
+          'is_completed': false,
+          'score': null,
+        },
+        'questions': [],
+      };
+    }
+
+    final eventsMap = Map<String, dynamic>.from(eventsBoxData);
+    final studentEvents = (eventsMap['student_events'] as List?) ?? [];
+
+    for (final e in studentEvents) {
+      if (e is Map && e['id'] == eventId) {
+        final event = Map<String, dynamic>.from(e);
+        final rawQuestions = event['questions'] as List? ?? [];
+
+        // Map stored questions to the expected API format
+        final mappedQuestions = rawQuestions.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final q = entry.value;
+          if (q is Map) {
+            return <String, dynamic>{
+              'id': q['id'] ?? (eventId * 1000 + idx + 1),
+              'index': idx,
+              'text': q['text'] ?? '',
+              'option_a': q['option_a'] ?? '',
+              'option_b': q['option_b'] ?? '',
+              'option_c': q['option_c'] ?? '',
+              'option_d': q['option_d'] ?? '',
+              'marks': q['marks'] ?? 1,
+            };
+          }
+          return <String, dynamic>{};
+        }).where((q) => q.isNotEmpty).toList();
+        final seenEvent = <int>{};
+        mappedQuestions.retainWhere((q) => seenEvent.add(q['id'] as int));
+
+        return {
+          'event': {
+            'id': eventId,
+            'title': event['title'] ?? 'Event #$eventId',
+            'description': event['description'] ?? '',
+            'start_time': event['start_time'] ?? DateTime.now().toIso8601String(),
+            'end_time': event['end_time'] ?? DateTime.now().add(const Duration(hours: 2)).toIso8601String(),
+            'time_limit_seconds': event['time_limit_seconds'] ?? 600,
+            'is_live': event['is_live'] ?? true,
+            'total_questions': mappedQuestions.length,
+          },
+          'registration': {
+            'is_registered': true,
+            'is_completed': false,
+            'score': null,
+          },
+          'questions': mappedQuestions,
+        };
+      }
+    }
+
+    // Event not found – return empty questions so candidate sees a helpful error
     final now = DateTime.now();
     return {
       'event': {
         'id': eventId,
         'title': 'Event #$eventId',
-        'description': 'Event description',
+        'description': 'Exam not found in local storage.',
         'start_time': now.toIso8601String(),
         'end_time': now.add(const Duration(hours: 2)).toIso8601String(),
         'time_limit_seconds': 600,
-        'is_live': true,
-        'total_questions': 10,
+        'is_live': false,
+        'total_questions': 0,
       },
       'registration': {
-        'is_registered': true,
+        'is_registered': false,
         'is_completed': false,
         'score': null,
       },
-      'questions': [
-        {'id': 1, 'index': 1, 'text': 'Sample question?', 'option_a': 'A', 'option_b': 'B', 'option_c': 'C', 'option_d': 'D', 'marks': 1},
-      ],
+      'questions': [],
     };
   }
 
@@ -1018,6 +1115,9 @@ class LocalDataProvider {
     final title = (data is Map) ? (data['title'] ?? 'Certificate') : 'Certificate';
     final filename = (data is Map) ? (data['filename'] ?? '') : '';
     final localPath = (data is Map) ? (data['local_path'] ?? '') : '';
+    final username = (data is Map && (data['username'] ?? '') != '')
+        ? (data['username'] as String)
+        : (HiveDatabase.instance.getCurrentUser()?['username'] as String? ?? '');
     final isImage = filename.toLowerCase().endsWith('.jpg') ||
         filename.toLowerCase().endsWith('.jpeg') ||
         filename.toLowerCase().endsWith('.png');
@@ -1032,6 +1132,7 @@ class LocalDataProvider {
       'filename': filename,
       'local_path': localPath,
       'is_image': isImage,
+      'username': username.toLowerCase(),
       'uploaded_at': DateTime.now().toIso8601String(),
     });
     _dataBox.put('user_certificates', certs);
@@ -1039,41 +1140,19 @@ class LocalDataProvider {
   }
 
   Map<String, dynamic> _deleteCertificate(int certId) {
+    final user = HiveDatabase.instance.getCurrentUser();
+    final currentUsername = (user?['username'] as String?)?.toLowerCase() ?? '';
     final certs = List<Map<String, dynamic>>.from(
       (_dataBox.get('user_certificates', defaultValue: []) as List)
           .map((e) => Map<String, dynamic>.from(e as Map)),
     );
-    certs.removeWhere((c) => c['id'] == certId);
+    certs.removeWhere((c) => c['id'] == certId && (c['username'] as String?)?.toLowerCase() == currentUsername);
     _dataBox.put('user_certificates', certs);
     return {'success': true, 'message': 'Certificate deleted'};
   }
 
-  List<Map<String, dynamic>> _mockCertificates() {
-    return [
-      {
-        'id': 101,
-        'title': 'AWS Cloud Practitioner',
-        'file_url': '',
-        'file_type': 'PNG',
-        'file_size': 0,
-        'uploaded_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-        'is_image': true,
-      },
-      {
-        'id': 102,
-        'title': 'Python for Data Science',
-        'file_url': '',
-        'file_type': 'PDF',
-        'file_size': 0,
-        'uploaded_at': DateTime.now().subtract(const Duration(days: 15)).toIso8601String(),
-        'is_image': false,
-      },
-    ];
-  }
-
   List<Map<String, dynamic>> _getAllCertificates() {
     final raw = _dataBox.get('user_certificates', defaultValue: []) as List;
-    if (raw.isEmpty) return _mockCertificates();
     return raw.map((e) {
       final c = Map<String, dynamic>.from(e);
       final fileName = c['filename'] as String? ?? '';
@@ -1092,12 +1171,21 @@ class LocalDataProvider {
 
   Map<String, dynamic> _listCertificates(String username) {
     final all = _getAllCertificates();
+    if (username.isNotEmpty) {
+      final filtered = all.where((c) =>
+        (c['username'] as String? ?? '').toLowerCase() == username.toLowerCase()
+      ).toList();
+      return {'certificates': filtered};
+    }
     return {'certificates': all};
   }
 
   Map<String, dynamic> _getAttemptHistory() {
+    final user = HiveDatabase.instance.getCurrentUser();
+    final currentUsername = (user?['username'] as String?) ?? 'anon';
     final profiles = _dataBox.get('profiles', defaultValue: _profiles());
-    final profile = profiles['current_user'] ?? _profiles()['current_user'];
+    // Check both the current username key and the legacy 'current_user' key
+    final profile = profiles[currentUsername] ?? profiles['current_user'] ?? {'attempts': []};
     final allAttempts = (profile['attempts'] as List?) ?? [];
     final realAttempts = allAttempts.where((a) {
       final m = a as Map?;
@@ -1153,14 +1241,12 @@ class LocalDataProvider {
     // Ensure we don't return the password
     matchUser.remove('password');
 
-    // 3. Load user's profile details from Hive box
-    // Get attempts, certificates, and category_stats if present
+    // 3. Load user's profile details from Hive box keyed by actual username
     final profiles = _dataBox.get('profiles', defaultValue: _profiles());
-    final profileKey = (username == null || username.toLowerCase() == (HiveDatabase.instance.getCurrentUser()?['username'] as String?)?.toLowerCase())
-        ? 'current_user'
-        : targetUsername.toLowerCase();
+    final profileKey = targetUsername.toLowerCase();
         
-    final userProfile = Map<String, dynamic>.from(profiles[profileKey] ?? {
+    // Check both the current username key and the legacy 'current_user' key
+    final userProfile = Map<String, dynamic>.from(profiles[profileKey] ?? profiles['current_user'] ?? {
       'attempts': [],
       'category_stats': [],
       'certificates': [],
@@ -1203,13 +1289,12 @@ class LocalDataProvider {
             'file_size': 0,
             'uploaded_at': c['uploaded_at'] ?? '',
             'is_image': c['is_image'] == true,
+            'username': c['username'] ?? '',
           };
         })
+        .where((c) => (c['username'] as String).toLowerCase() == targetUsername.toLowerCase())
         .toList();
     mergedCerts = [...seedCerts, ...boxCerts];
-    if (mergedCerts.isEmpty && username != null) {
-      mergedCerts = _mockCertificates();
-    }
 
     return {
       'user': matchUser,
@@ -1220,37 +1305,7 @@ class LocalDataProvider {
   }
 
   Map<String, dynamic> _profiles() {
-    return {
-      'current_user': {
-        'user': {
-          'username': 'current_user',
-          'first_name': '',
-          'last_name': '',
-          'avatar_url': null,
-          'level': 1,
-          'exp': 0,
-          'coins': 0,
-          'lives': 5,
-          'is_company': false,
-          'organization': '',
-          'linkedin_url': '',
-          'github_url': '',
-        },
-        'attempts': [],
-        'category_stats': [],
-        'certificates': [],
-      },
-      'alice': {
-        'user': {
-          'username': 'alice', 'first_name': 'Alice', 'last_name': 'W.', 'avatar_url': null,
-          'level': 10, 'exp': 2000, 'coins': 1200, 'lives': 5, 'is_company': false,
-          'organization': 'Tech University', 'linkedin_url': '', 'github_url': '',
-        },
-        'attempts': [],
-        'category_stats': [],
-        'certificates': [],
-      },
-    };
+    return {};
   }
 
   Map<String, dynamic> _adminCategory(Map<String, dynamic> c) {
@@ -1269,34 +1324,435 @@ class LocalDataProvider {
     };
   }
 
+  List<double> _getUserGrowthData(List<dynamic> users) {
+    final counts = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+    int total = users.length;
+    for (int i = 0; i < 7; i++) {
+      counts[i] = (total * (i + 1) / 7).roundToDouble();
+    }
+    return counts;
+  }
+
+  List<double> _getExamActivityData(Map<dynamic, dynamic> profiles) {
+    int count = 0;
+    profiles.forEach((key, val) {
+      if (val is Map && val['attempts'] is List) {
+        count += (val['attempts'] as List).length;
+      }
+    });
+    final counts = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+    for (int i = 0; i < 7; i++) {
+      counts[i] = (count * (i + 1) / 7).roundToDouble();
+    }
+    return counts;
+  }
+
+  List<double> _getRecruiterActivityData(List<dynamic> users) {
+    final recruiters = users.where((u) => u['is_company'] == true).length;
+    final counts = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+    for (int i = 0; i < 7; i++) {
+      counts[i] = (recruiters * (i + 1) / 7).roundToDouble();
+    }
+    return counts;
+  }
+
+  List<double> _getQuestionGrowthData(Map<dynamic, dynamic>? qData) {
+    int count = 0;
+    if (qData is Map) {
+      qData.forEach((key, val) {
+        if (val is List) count += val.length;
+      });
+    }
+    final counts = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+    for (int i = 0; i < 7; i++) {
+      counts[i] = (count * (i + 1) / 7).roundToDouble();
+    }
+    return counts;
+  }
+
   Map<String, dynamic> _getAdminDashboard() {
+    final users = HiveDatabase.instance.getUsers();
+    final candidatesCount = users.where((u) => u['is_company'] != true).length;
+    final recruitersCount = users.where((u) => u['is_company'] == true).length;
+
+    int questionsCount = 0;
+    final qData = _dataBox.get('question_data');
+    if (qData is Map) {
+      qData.forEach((key, val) {
+        if (val is List) questionsCount += val.length;
+      });
+    }
+
+    int attemptsCount = 0;
+    final profiles = _dataBox.get('profiles', defaultValue: _profiles());
+    if (profiles is Map) {
+      profiles.forEach((key, val) {
+        if (val is Map && val['attempts'] is List) {
+          attemptsCount += (val['attempts'] as List).length;
+        }
+      });
+    }
+
+    int certsCount = 0;
+    if (profiles is Map) {
+      profiles.forEach((key, val) {
+        if (val is Map && val['certificates'] is List) {
+          certsCount += (val['certificates'] as List).length;
+        }
+      });
+    }
+    final userCerts = _dataBox.get('user_certificates', defaultValue: []);
+    if (userCerts is List) {
+      certsCount += userCerts.length;
+    }
+
+    final eventsBoxData = _dataBox.get('events', defaultValue: _events());
+    final studentEvents = eventsBoxData['student_events'] as List? ?? [];
+
+    final dynamicCategories = _categories.map((c) {
+      final slug = c['slug'] as String;
+      final rawQs = qData is Map ? (qData[slug] as List? ?? []) : [];
+      return {
+        'id': c['id'],
+        'name': c['name'],
+        'question_count': rawQs.length,
+        'questions': rawQs.map((q) => {
+          'id': q['id'],
+          'text': q['text'],
+          'difficulty': q['difficulty'] ?? 'Medium',
+        }).toList(),
+      };
+    }).toList();
+
+    final allAttempts = <Map<String, dynamic>>[];
+    if (profiles is Map) {
+      profiles.forEach((username, profile) {
+        if (profile is Map && profile['attempts'] is List) {
+          for (final att in profile['attempts']) {
+            if (att is Map) {
+              allAttempts.add({
+                'username': username == 'current_user' ? (HiveDatabase.instance.getCurrentUser()?['username'] ?? 'candidate') : username,
+                'category_name': att['category_name'] ?? 'General',
+                'score': att['score'] ?? 0,
+                'total_questions': att['total_questions'] ?? 10,
+                'percentage': att['percentage'] ?? 0.0,
+                'completed_at': att['completed_at'] ?? '',
+                'has_certificate': (att['percentage'] ?? 0.0) >= 70.0,
+              });
+            }
+          }
+        }
+      });
+    }
+
+    final allCertificates = <Map<String, dynamic>>[];
+    for (final att in allAttempts) {
+      if (att['has_certificate'] == true) {
+        allCertificates.add({
+          'username': att['username'],
+          'exam_name': att['category_name'],
+          'score': '${att['score']}/${att['total_questions']}',
+          'date': att['completed_at'],
+          'verified': true,
+        });
+      }
+    }
+    if (userCerts is List) {
+      for (final c in userCerts) {
+        if (c is Map) {
+          allCertificates.add({
+            'username': 'current_user',
+            'exam_name': c['title'] ?? 'Certificate',
+            'score': 'N/A',
+            'date': c['uploaded_at'] ?? '',
+            'verified': false,
+          });
+        }
+      }
+    }
+
     return {
-      'anti_malpractice_enabled': false,
+      'anti_malpractice_enabled': _dataBox.get('anti_malpractice_enabled', defaultValue: false),
       'stats': {
-        'total_users': 25,
-        'total_candidates': 18,
-        'total_recruiters': 4,
-        'total_questions': 60,
-        'total_attempts': 150,
-        'active_events': 1,
+        'total_users': users.length,
+        'total_candidates': candidatesCount,
+        'total_recruiters': recruitersCount,
+        'total_questions': questionsCount,
+        'total_attempts': attemptsCount,
+        'total_certificates': certsCount,
+        'active_events': studentEvents.where((e) => e is Map && e['is_live'] == true).length,
       },
-      'pending_approvals': [
-        {'id': 1, 'username': 'newuser', 'email': 'newuser@test.com'},
-      ],
-      'users': [
-        {'id': 1, 'username': 'admin', 'email': 'admin@test.com', 'is_company': false, 'is_staff': true, 'is_superuser': true, 'is_active': true},
-        {'id': 2, 'username': 'alice', 'email': 'alice@test.com', 'is_company': false, 'is_staff': false, 'is_superuser': false, 'is_active': true},
-        {'id': 3, 'username': 'recruiter1', 'email': 'recruiter@test.com', 'is_company': true, 'is_staff': false, 'is_superuser': false, 'is_active': true},
-      ],
-      'categories': _categories.map(_adminCategory).toList(),
-      'events': [
-        {'id': 3, 'title': 'Live Speed Quiz', 'start_time': DateTime.now().toIso8601String(), 'end_time': DateTime.now().add(const Duration(hours: 2)).toIso8601String(), 'is_live': true, 'participant_count': 256},
-        {'id': 1, 'title': 'Weekly Challenge', 'start_time': DateTime.now().add(const Duration(days: 7)).toIso8601String(), 'end_time': DateTime.now().add(const Duration(days: 8)).toIso8601String(), 'is_live': false, 'participant_count': 42},
-      ],
+      'pending_approvals': users.where((u) => u['is_company'] == true && u['is_active'] != true).map((u) => {
+        'id': u['id'], 'username': u['username'], 'email': u['email']
+      }).toList(),
+      'users': users.map((u) => {
+        'id': u['id'],
+        'username': u['username'],
+        'email': u['email'],
+        'is_company': u['is_company'] ?? false,
+        'is_staff': u['is_staff'] ?? false,
+        'is_superuser': u['is_superuser'] ?? false,
+        'is_active': u['is_active'] ?? false,
+        'date_joined': u['date_joined'] ?? DateTime.now().toIso8601String(),
+        'interested_field': u['interested_field'] ?? '',
+        'current_status': u['current_status'] ?? '',
+        'level': u['level'] ?? 1,
+        'coins': u['coins'] ?? 0,
+      }).toList(),
+      'categories': dynamicCategories,
+      'events': studentEvents,
+      'attempts': allAttempts,
+      'certificates': allCertificates,
+      'analytics': {
+        'user_growth': _getUserGrowthData(users),
+        'exam_activity': _getExamActivityData(profiles),
+        'recruiter_activity': _getRecruiterActivityData(users),
+        'question_growth': _getQuestionGrowthData(qData),
+      }
+    };
+  }
+
+  Future<Map<String, dynamic>> _createEvent(dynamic data) async {
+    final currentUser = HiveDatabase.instance.getCurrentUser() ?? {};
+    final username = currentUser['username'] as String? ?? 'admin';
+    final title = (data is Map) ? (data['title'] ?? 'Private Exam') : 'Private Exam';
+    final desc = (data is Map) ? (data['description'] ?? '') : '';
+    final startTime = (data is Map) ? (data['start_time'] ?? DateTime.now().toIso8601String()) : DateTime.now().toIso8601String();
+    final endTime = (data is Map) ? (data['end_time'] ?? DateTime.now().add(const Duration(hours: 2)).toIso8601String()) : DateTime.now().add(const Duration(hours: 2)).toIso8601String();
+    final duration = (data is Map) ? (data['time_limit_seconds'] ?? 600) : 600;
+    final rawQuestions = (data is Map) ? (data['questions'] as List? ?? []) : [];
+    final thresholdType = (data is Map) ? (data['threshold_type'] ?? 'TIME') : 'TIME';
+    final thresholdValue = (data is Map) ? (data['threshold_value'] ?? 0) : 0;
+
+    final eventsBoxData = Map<String, dynamic>.from(_dataBox.get('events', defaultValue: _events()));
+    final studentEvents = List<Map<String, dynamic>>.from(
+      (eventsBoxData['student_events'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []
+    );
+
+    final newId = studentEvents.isEmpty ? 1 : (studentEvents.map((e) => e['id'] as int).reduce((a, b) => a > b ? a : b) + 1);
+    final accessCode = 'EXAM${1000 + newId}';
+
+    // Assign a unique numeric ID and positional index to every question
+    final questions = rawQuestions.asMap().entries.map((entry) {
+      final idx = entry.key;
+      final q = Map<String, dynamic>.from(entry.value is Map ? entry.value as Map : {});
+      q['id'] = q['id'] ?? (newId * 1000 + idx + 1); // stable unique ID
+      q['index'] = idx;
+      return q;
+    }).toList();
+    final seenCreate = <int>{};
+    questions.retainWhere((q) => seenCreate.add(q['id'] as int));
+
+    final categoryName = () {
+      final catId = (data is Map) ? data['category_id'] : null;
+      if (catId != null) {
+        for (final c in _categories) {
+          if (c['id'] == catId) return c['name'] as String;
+        }
+      }
+      return 'General';
+    }();
+
+    final newEvent = <String, dynamic>{
+      'id': newId,
+      'title': title,
+      'description': desc,
+      'category': categoryName,
+      'start_time': startTime,
+      'end_time': endTime,
+      'total_questions': questions.length,
+      'time_limit_seconds': duration,
+      'threshold_type': thresholdType,
+      'threshold_value': thresholdValue,
+      'is_registered': false,
+      'is_completed': false,
+      'status': 'UPCOMING',
+      'is_live': true,
+      'participant_count': 0,
+      'questions': questions,
+      'access_code': accessCode,
+      'created_by': username,
+    };
+
+    studentEvents.add(newEvent);
+    eventsBoxData['student_events'] = studentEvents;
+    await _dataBox.put('events', eventsBoxData);
+
+    return {
+      'success': true,
+      'message': 'Event created successfully',
+      'event_id': newId,
+      'access_code': accessCode,
+    };
+  }
+
+  Map<String, dynamic> _submitEventTest(int eventId, dynamic data) {
+    final currentUser = HiveDatabase.instance.getCurrentUser() ?? {};
+    final username = currentUser['username'] as String? ?? 'unknown';
+    final firstName = currentUser['first_name'] as String? ?? '';
+    final lastName = currentUser['last_name'] as String? ?? '';
+    final email = currentUser['email'] as String? ?? '';
+
+    final answers = (data is Map) ? (data['answers'] as Map<dynamic, dynamic>? ?? {}) : {};
+    final eventsBoxData = Map<String, dynamic>.from(_dataBox.get('events', defaultValue: _events()));
+    final studentEvents = List<Map<String, dynamic>>.from(
+      (eventsBoxData['student_events'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []
+    );
+
+    final eventIndex = studentEvents.indexWhere((e) => e['id'] == eventId);
+    if (eventIndex == -1) {
+      return {'success': false, 'message': 'Event not found'};
+    }
+
+    final event = studentEvents[eventIndex];
+    final questions = event['questions'] as List? ?? [];
+
+    int correct = 0;
+    int totalMarks = 0;
+    for (final q in questions) {
+      if (q is! Map) continue;
+      // Use question ID as key (matches what TestInterfaceScreen sends)
+      final qId = q['id'];
+      final qMarks = (q['marks'] as int?) ?? 1;
+      totalMarks += qMarks;
+      final correctOption = (q['correct_option'] as String? ?? 'A').toUpperCase();
+      // Answers are keyed by question ID (string) and valued as 'A'/'B'/'C'/'D'
+      final userAnswer = (answers[qId?.toString()] ?? answers[qId])?.toString().toUpperCase();
+      if (userAnswer != null && userAnswer == correctOption) {
+        correct += qMarks;
+      }
+    }
+
+    final total = totalMarks;
+    final percentage = total > 0 ? (correct / total) * 100 : 0.0;
+    final passed = percentage >= 40.0;
+    final now = DateTime.now().toIso8601String();
+
+    final examResults = Map<String, dynamic>.from(_dataBox.get('exam_results', defaultValue: {}));
+    final examKey = 'exam_$eventId';
+    final participants = List<Map<String, dynamic>>.from(
+      (examResults[examKey] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []
+    );
+
+    final existingIdx = participants.indexWhere((p) => p['username'] == username);
+    final result = <String, dynamic>{
+      'username': username,
+      'first_name': firstName,
+      'last_name': lastName,
+      'email': email,
+      'score': correct,
+      'total_questions': total,
+      'percentage': double.parse(percentage.toStringAsFixed(1)),
+      'passed': passed,
+      'completed_at': now,
+    };
+
+    if (existingIdx >= 0) {
+      participants[existingIdx] = result;
+    } else {
+      participants.add(result);
+    }
+
+    examResults[examKey] = participants;
+    _dataBox.put('exam_results', examResults);
+
+    event['participant_count'] = participants.length;
+    studentEvents[eventIndex] = event;
+    eventsBoxData['student_events'] = studentEvents;
+    _dataBox.put('events', eventsBoxData);
+
+    final coinsEarned = correct * 10;
+    final expEarned = correct * 20;
+    HiveDatabase.instance.updateCurrentUser({
+      'coins': ((currentUser['coins'] as num?)?.toInt() ?? 0) + coinsEarned,
+      'exp': ((currentUser['exp'] as num?)?.toInt() ?? 0) + expEarned,
+    });
+
+    return {
+      'success': true,
+      'message': 'Event test submitted successfully',
+      'score': correct,
+      'total': total,
+      'percentage': double.parse(percentage.toStringAsFixed(1)),
+      'passed': passed,
+      'coins_earned': coinsEarned,
+      'exp_earned': expEarned,
+    };
+  }
+
+  Map<String, dynamic> _getExamCandidates(int eventId) {
+    final eventsBoxData = Map<String, dynamic>.from(_dataBox.get('events', defaultValue: _events()));
+    final studentEvents = List<Map<String, dynamic>>.from(
+      (eventsBoxData['student_events'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []
+    );
+
+    final eventIndex = studentEvents.indexWhere((e) => e['id'] == eventId);
+    if (eventIndex == -1) {
+      return {'success': false, 'candidates': [], 'event': null};
+    }
+
+    final event = studentEvents[eventIndex];
+    final examKey = 'exam_$eventId';
+    final examResults = Map<String, dynamic>.from(_dataBox.get('exam_results', defaultValue: {}));
+    final participants = List<Map<String, dynamic>>.from(
+      (examResults[examKey] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []
+    );
+
+    final users = HiveDatabase.instance.getUsers();
+    final enriched = participants.map((p) {
+      final user = users.cast<Map<String, dynamic>?>().firstWhere(
+        (u) => u?['username'] == p['username'],
+        orElse: () => null,
+      );
+      return <String, dynamic>{
+        ...p,
+        'avatar_url': user?['avatar_url'],
+        'level': user?['level'] ?? 1,
+        'has_certificate': ((p['percentage'] as num?)?.toDouble() ?? 0.0) >= 70.0,
+      };
+    }).toList();
+
+    enriched.sort((a, b) => (b['score'] as num).compareTo(a['score'] as num));
+    for (int i = 0; i < enriched.length; i++) {
+      enriched[i]['rank'] = i + 1;
+    }
+
+    final scores = enriched.map((e) => (e['score'] as num).toDouble()).toList();
+    final percentages = enriched.map((e) => (e['percentage'] as num).toDouble()).toList();
+    final totalCandidates = enriched.length;
+    final passedCount = enriched.where((e) => e['passed'] == true).length;
+
+    return {
+      'success': true,
+      'event': {
+        'id': event['id'],
+        'title': event['title'],
+        'total_questions': event['total_questions'],
+        'time_limit_seconds': event['time_limit_seconds'],
+      },
+      'candidates': enriched,
+      'analytics': {
+        'total_candidates': totalCandidates,
+        'average_score': totalCandidates > 0
+            ? double.parse((scores.reduce((a, b) => a + b) / totalCandidates).toStringAsFixed(1))
+            : 0.0,
+        'highest_score': scores.isEmpty ? 0.0 : scores.reduce((a, b) => a > b ? a : b),
+        'lowest_score': scores.isEmpty ? 0.0 : scores.reduce((a, b) => a < b ? a : b),
+        'average_percentage': totalCandidates > 0
+            ? double.parse((percentages.reduce((a, b) => a + b) / totalCandidates).toStringAsFixed(1))
+            : 0.0,
+        'pass_percentage': totalCandidates > 0
+            ? double.parse(((passedCount / totalCandidates) * 100).toStringAsFixed(1))
+            : 0.0,
+        'completion_percentage': totalCandidates > 0 ? 100.0 : 0.0,
+      },
     };
   }
 
   Map<String, dynamic> _getRecruiterDashboard() {
+    final currentUser = HiveDatabase.instance.getCurrentUser() ?? {};
+    final currentUsername = currentUser['username'] as String? ?? '';
+
     final users = HiveDatabase.instance.getUsers();
     final candidates = users.where((u) =>
       u['is_company'] != true &&
@@ -1312,7 +1768,7 @@ class LocalDataProvider {
       final profileKey = username is String ? username.toLowerCase() : '';
 
       Map<String, dynamic>? userProfile;
-      final raw = profiles[profileKey] ?? profiles['current_user'];
+      final raw = profiles[profileKey] ?? null;
       if (raw is Map) {
         userProfile = Map<String, dynamic>.from(raw);
       }
@@ -1333,38 +1789,88 @@ class LocalDataProvider {
 
     topTalent.sort((a, b) => (b['avg_score'] as double).compareTo(a['avg_score'] as double));
 
+    final eventsBoxData = Map<String, dynamic>.from(_dataBox.get('events', defaultValue: _events()));
+    final allEvents = List<Map<String, dynamic>>.from(
+      (eventsBoxData['student_events'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? []
+    );
+    final myExams = allEvents.where((e) => e['created_by'] == currentUsername).toList();
+
+    final examResults = Map<String, dynamic>.from(_dataBox.get('exam_results', defaultValue: {}));
+    int totalAttempts = 0;
+    double scoreSum = 0;
+    for (final e in myExams) {
+      final key = 'exam_${e['id']}';
+      final participants = (examResults[key] as List?) ?? [];
+      totalAttempts += participants.length;
+      for (final p in participants) {
+        if (p is Map) {
+          scoreSum += (p['score'] as num?)?.toDouble() ?? 0;
+        }
+      }
+    }
+
+    int totalCerts = 0;
+    for (final p in candidates) {
+      final username = p['username'] ?? '';
+      final profileKey = username is String ? username.toLowerCase() : '';
+      final raw = profiles[profileKey] ?? null;
+      if (raw is Map) {
+        final userProfile = Map<String, dynamic>.from(raw);
+        totalCerts += (userProfile['certificates'] as List?)?.length ?? 0;
+      }
+    }
+
     return {
       'stats': {
         'total_candidates': candidates.length,
-        'total_attempts': 150,
-        'avg_score': 78.5,
-        'total_certs': 5,
+        'total_attempts': totalAttempts > 0 ? totalAttempts : candidates.length,
+        'avg_score': totalAttempts > 0 ? double.parse((scoreSum / totalAttempts).toStringAsFixed(1)) : 0.0,
+        'total_certs': totalCerts,
+        'total_exams_created': myExams.length,
       },
       'top_talent': topTalent,
+      'exams': myExams.map((e) {
+        final key = 'exam_${e['id']}';
+        final participants = (examResults[key] as List?) ?? [];
+        return {
+          'id': e['id'],
+          'title': e['title'],
+          'total_questions': e['total_questions'],
+          'participant_count': participants.length,
+          'status': e['status'],
+          'access_code': e['access_code'],
+        };
+      }).toList(),
     };
   }
 
   Map<String, dynamic> _searchTalent(String? query, {String? role}) {
-    if (query == null || query.isEmpty) {
-      return {'results': (_getRecruiterDashboard()['top_talent'] as List).take(10).toList()};
-    }
     final users = HiveDatabase.instance.getUsers();
-    final q = query.toLowerCase();
     var matches = users.where((u) =>
       u['is_company'] != true &&
-      u['is_active'] == true &&
-      (
+      u['is_active'] == true
+    );
+
+    if (query != null && query.isNotEmpty) {
+      final q = query.toLowerCase();
+      matches = matches.where((u) =>
         (u['username'] as String? ?? '').toLowerCase().contains(q) ||
         (u['first_name'] as String? ?? '').toLowerCase().contains(q) ||
         (u['last_name'] as String? ?? '').toLowerCase().contains(q)
-      )
-    );
-    if (role != null && role != 'All') {
-      matches = matches.where((u) =>
-        (u['interested_field'] as String? ?? '').toLowerCase().contains(role.toLowerCase())
       );
     }
-    final resultList = matches.map((u) {
+
+    if (role != null && role != 'All') {
+      matches = matches.where((u) =>
+        (u['interested_field'] as String? ?? '').toLowerCase() == role.toLowerCase()
+      );
+    }
+
+    // Sort by level descending
+    final sorted = matches.toList()
+      ..sort((a, b) => ((b['level'] as num?)?.toInt() ?? 0).compareTo((a['level'] as num?)?.toInt() ?? 0));
+
+    final resultList = sorted.take(100).map((u) {
       final username = u['username'] ?? '';
       final profiles = Map<String, dynamic>.from(
         _dataBox.get('profiles', defaultValue: _profiles()),
@@ -1372,7 +1878,7 @@ class LocalDataProvider {
       final profileKey = username is String ? username.toLowerCase() : '';
 
       Map<String, dynamic>? userProfile;
-      final raw = profiles[profileKey] ?? profiles['current_user'];
+      final raw = profiles[profileKey] ?? null;
       if (raw is Map) {
         userProfile = Map<String, dynamic>.from(raw);
       }
@@ -1381,13 +1887,85 @@ class LocalDataProvider {
         'username': username,
         'first_name': u['first_name'] ?? '',
         'last_name': u['last_name'] ?? '',
-        'avatar_url': u['avatar_url'],
+        'avatar_url': u['avatar'],
         'avg_score': 0.0,
         'certificate_count': (userProfile?['certificates'] as List?)?.length ?? 0,
         'level': u['level'] ?? 1,
+        'interested_field': u['interested_field'] ?? '',
+        'exp': u['exp'] ?? 0,
+        'coins': u['coins'] ?? 0,
+        'email': u['email'] ?? '',
       };
     }).toList();
     return {'results': resultList};
+  }
+
+  Map<String, dynamic> _getTopPeople() {
+    final users = HiveDatabase.instance.getUsers();
+    final candidates = users.where((u) =>
+      u['is_company'] != true &&
+      u['is_active'] == true
+    ).toList();
+
+    final profiles = Map<String, dynamic>.from(
+      _dataBox.get('profiles', defaultValue: _profiles()),
+    );
+
+    final enriched = candidates.map((u) {
+      final username = u['username'] ?? '';
+      final profileKey = username is String ? username.toLowerCase() : '';
+
+      Map<String, dynamic>? userProfile;
+      final raw = profiles[profileKey] ?? null;
+      if (raw is Map) {
+        userProfile = Map<String, dynamic>.from(raw);
+      }
+
+      final attempts = (userProfile?['attempts'] as List?) ?? [];
+      final totalScore = attempts.fold<num>(0, (s, a) => s + ((a as Map?)?['score'] as num? ?? 0));
+      final avgScore = attempts.isNotEmpty ? (totalScore / attempts.length) : 0.0;
+      final examsCompleted = attempts.length;
+      final certificatesCount = (userProfile?['certificates'] as List?)?.length ?? 0;
+
+      final candidateProfile = HiveDatabase.instance.getCandidateProfile(username);
+      final achievementsCount = (candidateProfile['achievements'] as List?)?.length ?? 0;
+
+      return {
+        'username': username,
+        'first_name': u['first_name'] ?? '',
+        'last_name': u['last_name'] ?? '',
+        'avatar_url': u['avatar'],
+        'level': u['level'] ?? 1,
+        'exp': u['exp'] ?? 0,
+        'coins': u['coins'] ?? 0,
+        'interested_field': u['interested_field'] ?? '',
+        'avg_score': double.parse(avgScore.toStringAsFixed(1)),
+        'total_score': totalScore.toInt(),
+        'exams_completed': examsCompleted,
+        'certificate_count': certificatesCount,
+        'achievements_count': achievementsCount,
+        'email': u['email'] ?? '',
+      };
+    }).toList();
+
+    enriched.sort((a, b) {
+      int cmp = (b['level'] as int).compareTo(a['level'] as int);
+      if (cmp != 0) return cmp;
+      cmp = (b['total_score'] as int).compareTo(a['total_score'] as int);
+      if (cmp != 0) return cmp;
+      cmp = (b['certificate_count'] as int).compareTo(a['certificate_count'] as int);
+      if (cmp != 0) return cmp;
+      cmp = (b['exams_completed'] as int).compareTo(a['exams_completed'] as int);
+      if (cmp != 0) return cmp;
+      cmp = (b['achievements_count'] as int).compareTo(a['achievements_count'] as int);
+      return cmp;
+    });
+
+    for (int i = 0; i < enriched.length; i++) {
+      enriched[i]['rank'] = i + 1;
+    }
+
+    return {'results': enriched};
   }
 
   List<Map<String, String>> _practicePdfs() {
@@ -1408,101 +1986,141 @@ class LocalDataProvider {
 
   String getAptixResponse(String message) {
     final msg = message.toLowerCase();
+
+    // ── Greetings ──
     if (msg.contains('hello') || msg.contains('hi') || msg.contains('hey'))
-      return 'Hello! I\'m Aptix, your AI aptitude mentor on Aptitude GO. 🧠 I can help you understand concepts, guide you through the platform, and share study tips. What would you like to know?';
-
-    // ── Platform navigation & features ──
-    if (msg.contains('how to use') || msg.contains('how do i') || msg.contains('getting started') || msg.contains('guide') || msg.contains('tutorial'))
-      return 'Here\'s how to use Aptitude GO:\n\n📚 **Practice Tab** — Take topic-wise aptitude tests (Quant, Logical, Verbal, etc.)\n📄 **Arena Tab** — Browse and view/download practice PDFs\n🛒 **Store Tab** — Spend coins on cosmetics like Golden Frame & Pro Avatar\n💬 **Chat Tab** — Message other users or chat with me (Aptix!)\n👤 **Profile Tab** — View your stats, level, certificates & achievements\n\nStart with Practice tests to build your skills!';
-
-    if (msg.contains('feature') || msg.contains('what can') || msg.contains('what do you'))
-      return 'This platform helps you prepare for aptitude tests and campus placements. Key features:\n\n✅ Topic-wise practice tests with instant scoring\n✅ Live & upcoming events and contests\n✅ Multiplayer mode to compete with others\n✅ Practice PDF library (Arena)\n✅ In-app store for cosmetics\n✅ Leaderboard to track rankings\n✅ Earn coins & level up as you improve!\n\nTry taking a test from the Practice tab to get started! 🚀';
-
-    if (msg.contains('placement') || msg.contains('job') || msg.contains('campus') || msg.contains('recruit') || msg.contains('career') || msg.contains('hire') || msg.contains('get placed'))
-      return 'Aptitude GO helps you prepare for campus placements and job recruitment tests! 🎯\n\n✅ Practice with topic-wise tests covering all major aptitude areas\n✅ Access HR interview PDF guides in the Arena\n✅ Compete in events to build confidence\n✅ Track your progress and improve weak areas\n\nConsistent practice here will boost your performance in real placement tests. Start with the **Practice** tab! 🚀';
-
-    if (msg.contains('practice') || msg.contains('test') || msg.contains('quiz'))
-      return 'To take a practice test:\n1. Go to the **Practice** tab from the bottom menu\n2. Pick a category (Quantitative, Logical, Verbal, etc.)\n3. Select the number of questions and time limit\n4. Answer & submit to see your score, coins earned & XP gained\n\nTip: Review your mistakes to improve faster! 📈';
-
-    if (msg.contains('pdf') || msg.contains('arena') || msg.contains('study material'))
-      return 'The **Arena** tab under Practice gives you access to detailed PDF study materials covering all aptitude topics — Quantitative, Logical, Verbal, Data Interpretation, Technical, and HR Interview guides. You can view them online or download for offline study. 📄';
-
-    if (msg.contains('store') || msg.contains('coin') || msg.contains('buy') || msg.contains('purchase'))
-      return 'You earn **coins** by completing tests and participating in events. Spend them in the **Store** tab to unlock:\n\n🪙 Golden Frame — a shiny border for your profile\n👤 Pro Avatar — premium avatar style\n❤️ Life Refill — restore your lives to 5\n\nKeep practicing to earn more coins!';
-
-    if (msg.contains('event') || msg.contains('contest') || msg.contains('competition'))
-      return 'Check the **Events** section for upcoming and live contests! Participating in events can earn you extra coins, certificates, and leaderboard recognition. Look for active events on the Events page and register to join. 🏆';
-
-    if (msg.contains('leaderboard') || msg.contains('rank') || msg.contains('top'))
-      return 'The **Leaderboard** shows top-performing users globally and weekly. Your rank improves as you score higher in tests and events. Compete, climb the ranks, and become the top performer! 🏅';
-
-    if (msg.contains('multiplayer') || msg.contains('challenge') || msg.contains('1v1') || msg.contains('live opponent'))
-      return 'The **Multiplayer** feature lets you challenge a live opponent in real-time! Go to the Multiplayer section, choose a topic, and compete head-to-head. Win to earn extra coins and bragging rights! 🎮';
-
-    if (msg.contains('life') || msg.contains('heart') || msg.contains('live'))
-      return 'You have **5 lives** that recharge when you take tests. If you run out, you can:\n- Wait for automatic refill over time\n- Purchase a **Life Refill** from the Store using coins\n\nLives are consumed when you start a test, so use them wisely! ❤️';
-
-    if (msg.contains('profile') || msg.contains('avatar') || msg.contains('level') || msg.contains('xp'))
-      return 'Your **Profile** shows your stats: Level, XP, Coins, Lives, and test history. You can also view your certificates and edit your personal info. As you take more tests, your level and XP increase! 📊';
-
-    if (msg.contains('certificate') || msg.contains('cert'))
-      return 'You can earn **certificates** by performing well in events and achieving high scores. View and download your certificates from your Profile page. Keep aiming higher! 🎓';
-
-    if (msg.contains('message') || msg.contains('chat') || msg.contains('inbox') || msg.contains('talk'))
-      return 'The **Chat** tab lets you message other users, and you\'re talking to me right now — Aptix! 🤖 I\'m here to help you with concepts, platform guidance, and study tips. Ask me anything about the platform!';
-
-    // ── Concept help ──
-    if (msg.contains('quantitative') || msg.contains('math') || msg.contains('numerical') || msg.contains('percentage') || msg.contains('ratio') || msg.contains('average'))
-      return '**Quantitative Aptitude** covers percentages, ratios, averages, time-speed-distance, number systems, profit & loss, and more. Go to the Practice tab, select Quantitative Aptitude, and start solving! 📐';
-
-    if (msg.contains('logical') || msg.contains('reasoning') || msg.contains('puzzle') || msg.contains('syllogism') || msg.contains('seating'))
-      return '**Logical Reasoning** includes puzzles, seating arrangements, syllogisms, blood relations, coding-decoding, and more. Try practicing puzzle grids and take tests from the Logical Reasoning category. 🧩';
-
-    if (msg.contains('verbal') || msg.contains('english') || msg.contains('grammar') || msg.contains('vocabulary'))
-      return '**Verbal Ability** focuses on grammar, vocabulary, reading comprehension, sentence correction, and para jumbles. Practice regularly with English reading to improve! 📖';
-
-    if (msg.contains('data interpretation') || msg.contains('data') && msg.contains('interpret'))
-      return '**Data Interpretation & Analysis** covers tables, bar graphs, pie charts, line graphs, and caselet data. These are common in campus placements. Practice with the Data Interpretation category in Practice tab! 📊';
-
-    if (msg.contains('technical') || msg.contains('programming') || msg.contains('coding') || msg.contains('computer') || msg.contains('aiml'))
-      return '**Technical Aptitude** covers computer fundamentals, programming basics, and AI/ML concepts. Great for tech role placements! Practice under the Computer Fundamentals and Programming Logic categories. 💻';
-
-    if (msg.contains('abstract') || msg.contains('non-verbal') || msg.contains('pattern'))
-      return '**Abstract/Non-Verbal Reasoning** tests your ability to identify patterns, analogies, and sequences in shapes and figures. Practice these to improve your visual reasoning skills! 🔷';
-
-    if (msg.contains('hr') || msg.contains('interview'))
-      return 'HR Interview preparation is available in the **Arena** tab as PDF guides. These cover common HR questions, self-introduction tips, and interview strategies to help you succeed! 🎯';
-
-    if (msg.contains('tip') || msg.contains('advice') || msg.contains('suggestion') || msg.contains('how to improve'))
-      return 'Here are some tips to improve:\n\n✅ Practice daily — aim for at least 20 questions\n✅ Review your mistakes after every test\n✅ Focus on weaker topics first\n✅ Use the PDF study materials in Arena\n✅ Participate in events for extra practice\n✅ Track your progress on the Profile page\n\nConsistency is the key to success! 💪';
-
-    if (msg.contains('thank') || msg.contains('thanks'))
-      return 'You\'re welcome! Keep practicing and you\'ll see great results. If you ever need help, I\'m just a message away! 😊';
+      return 'Hello! I\'m Aptix, your AI Platform Guide for Aptitude GO. 🤖 I can help you with registration, exams, levels, certificates, recruiter features, and everything about the platform. What would you like to know?';
 
     if (msg.contains('who are you') || msg.contains('what are you') || msg.contains('who made'))
-      return 'I\'m **Aptix** — your AI Aptitude Mentor on the **Aptitude GO** platform! 🧠 I\'m here to help you practice aptitude tests, learn concepts, and prepare for campus placements. Ask me anything about the platform or specific aptitude topics!';
+      return 'I\'m **Aptix** — your AI Platform Guide on the **Aptitude GO** platform! 🤖 I\'m here to help you navigate the app, understand features, and get the most out of your aptitude preparation. Ask me anything about the platform!';
 
-    if (msg.contains('bye') || msg.contains('goodbye'))
-      return 'Goodbye! Keep practicing and good luck with your placements! 🎯 Come back anytime you need help! 😊';
+    if (msg.contains('bye') || msg.contains('goodbye') || msg.contains('see you'))
+      return 'Goodbye! Keep practicing and good luck with your preparation! 🎯 Come back anytime you need help! 😊';
+
+    if (msg.contains('thank') || msg.contains('thanks'))
+      return 'You\'re welcome! If you ever have more questions about Aptitude GO, I\'m just a message away! 😊';
+
+    // ── Registration & Login ──
+    if (msg.contains('register') || msg.contains('sign up') || msg.contains('create account') || msg.contains('new account'))
+      return 'To create an account on Aptitude GO:\n\n1. Open the app and tap **Register** on the login screen\n2. Choose your role: **Candidate** (student) or **Recruiter** (company)\n3. Fill in your details: username, email, password\n4. Complete email verification if prompted\n5. Log in and start using the platform!\n\nIf you\'re a recruiter, you\'ll need to provide your organization name during registration.';
+
+    if (msg.contains('login') || msg.contains('sign in') || msg.contains('log in'))
+      return 'To log in:\n\n1. Open the Aptitude GO app\n2. Enter your **username** and **password**\n3. Tap the **Login** button\n\nThe app will remember your session, so you won\'t need to log in every time. If you forgot your password, use the **Forgot Password** option on the login screen.';
+
+    if (msg.contains('password reset') || msg.contains('forgot password') || msg.contains('reset password') || msg.contains('change password'))
+      return 'To reset your password:\n\n1. On the login screen, tap **Forgot Password**\n2. Enter your registered email address\n3. Check your email for a password reset link\n4. Click the link and follow the instructions to create a new password\n5. Return to the app and log in with your new password\n\nMake sure your new password is at least 8 characters long and includes a mix of letters and numbers.';
+
+    if (msg.contains('email verify') || msg.contains('verify email') || msg.contains('email verification') || msg.contains('confirm email'))
+      return 'Email verification helps secure your account. After registration:\n\n1. Check your email inbox (and spam folder) for a verification message\n2. Click the verification link in the email\n3. Once verified, you\'ll have full access to all features\n\nIf you didn\'t receive the email, you can request a new verification link from your Profile settings.';
+
+    // ── Candidate Features ──
+    if (msg.contains('candidate feature') || msg.contains('candidate can') || msg.contains('student feature') || msg.contains('what can i do as a'))
+      return 'As a **Candidate** on Aptitude GO, you can:\n\n📝 **Practice Tests** — Take topic-wise aptitude tests with instant scoring\n📄 **Study Materials** — Browse PDF guides in the Arena\n🏆 **Events & Contests** — Participate in live and upcoming events\n📊 **Leaderboard** — Compete for top rankings\n🎡 **Weekly Spin** — Spin the wheel for rewards\n🎓 **Certificates** — Earn certificates for high scores\n👤 **Profile** — Track your level, XP, coins, and progress\n\nStart by taking a practice test from the Practice tab!';
+
+    // ── Recruiter Features ──
+    if (msg.contains('recruiter feature') || msg.contains('recruiter can') || msg.contains('company feature') || msg.contains('recruiter create'))
+      return 'As a **Recruiter** on Aptitude GO, you can:\n\n📝 **Create Exams** — Design custom aptitude tests for candidates\n🔍 **Search Candidates** — Find candidates by skills and performance\n📊 **View Analytics** — Track candidate performance on your exams\n👥 **Manage Listings** — Post and manage job openings\n📈 **Monitor Progress** — See how candidates perform over time\n\nTo create an exam, go to your Recruiter Dashboard and tap **Create Exam**.';
+
+    if (msg.contains('recruiter create exam') || msg.contains('create exam as recruiter') || msg.contains('how to create exam') || msg.contains('make exam'))
+      return 'To create an exam as a Recruiter:\n\n1. Go to your **Recruiter Dashboard**\n2. Tap **Create Exam** or the **+** button\n3. Enter the exam title, description, and category\n4. Select questions from the question bank or add new ones\n5. Set the time limit and passing threshold\n6. Choose whether to make it **Public** or **Private** (with access code)\n7. Tap **Create** to publish the exam\n\nCandidates can then find and take your exam. You can view their results in the Analytics section.';
+
+    if (msg.contains('search candidate') || msg.contains('find candidate') || msg.contains('candidate search') || msg.contains('hire candidate'))
+      return 'To search for candidates:\n\n1. Go to your **Recruiter Dashboard**\n2. Use the **Search Candidates** section\n3. Filter by skills, experience level, or test performance\n4. View candidate profiles including their scores and certificates\n5. Contact promising candidates through the platform\n\nThis helps you find the right talent for your organization!';
+
+    // ── Admin Features ──
+    if (msg.contains('admin feature') || msg.contains('admin can') || msg.contains('staff feature') || msg.contains('administrator'))
+      return 'As an **Admin**, you have full control over the platform:\n\n📊 **Overview Dashboard** — View platform stats (users, questions, exams)\n👥 **User Management** — View, manage, and delete users\n❓ **Question Management** — Add, edit, and delete questions by category\n📋 **Events** — Manage platform events and contests\n📈 **Analytics** — View user growth, exam activity, recruiter activity, and question growth trends\n\nAdmins are responsible for maintaining the platform and ensuring smooth operation.';
+
+    // ── Exams & Assessments ──
+    if ((msg.contains('exam') || msg.contains('test') || msg.contains('assessment')) && !msg.contains('create exam'))
+      return 'On Aptitude GO, you can take various types of exams:\n\n📝 **Practice Tests** — Choose a topic, number of questions, and time limit\n🏆 **Live Events** — Timed contests with other participants\n📋 **Recruiter Exams** — Tests created by recruiters for hiring\n🔑 **Private Exams** — Access with a unique exam code\n\nTo start: go to the **Practice** tab, pick a category, configure your test, and begin! Each test costs 1 life (heart).';
+
+    // ── Levels & XP System ──
+    if (msg.contains('level') || msg.contains('xp') || msg.contains('experience') || msg.contains('level up'))
+      return 'The **Level & XP** system tracks your progress:\n\n⭐ **XP (Experience Points)** — Earned by completing tests. More questions = more XP.\n📈 **Levels** — Your level increases as you accumulate XP. Higher levels unlock recognition on the leaderboard.\n📊 **Progress** — View your current level and XP progress on your Profile page.\n\nThe more you practice, the higher your level! Keep taking tests to level up. 🚀';
+
+    // ── Weekly Spin Wheel ──
+    if (msg.contains('spin') || msg.contains('wheel') || msg.contains('spin wheel') || msg.contains('weekly spin') || msg.contains('reward wheel'))
+      return 'The **Weekly Spin Wheel** lets you win rewards! 🎡\n\n- You can spin **once every 7 days**\n- Rewards include coins, bonus XP, and other prizes\n- Your spin status shows on the home dashboard\n- The wheel resets weekly, so come back to claim your reward\n\nCheck your dashboard for the spin wheel card and tap **Spin Now** when it\'s available!';
+
+    // ── Certificates ──
+    if (msg.contains('certificate') || msg.contains('cert') || msg.contains('certification'))
+      return 'You can earn **certificates** on Aptitude GO! 🎓\n\n- **Event Certificates** — Awarded for participating in and completing events\n- **Achievement Certificates** — Earned by scoring 70% or higher on exams\n- View all your certificates on your **Profile** page\n- Certificates are stored and can be accessed anytime\n\nKeep aiming for high scores to earn more certificates!';
+
+    // ── Leaderboard ──
+    if (msg.contains('leaderboard') || msg.contains('rank') || msg.contains('top') || msg.contains('ranking'))
+      return 'The **Leaderboard** shows top-performing users on the platform 🏅\n\n- **Global Ranking** — See how you compare against all users\n- **Weekly Ranking** — Track your performance this week\n- Rankings are based on scores, levels, and overall activity\n- Climb the ranks by taking more tests and scoring higher\n\nCheck the Leaderboard tab to see where you stand!';
+
+    // ── Profile Management ──
+    if (msg.contains('profile') || msg.contains('avatar') || msg.contains('edit profile') || msg.contains('my profile'))
+      return 'Your **Profile** page is your personal hub on Aptitude GO:\n\n👤 **User Info** — View and edit your name, email, and other details\n🖼️ **Avatar** — Customize your profile with avatars from the Store\n📊 **Stats** — Track your level, XP, coins, and test history\n🎓 **Certificates** — View all certificates you\'ve earned\n⚙️ **Settings** — Manage account preferences\n\nTap the **Profile** tab at the bottom to access your profile!';
+
+    // ── Exam Attempts & Lives ──
+    if (msg.contains('life') || msg.contains('heart') || msg.contains('lives') || msg.contains('attempt'))
+      return 'The **Lives** system manages your exam attempts ❤️\n\n- You start with **5 lives**\n- Each practice test consumes **1 life**\n- Lives **restore automatically** at the start of each new day\n- If you run out, you can purchase a **Life Refill** from the Store using coins\n- Recruiter exams and events may have separate rules\n\nUse your lives wisely and practice daily to improve!';
+
+    // ── Platform navigation ──
+    if (msg.contains('how to use') || msg.contains('how do i') || msg.contains('getting started') || msg.contains('guide') || msg.contains('tutorial'))
+      return 'Here\'s how to get started with Aptitude GO:\n\n1. **Register** or **Log in** to your account\n2. Choose your role: **Candidate** or **Recruiter**\n3. **Candidates**: Start with practice tests, join events, earn certificates\n4. **Recruiters**: Create exams, search candidates, view analytics\n5. Explore tabs: Home, Practice, Events, Leaderboard, Profile\n\nNeed help with something specific? Just ask!';
+
+    // ── Store & Coins ──
+    if (msg.contains('store') || msg.contains('coin') || msg.contains('coins') || msg.contains('buy') || msg.contains('purchase') || msg.contains('spend'))
+      return 'The **Store** lets you spend coins earned from tests and events 🛒\n\n🪙 **Golden Frame** — A shiny border for your profile avatar\n👤 **Pro Avatar** — Premium avatar style\n❤️ **Life Refill** — Restore your lives back to 5\n\nYou earn coins by:\n- Completing practice tests\n- Participating in events\n- Performing well on exams\n\nKeep practicing to build your coin balance!';
+
+    // ── Events ──
+    if (msg.contains('event') || msg.contains('contest') || msg.contains('competition') || msg.contains('live event'))
+      return '**Events** are timed contests on Aptitude GO 🏆\n\n- **Upcoming Events** — Register in advance for future contests\n- **Live Events** — Currently active events you can join immediately\n- Events have specific categories and time limits\n- Top performers earn coins, certificates, and leaderboard recognition\n\nCheck the **Events** tab to see what\'s coming up!';
+
+    // ── Dashboard & Analytics ──
+    if (msg.contains('dashboard') || msg.contains('analytics') || msg.contains('stats') || msg.contains('performance'))
+      return 'Your **Dashboard** provides a complete view of your activity:\n\n📊 **Score History** — Chart showing your performance over time\n📈 **Progress** — Track your improvement across different topics\n🏆 **Achievements** — View certificates and accomplishments\n📉 **Weak Areas** — Identify topics that need more practice\n\nRecruiters and Admins have their own dashboards with additional analytics features.';
+
+    // ── General features overview ──
+    if (msg.contains('feature') || msg.contains('what can') || msg.contains('capabilities') || msg.contains('what do you do'))
+      return 'Aptitude GO is a comprehensive aptitude preparation platform:\n\n**For Candidates:**\n- Topic-wise practice tests (Quant, Logical, Verbal, etc.)\n- Live events and contests\n- PDF study materials\n- Spin wheel for rewards\n- Certificates and leaderboards\n- Level & XP progression system\n\n**For Recruiters:**\n- Create custom exams\n- Search and evaluate candidates\n- View detailed analytics\n- Manage hiring assessments\n\n**For Admins:**\n- Platform-wide analytics\n- User and question management\n- System oversight\n\nWhat specific feature would you like to know more about?';
+
+    // ── Placement & Career ──
+    if (msg.contains('placement') || msg.contains('job') || msg.contains('campus') || msg.contains('career') || msg.contains('hire') || msg.contains('recruit'))
+      return 'Aptitude GO helps you prepare for campus placements and recruitment! 🎯\n\n✅ Practice with topic-wise tests that match placement exam patterns\n✅ Access HR interview PDF guides\n✅ Build your profile to get noticed by recruiters\n✅ Track improvement across all aptitude areas\n✅ Earn certificates to showcase your skills\n\nConsistent practice is the key to success in campus placements. Start today!';
+
+    // ── Study Tips ──
+    if (msg.contains('tip') || msg.contains('advice') || msg.contains('suggestion') || msg.contains('how to improve') || msg.contains('study'))
+      return 'Here are some tips to get the most out of Aptitude GO:\n\n✅ Practice **daily** — even 20 questions help\n✅ Review **mistakes** after every test\n✅ Focus on **weak areas** first\n✅ Use **PDF study materials** in the Arena\n✅ Participate in **events** for extra practice\n✅ Track your **progress** on your Profile\n✅ Earn and save **coins** for useful items\n✅ Aim for **certificates** to validate your skills\n\nConsistency is the key to success! 💪';
+
+    // ── Subject-specific (kept minimal, platform-focused) ──
+    if (msg.contains('quantitative') || msg.contains('math') || msg.contains('numerical'))
+      return '**Quantitative Aptitude** covers percentages, ratios, averages, time-speed-distance, number systems, profit & loss, and more. You can practice these in the **Practice** tab under the Quantitative Aptitude category. 📐';
+
+    if (msg.contains('logical') || msg.contains('reasoning') || msg.contains('puzzle'))
+      return '**Logical Reasoning** includes puzzles, seating arrangements, syllogisms, blood relations, coding-decoding, and more. Practice these under the Logical Reasoning category in the **Practice** tab. 🧩';
+
+    if (msg.contains('verbal') || msg.contains('english') || msg.contains('grammar') || msg.contains('vocabulary'))
+      return '**Verbal Ability** focuses on grammar, vocabulary, reading comprehension, and sentence correction. Practice under the Verbal Ability category in the **Practice** tab. 📖';
+
+    if (msg.contains('hr') || msg.contains('interview'))
+      return 'HR Interview preparation guides are available as PDFs in the **Arena** section. These cover common questions, self-introduction tips, and interview strategies. 🎯';
 
     // ── Off-topic check: refuse non-platform questions ──
     final offTopic = [
-      'movie', 'song', 'music', 'dance', 'game', 'sports', 'cricket', 'football',
+      'movie', 'song', 'music', 'dance', 'sports', 'cricket', 'football', 'basketball',
       'recipe', 'cook', 'food', 'weather', 'capital of', 'who is', 'history of',
       'joke', 'story', 'funny', 'horoscope', 'astrology', 'love', 'girlfriend',
       'boyfriend', 'relationship', 'politics', 'religion', 'god', 'party',
-      'travel', 'tourism', 'fashion', 'shopping', 'price of', 'news',
+      'travel', 'tourism', 'fashion', 'news', 'celebrity', 'actor', 'actress',
       'what is the meaning of life', 'tell me a', 'make me', 'write a poem',
-      'translate', 'how to hack', 'crack', 'cheat',
+      'translate', 'how to hack', 'crack', 'cheat', 'python', 'javascript', 'java',
+      'programming language', 'what is programming', 'define', 'explain quantum',
+      'football match', 'cricket match', 'who won', 'score', 'match today',
+      'stock market', 'bitcoin', 'crypto', 'investment',
     ];
     for (final keyword in offTopic) {
       if (msg.contains(keyword)) {
-        return 'I\'m designed only to assist you with the Aptitude GO platform and improving your aptitude skills. 🤖\n\nI can help you with:\n• Practice tests and study tips\n• Aptitude concepts (Quant, Logical, Verbal, etc.)\n• Campus placement preparation\n• How to use app features\n\nPlease ask me something related to the platform! 😊';
+        return 'Sorry, I can only assist with questions related to the Aptitude GO platform and its features. 🤖\n\nI can help you with:\n• How to register and log in\n• Candidate and recruiter features\n• Exams, levels, XP, and certificates\n• Spin wheel, store, and coins\n• Leaderboards and profile management\n\nPlease ask me something about the platform!';
       }
     }
 
     // ── Default: guide the user ──
-    return 'I\'m here to help you master aptitude skills on Aptitude GO! 🚀\n\nTry asking me about:\n• "Can I get placement from this app?"\n• "How to use this platform?"\n• "Tips to improve my score"\n• "What is Quantitative Aptitude?"\n• "How does the Store work?"\n• "Tell me about events and contests"\n\nWhat would you like to know? 😊';
+    return 'I\'m here to help you with Aptitude GO! 🤖\n\nTry asking me about:\n• "How do I register?"\n• "How to create an exam as a recruiter?"\n• "What are certificates?"\n• "How does the level system work?"\n• "Tell me about the spin wheel"\n• "How do I reset my password?"\n\nWhat would you like to know?';
   }
 
   Map<String, dynamic> _getRecruiterProfileData(String? username) {
@@ -1543,8 +2161,6 @@ class LocalDataProvider {
       'recruiter_profile_data': profile,
       'stats': {
         'total_exams_created': 0,
-        'active_job_openings': 0,
-        'total_candidates_hired': 0,
       }
     };
   }

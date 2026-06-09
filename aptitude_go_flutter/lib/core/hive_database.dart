@@ -1,6 +1,7 @@
+import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'dart:convert';
 
 class HiveDatabase {
   static final HiveDatabase instance = HiveDatabase._init();
@@ -26,13 +27,107 @@ class HiveDatabase {
     debugPrint("Hive: current_user exists in auth_box: ${savedUser != null}");
 
     final registeredUsers = _authBox.get('registered_users', defaultValue: []);
-    debugPrint("Hive: registered_users count: ${(registeredUsers as List?)?.length ?? 0}");
+    if (registeredUsers is List) {
+      debugPrint("Hive: registered_users count: ${registeredUsers.length}");
+      for (int i = 0; i < registeredUsers.length; i++) {
+        final u = registeredUsers[i];
+        if (u is Map) {
+          debugPrint("Hive:   user[$i]: username=${u['username']}, email=${u['email']}, is_company=${u['is_company']}, is_active=${u['is_active']}, has_password=${u['password'] != null && (u['password'] as String).isNotEmpty}");
+        } else {
+          debugPrint("Hive:   user[$i]: NOT A MAP — type=${u.runtimeType}");
+        }
+      }
+    } else {
+      debugPrint("Hive: registered_users is NOT a List — type=${registeredUsers.runtimeType}");
+    }
 
     if (savedUser is Map && (registeredUsers is List ? registeredUsers.isEmpty : true)) {
       final restored = Map<String, dynamic>.from(savedUser);
       restored['password'] = _hashPassword('');
       await _authBox.put('registered_users', [restored]);
       debugPrint("Hive: Restored user '${restored['username']}' to registered_users (was missing)");
+    }
+
+    // Migrate old profile data from 'current_user' key to actual username key
+    await _migrateOldProfileData();
+  }
+
+  /// Migrates old test attempt data stored under `profiles['current_user']`
+  /// (pre-fix key) to the correct `profiles[actualUsername]` key.
+  /// Runs once; subsequent runs are no-ops via a migration flag.
+  Future<void> _migrateOldProfileData() async {
+    try {
+      final migrationDone = _authBox.get('_profile_migration_done', defaultValue: false);
+      if (migrationDone == true) return;
+
+      final profilesBox = await Hive.openBox('local_data_box');
+      final raw = profilesBox.get('profiles', defaultValue: <String, dynamic>{});
+      if (raw is! Map) return;
+      final profiles = Map<String, dynamic>.from(raw);
+
+      if (profiles.containsKey('current_user')) {
+        final oldData = profiles['current_user'];
+        if (oldData is Map) {
+          final oldProfile = Map<String, dynamic>.from(oldData);
+          final oldAttempts = (oldProfile['attempts'] as List?) ?? [];
+          final oldCerts = (oldProfile['certificates'] as List?) ?? [];
+
+          if (oldAttempts.isNotEmpty || oldCerts.isNotEmpty) {
+            // Try to migrate to each registered user that doesn't already have data
+            final users = getUsers();
+            bool migrated = false;
+
+            // First, try to migrate to the currently logged-in user
+            final savedUser = _authBox.get('current_user');
+            if (savedUser is Map) {
+              final currentUsername = (savedUser['username'] as String? ?? '').toLowerCase();
+              if (currentUsername.isNotEmpty) {
+                final currentProfile = profiles[currentUsername] as Map? ?? <String, dynamic>{};
+                final currentAttempts = (currentProfile['attempts'] as List?) ?? [];
+                if (currentAttempts.isEmpty) {
+                  profiles[currentUsername] = oldProfile;
+                  profiles.remove('current_user');
+                  migrated = true;
+                  debugPrint("Hive: Migrated profile data from 'current_user' to '$currentUsername' (${oldAttempts.length} attempts)");
+                }
+              }
+            }
+
+            // If not migrated yet, try each user
+            if (!migrated) {
+              for (final u in users) {
+                final uname = (u['username'] as String? ?? '').toLowerCase();
+                if (uname.isEmpty) continue;
+                final userProfile = profiles[uname] as Map? ?? <String, dynamic>{};
+                final userAttempts = (userProfile['attempts'] as List?) ?? [];
+                if (userAttempts.isEmpty) {
+                  profiles[uname] = oldProfile;
+                  profiles.remove('current_user');
+                  migrated = true;
+                  debugPrint("Hive: Migrated profile data from 'current_user' to '$uname' (${oldAttempts.length} attempts)");
+                  break;
+                }
+              }
+            }
+
+            if (migrated) {
+              await profilesBox.put('profiles', profiles);
+            }
+          } else {
+            // No meaningful data; just clean up
+            profiles.remove('current_user');
+            await profilesBox.put('profiles', profiles);
+          }
+        } else {
+          profiles.remove('current_user');
+          await profilesBox.put('profiles', profiles);
+        }
+      }
+
+      await _authBox.put('_profile_migration_done', true);
+      debugPrint("Hive: Profile data migration completed");
+    } catch (e) {
+      debugPrint("Hive: Profile migration error: $e");
     }
   }
 
@@ -68,23 +163,25 @@ class HiveDatabase {
 
   // ── AI CHATBOT PERSISTENCE ────────────────────────────────────────────────
 
-  Future<void> saveChatMessage(Map<String, String> message) async {
+  Future<void> saveChatMessage(Map<String, String> message, {required String username}) async {
     try {
-      final List<dynamic> history = _chatBox.get('message_history', defaultValue: []);
+      final key = 'message_history_$username';
+      final List<dynamic> history = _chatBox.get(key, defaultValue: []);
       final List<Map<String, String>> updated = List<Map<String, String>>.from(
         history.map((e) => Map<String, String>.from(e)),
       );
 
       updated.add(message);
-      await _chatBox.put('message_history', updated);
+      await _chatBox.put(key, updated);
     } catch (e) {
       debugPrint("Hive: Failed to save chat message: $e");
     }
   }
 
-  List<Map<String, String>> getCachedChatMessages() {
+  List<Map<String, String>> getCachedChatMessages({required String username}) {
     try {
-      final data = _chatBox.get('message_history');
+      final key = 'message_history_$username';
+      final data = _chatBox.get(key);
       if (data is List) {
         return List<Map<String, String>>.from(
           data.map((e) => Map<String, String>.from(e)),
@@ -94,9 +191,18 @@ class HiveDatabase {
     return [];
   }
 
-  Future<void> clearChatHistory() async {
+  Future<void> clearChatHistory({String? username}) async {
     try {
-      await _chatBox.delete('message_history');
+      if (username != null) {
+        final key = 'message_history_$username';
+        await _chatBox.delete(key);
+      } else {
+        // Clear all chat history keys from all users
+        final keys = _chatBox.keys.where((k) => k.toString().startsWith('message_history_')).toList();
+        for (final k in keys) {
+          await _chatBox.delete(k);
+        }
+      }
     } catch (_) {}
   }
 
@@ -142,6 +248,7 @@ class HiveDatabase {
         'exp': 0,
         'coins': 0,
         'lives': 5,
+        'last_life_reset_date': DateTime.now().toIso8601String(),
         'current_status': currentStatus ?? '',
         'interested_field': interestedField ?? '',
         'hiring_focus': hiringFocus ?? '',
@@ -167,23 +274,38 @@ class HiveDatabase {
       final users = _getUsers();
       final input = usernameOrEmail.toLowerCase();
 
-      final user = users.cast<Map<String, dynamic>>().firstWhere(
-        (u) =>
-            u['username'] == input ||
-            u['email'] == input,
-        orElse: () => <String, dynamic>{},
-      );
+      debugPrint("🔐 LOGIN: Searching for '$input' among ${users.length} registered users");
+      for (int i = 0; i < users.length; i++) {
+        debugPrint("🔐 LOGIN:   user[$i]: username='${users[i]['username']}', email='${users[i]['email']}', is_company=${users[i]['is_company']}, is_active=${users[i]['is_active']}");
+      }
 
-      if (user.isEmpty) {
+      int foundIdx = -1;
+      for (int i = 0; i < users.length; i++) {
+        if (users[i]['username'] == input || users[i]['email'] == input) {
+          foundIdx = i;
+          break;
+        }
+      }
+
+      if (foundIdx == -1) {
+        debugPrint("🔐 LOGIN: No user found matching '$input'");
         return {'success': false, 'error': 'Invalid username or password'};
       }
 
-      if (user['password'] != _hashPassword(password)) {
+      final user = users[foundIdx];
+      debugPrint("🔐 LOGIN: Found user at index $foundIdx: username='${user['username']}', email='${user['email']}'");
+
+      final inputHash = _hashPassword(password);
+      final storedHash = user['password'] as String? ?? '';
+      debugPrint("🔐 LOGIN: password check — stored='$storedHash', input_hash='$inputHash', match=${storedHash == inputHash}");
+
+      if (storedHash != inputHash) {
         return {'success': false, 'error': 'Invalid username or password'};
       }
 
       if (user['is_active'] != true) {
-        return {'success': false, 'error': 'Account is inactive'};
+        debugPrint("🔐 LOGIN: User is NOT active (is_active=${user['is_active']})");
+        return {'success': false, 'error': 'Account is inactive. Please verify your email first.'};
       }
 
       final userData = Map<String, dynamic>.from(user);
@@ -318,17 +440,31 @@ class HiveDatabase {
 
   Future<void> addAttempt(Map<String, dynamic> attempt) async {
     try {
+      final currentUser = getCurrentUser();
+      if (currentUser == null) return;
+      final username = currentUser['username'] as String? ?? '';
+      if (username.isEmpty) return;
+
       final profilesBox = await Hive.openBox('local_data_box');
       final raw = profilesBox.get('profiles', defaultValue: <String, dynamic>{});
       final profiles = Map<String, dynamic>.from(raw as Map);
-      final profileKey = 'current_user';
-      final profileData = profiles[profileKey] as Map? ?? <String, dynamic>{};
+      final profileKey = username.toLowerCase();
+
+      // Check both the current username key and legacy 'current_user' key
+      final existingProfile = profiles[profileKey] ?? profiles['current_user'] ?? <String, dynamic>{};
+      final profileData = existingProfile as Map? ?? <String, dynamic>{};
       final profile = Map<String, dynamic>.from(profileData);
+
       final attempts = List<Map<String, dynamic>>.from(
         (profile['attempts'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)) ?? [],
       );
       attempts.add(attempt);
       profile['attempts'] = attempts;
+
+      // Always write to the correct username key, never to 'current_user'
+      if (profiles.containsKey('current_user') && profileKey != 'current_user') {
+        profiles.remove('current_user');
+      }
       profiles[profileKey] = profile;
       await profilesBox.put('profiles', profiles);
     } catch (e) {
@@ -360,6 +496,52 @@ class HiveDatabase {
     }
   }
 
+  /// Checks if a new day has started and restores lives to max (5).
+  /// Returns true if lives were restored.
+  Future<bool> checkAndRestoreLives() async {
+    try {
+      final current = _authBox.get('current_user');
+      if (current is! Map) return false;
+      final user = Map<String, dynamic>.from(current);
+      final username = user['username'] as String?;
+      if (username == null) return false;
+
+      final lastReset = user['last_life_reset_date'] as String?;
+      final today = DateTime.now();
+
+      if (lastReset != null) {
+        final lastDate = DateTime.tryParse(lastReset);
+        if (lastDate != null && _isSameDay(lastDate, today)) {
+          return false; // already reset today
+        }
+      }
+
+      user['lives'] = 5;
+      user['last_life_reset_date'] = today.toIso8601String();
+      await _authBox.put('current_user', user);
+
+      final users = _getUsers();
+      for (int i = 0; i < users.length; i++) {
+        if (users[i]['username'] == username) {
+          users[i]['lives'] = 5;
+          users[i]['last_life_reset_date'] = today.toIso8601String();
+          break;
+        }
+      }
+      await _authBox.put('registered_users', users);
+
+      debugPrint("❤️ Daily life reset: restored lives to 5 for '$username'");
+      return true;
+    } catch (e) {
+      debugPrint("Hive: Failed to check/restore lives: $e");
+      return false;
+    }
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   bool isUsernameTaken(String username) {
     return _getUsers().any((u) => u['username'] == username.toLowerCase());
   }
@@ -382,8 +564,22 @@ class HiveDatabase {
   List<Map<String, dynamic>> getUsers() {
     final data = _authBox.get('registered_users', defaultValue: []);
     if (data is List) {
-      return data.map((e) => Map<String, dynamic>.from(e)).toList();
+      final result = <Map<String, dynamic>>[];
+      for (int i = 0; i < data.length; i++) {
+        final e = data[i];
+        if (e is Map) {
+          try {
+            result.add(Map<String, dynamic>.from(e));
+          } catch (parseErr) {
+            debugPrint("⚠️ getUsers: Failed to parse user[$i]: $parseErr");
+          }
+        } else {
+          debugPrint("⚠️ getUsers: user[$i] is not a Map — type=${e.runtimeType}, value=$e");
+        }
+      }
+      return result;
     }
+    debugPrint("⚠️ getUsers: registered_users is not a List — type=${data.runtimeType}, value=$data");
     return [];
   }
 
@@ -456,9 +652,162 @@ class HiveDatabase {
 
   // ── HELPERS ────────────────────────────────────────────────────────────────
 
+  // ── LOCAL OTP (FALLBACK WHEN SERVER IS UNAVAILABLE) ───────────────────────
+
+  Future<Map<String, dynamic>> generateLocalOtp({
+    required String email,
+    required String purpose,
+  }) async {
+    try {
+      final otpCode = (Random().nextInt(900000) + 100000).toString();
+      final expiresAt = DateTime.now().add(const Duration(minutes: 5)).millisecondsSinceEpoch;
+
+      final otpData = {
+        'email': email.toLowerCase(),
+        'otp': otpCode,
+        'purpose': purpose,
+        'expires_at': expiresAt,
+        'created_at': DateTime.now().millisecondsSinceEpoch,
+        'attempts': 0,
+        'max_attempts': 5,
+      };
+
+      await _authBox.put('current_otp', otpData);
+      debugPrint("Hive: Generated OTP for $email: $otpCode");
+      return {'success': true, 'message': 'OTP sent to $email', 'otp_debug': otpCode};
+    } catch (e) {
+      return {'success': false, 'error': 'Failed to generate OTP: $e'};
+    }
+  }
+
+  Future<void> clearOtp() async {
+    try {
+      await _authBox.delete('current_otp');
+    } catch (_) {}
+  }
+
+  Future<Map<String, dynamic>> verifyLocalOtp({
+    required String email,
+    required String otp,
+    required String purpose,
+  }) async {
+    try {
+      final stored = _authBox.get('current_otp');
+      if (stored == null) {
+        return {'success': false, 'error': 'No OTP found. Request a new one.'};
+      }
+
+      final otpData = Map<String, dynamic>.from(stored);
+
+      if (otpData['email'] != email.toLowerCase() || otpData['purpose'] != purpose) {
+        return {'success': false, 'error': 'OTP mismatch. Request a new one.'};
+      }
+
+      if (DateTime.now().millisecondsSinceEpoch > (otpData['expires_at'] as int)) {
+        await _authBox.delete('current_otp');
+        return {'success': false, 'error': 'OTP has expired. Request a new one.'};
+      }
+
+      otpData['attempts'] = (otpData['attempts'] as int) + 1;
+      if (otpData['attempts'] > otpData['max_attempts']) {
+        await _authBox.delete('current_otp');
+        return {'success': false, 'error': 'Too many failed attempts. Request a new OTP.'};
+      }
+      await _authBox.put('current_otp', otpData);
+
+      if (otpData['otp'] != otp) {
+        final remaining = (otpData['max_attempts'] as int) - (otpData['attempts'] as int);
+        return {'success': false, 'error': 'Incorrect OTP. $remaining attempts remaining.'};
+      }
+
+      await _authBox.delete('current_otp');
+
+      if (purpose == 'verify') {
+        await verifyUser(email);
+      }
+
+      return {'success': true, 'message': 'OTP verified successfully'};
+    } catch (e) {
+      return {'success': false, 'error': 'Verification failed: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> resetLocalPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final users = _getUsers();
+      final input = email.toLowerCase();
+
+      debugPrint("🔑 PASSWORD RESET: Request for email='$input'");
+      debugPrint("🔑 PASSWORD RESET: Total users stored BEFORE: ${users.length}");
+      for (int i = 0; i < users.length; i++) {
+        debugPrint("🔑 PASSWORD RESET:   user[$i]: username='${users[i]['username']}', email='${users[i]['email']}', is_company=${users[i]['is_company']}, is_active=${users[i]['is_active']}, has_password=${(users[i]['password'] as String?)?.isNotEmpty == true}");
+      }
+
+      int foundIndex = -1;
+      for (int i = 0; i < users.length; i++) {
+        if (users[i]['email'] == input) {
+          foundIndex = i;
+          break;
+        }
+      }
+
+      if (foundIndex == -1) {
+        debugPrint("🔑 PASSWORD RESET: No user found with email '$input'");
+        return {'success': false, 'error': 'No account found with this email'};
+      }
+
+      debugPrint("🔑 PASSWORD RESET: Found user at index $foundIndex");
+      debugPrint("🔑 PASSWORD RESET: User BEFORE update: username='${users[foundIndex]['username']}', email='${users[foundIndex]['email']}', password='${users[foundIndex]['password']}'");
+
+      final newHash = _hashPassword(password);
+      users[foundIndex]['password'] = newHash;
+
+      debugPrint("🔑 PASSWORD RESET: User AFTER update: username='${users[foundIndex]['username']}', email='${users[foundIndex]['email']}', password='$newHash'");
+
+      await _authBox.put('registered_users', users);
+
+      final verifyUsers = _getUsers();
+      debugPrint("🔑 PASSWORD RESET: Total users stored AFTER: ${verifyUsers.length}");
+      for (int i = 0; i < verifyUsers.length; i++) {
+        debugPrint("🔑 PASSWORD RESET:   user[$i]: username='${verifyUsers[i]['username']}', email='${verifyUsers[i]['email']}', password='${verifyUsers[i]['password']}'");
+      }
+
+      return {'success': true, 'message': 'Password reset successfully'};
+    } catch (e) {
+      debugPrint("🔑 PASSWORD RESET: EXCEPTION: $e");
+      return {'success': false, 'error': 'Failed to reset password: $e'};
+    }
+  }
+
   List<Map<String, dynamic>> _getUsers() {
     return getUsers();
   }
+
+  /// Given cumulative total XP, returns [level, xpIntoLevel, xpForNextLevel].
+  static List<int> levelInfo(int totalExp) {
+    int level = 1;
+    int cumulative = 0;
+    while (true) {
+      final needed = level * 100;
+      if (totalExp < cumulative + needed) {
+        return [level, totalExp - cumulative, needed];
+      }
+      cumulative += needed;
+      level++;
+    }
+  }
+
+  /// Cumulative XP required to reach a given level (exclusive).
+  static int cumulativeXpForLevel(int level) {
+    if (level <= 1) return 0;
+    return 50 * level * (level - 1);
+  }
+
+  /// XP needed to go from [level] to [level] + 1.
+  static int xpForNextLevel(int level) => level * 100;
 
   String _hashPassword(String password) {
     return base64Encode(utf8.encode(password));

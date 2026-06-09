@@ -126,7 +126,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ? const Icon(Icons.person, color: AppTheme.neonPurple, size: 48) : null,
                         ),
                         const SizedBox(height: 8),
-                        Text('@${user['username'] ?? ''}', style: const TextStyle(color: Colors.white38, fontSize: 14)),
+                        Text('@${user['username'] ?? ''}', style: TextStyle(color: context.onSurface.withValues(alpha: 0.38), fontSize: 14)),
                       ],
                     ),
                   ),

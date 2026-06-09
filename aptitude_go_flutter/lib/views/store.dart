@@ -158,7 +158,7 @@ class _StoreScreenState extends State<StoreScreen> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: context.cardBgColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: borderColor, width: isEquipped ? 1.8 : 1),
         boxShadow: isEquipped
@@ -181,7 +181,7 @@ class _StoreScreenState extends State<StoreScreen> {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Theme.of(context).colorScheme.onSurface),
           ),
           const SizedBox(height: 6),
           // Description
@@ -190,7 +190,7 @@ class _StoreScreenState extends State<StoreScreen> {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 11, color: Colors.white54, height: 1.4),
+            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), height: 1.4),
           ),
           const SizedBox(height: 14),
           // Price / owned badge
@@ -207,7 +207,7 @@ class _StoreScreenState extends State<StoreScreen> {
   }
 
   Color _borderColorFor(_ItemType type, bool isEquipped, bool isPurchased) {
-    if (!isPurchased) return Colors.white.withValues(alpha: 0.08);
+    if (!isPurchased) return Theme.of(context).dividerColor;
     if (isEquipped) {
       switch (type) {
         case _ItemType.frame:  return const Color(0xFFF59E0B);
@@ -256,10 +256,8 @@ class _StoreScreenState extends State<StoreScreen> {
     final coins = user['coins'] ?? _userCoins;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
         title: const Text("Store"),
-        backgroundColor: const Color(0xFF0F172A),
         elevation: 0,
       ),
       body: _isLoading
@@ -269,7 +267,7 @@ class _StoreScreenState extends State<StoreScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_error!, style: const TextStyle(color: Colors.white70)),
+                      Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchStoreData,
@@ -290,7 +288,7 @@ class _StoreScreenState extends State<StoreScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E293B),
+                              color: context.cardBgColor,
                               border: Border.all(color: const Color(0xFFD97706).withValues(alpha: 0.5), width: 1.5),
                               borderRadius: BorderRadius.circular(30),
                               boxShadow: [
@@ -382,7 +380,7 @@ class _OwnedBadge extends StatelessWidget {
         decoration: BoxDecoration(
           color: equipped
               ? AppTheme.emeraldGreen.withValues(alpha: 0.15)
-              : Colors.white.withValues(alpha: 0.06),
+              : Theme.of(context).dividerColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -390,7 +388,7 @@ class _OwnedBadge extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: equipped ? AppTheme.emeraldGreen : Colors.white54,
+            color: equipped ? AppTheme.emeraldGreen : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
           ),
         ),
       ),

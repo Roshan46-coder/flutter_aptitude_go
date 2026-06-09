@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:aptitude_go_flutter/core/api_client.dart';
-import 'package:aptitude_go_flutter/main.dart';
+import 'package:aptitude/core/api_client.dart';
+import 'package:aptitude/main.dart';
 
 void main() {
   testWidgets('App basic smoke test - loads LoginScreen', (WidgetTester tester) async {

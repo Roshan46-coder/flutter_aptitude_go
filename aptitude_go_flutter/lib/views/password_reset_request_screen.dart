@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/api_client.dart';
 import '../core/theme.dart';
-import 'password_reset_done_screen.dart';
+import 'otp_verification_screen.dart';
 
 class PasswordResetRequestScreen extends StatefulWidget {
   const PasswordResetRequestScreen({super.key});
@@ -28,7 +28,10 @@ class _PasswordResetRequestScreenState extends State<PasswordResetRequestScreen>
     setState(() { _error = null; _isLoading = true; });
 
     final api = Provider.of<ApiClient>(context, listen: false);
-    final result = await api.resendVerificationEmail(_emailController.text.trim());
+    final result = await api.sendOtp(
+      email: _emailController.text.trim(),
+      purpose: 'reset',
+    );
 
     if (mounted) {
       setState(() => _isLoading = false);
@@ -36,7 +39,10 @@ class _PasswordResetRequestScreenState extends State<PasswordResetRequestScreen>
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PasswordResetDoneScreen(email: _emailController.text.trim()),
+            builder: (context) => OtpVerificationScreen(
+              email: _emailController.text.trim(),
+              purpose: 'reset',
+            ),
           ),
         );
       } else {

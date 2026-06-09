@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/api_client.dart';
 import '../core/theme.dart';
-import 'email_sent_screen.dart';
+import 'otp_verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   final bool isCompany;
@@ -70,8 +70,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => EmailSentScreen(
+            builder: (context) => OtpVerificationScreen(
               email: _emailController.text.trim(),
+              purpose: 'verify',
             ),
           ),
           (route) => false,

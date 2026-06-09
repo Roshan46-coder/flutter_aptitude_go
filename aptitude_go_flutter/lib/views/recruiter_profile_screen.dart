@@ -7,7 +7,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../core/api_client.dart';
 import '../core/hive_database.dart';
 import '../core/theme.dart';
-import 'recruiter_preview_screen.dart';
+import 'login_screen.dart';
 
 class RecruiterProfileScreen extends StatefulWidget {
   final bool hideAppBar;
@@ -224,25 +224,14 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
     } catch (_) {}
   }
 
-  void _showPreview() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => RecruiterPreviewScreen(
-          userData: _userData,
-          profile: _profile,
-          stats: _stats,
-        ),
-      ),
-    );
-  }
+
 
   Future<void> _deleteAccount() async {
     final api = Provider.of<ApiClient>(context, listen: false);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.cardBg,
+        backgroundColor: Theme.of(context).cardColor,
         title: const Text('Delete Account'),
         content: const Text('This will permanently delete your account and all data. This action cannot be undone.'),
         actions: [
@@ -262,6 +251,15 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
 
   Future<void> _logout() async {
     final api = Provider.of<ApiClient>(context, listen: false);
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const LoginScreen(),
+        transitionDuration: Duration.zero,
+      ),
+      (route) => false,
+    );
     await api.logout();
   }
 
@@ -294,7 +292,6 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
                       ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.emeraldGreen))
                       : IconButton(icon: const Icon(Icons.check, color: AppTheme.emeraldGreen), tooltip: 'Save', onPressed: _save),
                 ] else ...[
-                  IconButton(icon: const Icon(Icons.visibility_outlined), tooltip: 'Preview as candidate', onPressed: _showPreview),
                   IconButton(icon: const Icon(Icons.edit_outlined), tooltip: 'Edit Profile', onPressed: _enterEdit),
                   IconButton(icon: const Icon(Icons.logout_rounded), tooltip: 'Logout', onPressed: _logout),
                 ],
@@ -324,9 +321,9 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -334,10 +331,10 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
           if (_isEditing) ...[
             TextButton.icon(
               onPressed: _cancelEdit,
-              icon: const Icon(Icons.close, color: Colors.white54, size: 18),
-              label: const Text('Cancel', style: TextStyle(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)),
+              icon: Icon(Icons.close, color: context.onSurface.withValues(alpha: 0.54), size: 18),
+              label: Text('Cancel', style: TextStyle(color: context.onSurface.withValues(alpha: 0.54), fontSize: 13, fontWeight: FontWeight.bold)),
             ),
-            Container(height: 20, width: 1, color: AppTheme.divider),
+            Container(height: 20, width: 1, color: Theme.of(context).dividerColor),
             _isSaving
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.emeraldGreen))
                 : TextButton.icon(
@@ -347,17 +344,11 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
                   ),
           ] else ...[
             TextButton.icon(
-              onPressed: _showPreview,
-              icon: const Icon(Icons.visibility_outlined, color: AppTheme.neonBlue, size: 18),
-              label: const Text('Preview', style: TextStyle(color: AppTheme.neonBlue, fontSize: 13, fontWeight: FontWeight.bold)),
-            ),
-            Container(height: 20, width: 1, color: AppTheme.divider),
-            TextButton.icon(
               onPressed: _enterEdit,
               icon: const Icon(Icons.edit_outlined, color: AppTheme.neonPurple, size: 18),
               label: const Text('Edit Profile', style: TextStyle(color: AppTheme.neonPurple, fontSize: 13, fontWeight: FontWeight.bold)),
             ),
-            Container(height: 20, width: 1, color: AppTheme.divider),
+            Container(height: 20, width: 1, color: Theme.of(context).dividerColor),
             TextButton.icon(
               onPressed: _logout,
               icon: const Icon(Icons.logout_rounded, color: AppTheme.livesRed, size: 18),
@@ -374,11 +365,11 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
         gradient: LinearGradient(
-          colors: [AppTheme.neonBlue.withValues(alpha: 0.05), AppTheme.cardBg],
+          colors: [AppTheme.neonBlue.withValues(alpha: 0.05), Theme.of(context).cardColor],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
       ),
@@ -417,17 +408,17 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                const Icon(Icons.business, size: 14, color: Colors.white38),
+                Icon(Icons.business, size: 14, color: context.onSurface.withValues(alpha: 0.38)),
                 const SizedBox(width: 4),
-                Text(_profile['company_name'], style: const TextStyle(color: Colors.white38, fontSize: 13)),
+                Text(_profile['company_name'], style: TextStyle(color: context.onSurface.withValues(alpha: 0.38), fontSize: 13)),
               ]),
             ),
           if (_isEditing)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
               child: Text(
                 'Tap Logo to Upload/Change Company Logo',
-                style: TextStyle(color: Colors.white30, fontSize: 11, fontStyle: FontStyle.italic),
+                style: TextStyle(color: context.onSurface.withValues(alpha: 0.30), fontSize: 11, fontStyle: FontStyle.italic),
               ),
             ),
         ],
@@ -460,7 +451,7 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
           _infoCard('About Company', Icons.info_outline, [
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(_profile['company_description'], style: const TextStyle(fontSize: 13, color: Colors.white70, height: 1.5)),
+              child: Text(_profile['company_description'], style: TextStyle(fontSize: 13, color: context.onSurface.withValues(alpha: 0.70), height: 1.5)),
             ),
           ]),
         ],
@@ -470,17 +461,15 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
 
   Widget _buildStatCards() {
     final exams = _stats['total_exams_created'] ?? 0;
-    final hired = _stats['total_candidates_hired'] ?? 0;
     final assessed = _stats['total_candidates'] ?? 0;
     final avgScore = _stats['avg_score'] ?? 0.0;
-    final activeOpenings = _stats['active_job_openings'] ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -490,17 +479,11 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
           Row(children: [
             _statCard('Exams Conducted', '$exams', Icons.quiz_outlined, AppTheme.neonPurple),
             const SizedBox(width: 8),
-            _statCard('Candidates Recruited', '$hired', Icons.person_add_alt, AppTheme.emeraldGreen),
-          ]),
-          const SizedBox(height: 8),
-          Row(children: [
             _statCard('Candidates Assessed', '$assessed', Icons.people_outline, AppTheme.neonBlue),
-            const SizedBox(width: 8),
-            _statCard('Average Score', '${((avgScore) as num).toStringAsFixed(1)}%', Icons.bar_chart, AppTheme.goldAccent),
           ]),
           const SizedBox(height: 8),
           Row(children: [
-            _statCard('Active Openings', '$activeOpenings', Icons.work_outline, Colors.cyan),
+            _statCard('Average Score', '${((avgScore) as num).toStringAsFixed(1)}%', Icons.bar_chart, AppTheme.goldAccent),
             const SizedBox(width: 8),
             _statCard('Company Joining Date', _userData['date_joined'] != null ? _userData['date_joined'].toString().substring(0, 10) : '-', Icons.calendar_month_outlined, Colors.orange),
           ]),
@@ -521,7 +504,7 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
         Icon(icon, color: color, size: 22),
         const SizedBox(height: 4),
         Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color)),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white38), textAlign: TextAlign.center),
+        Text(label, style: TextStyle(fontSize: 10, color: context.onSurface.withValues(alpha: 0.38)), textAlign: TextAlign.center),
       ]),
     ));
   }
@@ -537,9 +520,9 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -558,7 +541,7 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
               BarChartData(
                 gridData: FlGridData(
                   show: true,
-                  getDrawingHorizontalLine: (_) => FlLine(color: AppTheme.divider, strokeWidth: 1),
+                  getDrawingHorizontalLine: (_) => FlLine(color: Theme.of(context).dividerColor, strokeWidth: 1),
                   getDrawingVerticalLine: (_) => FlLine(color: Colors.transparent),
                 ),
                 titlesData: FlTitlesData(
@@ -568,7 +551,7 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
                       reservedSize: 28,
                       getTitlesWidget: (val, meta) => Text(
                         '${val.toInt()}',
-                        style: const TextStyle(color: Colors.white24, fontSize: 10),
+                        style: TextStyle(color: context.onSurface.withValues(alpha: 0.24), fontSize: 10),
                       ),
                     ),
                   ),
@@ -581,7 +564,7 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
                         if (idx >= 0 && idx < labels.length) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 6),
-                            child: Text(labels[idx], style: const TextStyle(color: Colors.white24, fontSize: 10)),
+                            child: Text(labels[idx], style: TextStyle(color: context.onSurface.withValues(alpha: 0.24), fontSize: 10)),
                           );
                         }
                         return const SizedBox.shrink();
@@ -611,9 +594,9 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -719,8 +702,8 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
               icon: const Icon(Icons.close, size: 18),
               label: const Text('Cancel', style: TextStyle(fontSize: 15)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white54,
-                side: BorderSide(color: Colors.white24),
+                foregroundColor: context.onSurface.withValues(alpha: 0.54),
+                side: BorderSide(color: context.onSurface.withValues(alpha: 0.24)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -736,9 +719,9 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
@@ -757,12 +740,12 @@ class _RecruiterProfileScreenState extends State<RecruiterProfileScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(width: 140, child: Text('$label:', style: const TextStyle(color: Colors.white38, fontSize: 13))),
+        SizedBox(width: 140, child: Text('$label:', style: TextStyle(color: context.onSurface.withValues(alpha: 0.38), fontSize: 13))),
         Expanded(child: Text(
           value,
           style: TextStyle(
             fontSize: 13,
-            color: isMissing ? Colors.white24 : Colors.white70,
+            color: isMissing ? context.onSurface.withValues(alpha: 0.24) : context.onSurface.withValues(alpha: 0.70),
             fontStyle: isMissing ? FontStyle.italic : FontStyle.normal,
           ),
         )),
@@ -806,8 +789,8 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: const TextStyle(
-      fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white54, letterSpacing: 0.5,
+    return Text(text, style: TextStyle(
+      fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), letterSpacing: 0.5,
     ));
   }
 }

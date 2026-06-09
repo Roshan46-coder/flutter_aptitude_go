@@ -178,7 +178,7 @@ class _RewardWheelScreenState extends State<RewardWheelScreen> with SingleTicker
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Monthly Lucky Spin"),
+        title: const Text("Weekly Lucky Spin"),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -194,7 +194,7 @@ class _RewardWheelScreenState extends State<RewardWheelScreen> with SingleTicker
                   colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
                 ).createShader(bounds),
                 child: const Text(
-                  "Monthly Reward Spin",
+                  "Weekly Reward Spin",
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -205,7 +205,7 @@ class _RewardWheelScreenState extends State<RewardWheelScreen> with SingleTicker
               const SizedBox(height: 8),
               Text(
                 _statusText,
-                style: const TextStyle(color: Colors.white70, fontSize: 14),
+                style: TextStyle(color: context.onSurface.withValues(alpha: 0.70), fontSize: 14),
               ),
               const SizedBox(height: 40),
               
@@ -285,11 +285,11 @@ class _RewardWheelScreenState extends State<RewardWheelScreen> with SingleTicker
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, true),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.cardBg,
-                    foregroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).cardColor,
+                    foregroundColor: context.onSurface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: AppTheme.divider),
+                      side: BorderSide(color: Theme.of(context).dividerColor),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                   ),
