@@ -29,6 +29,9 @@ class _RecruiterCandidatesScreenState extends State<RecruiterCandidatesScreen>
   bool _roleLoading = false;
   String? _roleError;
 
+  // Cache key for top people
+  static const String _topCacheKey = 'cached_top_people';
+
   static const List<String> roles = [
     'Software Engineer',
     'Data Analyst',
@@ -57,11 +60,21 @@ class _RecruiterCandidatesScreenState extends State<RecruiterCandidatesScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_onTabChanged);
+    _loadCachedTopPeople();
     _fetchTopPeople();
     if (roles.isNotEmpty) {
       _selectedRole = roles.first;
       _fetchByRole();
     }
+  }
+
+  void _loadCachedTopPeople() {
+    try {
+      final cached = HiveDatabase.instance.getCachedTopPeople();
+      if (cached.isNotEmpty) {
+        setState(() => _topPeople = cached);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -85,10 +98,15 @@ class _RecruiterCandidatesScreenState extends State<RecruiterCandidatesScreen>
       final response = await api.get('recruiter/top-people/');
       if (mounted) {
         final raw = response.data['results'] as List? ?? [];
+        final people = raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        // Sort by rank (already sorted from backend but ensure client-side too)
+        people.sort((a, b) =>
+          ((a['rank'] as num?)?.toInt() ?? 999).compareTo((b['rank'] as num?)?.toInt() ?? 999));
         setState(() {
-          _topPeople = raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          _topPeople = people;
           _topLoading = false;
         });
+        HiveDatabase.instance.saveCachedTopPeople(people);
       }
     } catch (e) {
       if (mounted) {
@@ -114,10 +132,16 @@ class _RecruiterCandidatesScreenState extends State<RecruiterCandidatesScreen>
       );
       if (mounted) {
         final raw = response.data['results'] as List? ?? [];
+        final candidates = raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        // Sort by profile_score then level for best ranking
+        candidates.sort((a, b) {
+          final scoreA = (a['profile_score'] as num?)?.toInt() ?? 0;
+          final scoreB = (b['profile_score'] as num?)?.toInt() ?? 0;
+          if (scoreB != scoreA) return scoreB.compareTo(scoreA);
+          return ((b['level'] as num?)?.toInt() ?? 0).compareTo((a['level'] as num?)?.toInt() ?? 0);
+        });
         setState(() {
-          _roleCandidates = raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-          _roleCandidates.sort((a, b) =>
-            ((b['level'] as num?)?.toInt() ?? 0).compareTo((a['level'] as num?)?.toInt() ?? 0));
+          _roleCandidates = candidates;
           _roleLoading = false;
         });
       }

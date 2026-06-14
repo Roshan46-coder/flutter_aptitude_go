@@ -596,6 +596,32 @@ class HiveDatabase {
     await _profileBox.put('profile_$username', profile);
   }
 
+  // ── CACHED CERTIFICATES ────────────────────────────────────────────────────
+
+  List<dynamic> getCachedCertificates(String username) {
+    final key = 'certs_$username';
+    final data = _profileBox.get(key);
+    if (data is List) return data;
+    return [];
+  }
+
+  Future<void> saveCachedCertificates(String username, List<dynamic> certs) async {
+    await _profileBox.put('certs_$username', certs);
+  }
+
+  // ── CACHED ATTEMPTS ────────────────────────────────────────────────────────
+
+  List<dynamic> getCachedAttempts(String username) {
+    final key = 'attempts_$username';
+    final data = _profileBox.get(key);
+    if (data is List) return data;
+    return [];
+  }
+
+  Future<void> saveCachedAttempts(String username, List<dynamic> attempts) async {
+    await _profileBox.put('attempts_$username', attempts);
+  }
+
   Map<String, dynamic> _emptyProfile() {
     return {
       'phone': '',
@@ -620,6 +646,20 @@ class HiveDatabase {
       'availability': '',
       'achievements': <Map<String, dynamic>>[],
     };
+  }
+
+  // ── TOP PEOPLE CACHING ─────────────────────────────────────────────────────
+
+  List<Map<String, dynamic>> getCachedTopPeople() {
+    final data = _profileBox.get('cached_top_people');
+    if (data is List) {
+      return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    }
+    return [];
+  }
+
+  Future<void> saveCachedTopPeople(List<Map<String, dynamic>> people) async {
+    await _profileBox.put('cached_top_people', people);
   }
 
   // ── RECRUITER PROFILE DATA ─────────────────────────────────────────────────

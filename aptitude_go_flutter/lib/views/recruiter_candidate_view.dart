@@ -21,6 +21,8 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
   List<dynamic> _candidateAttempts = [];
   List<dynamic> _candidateCertificates = [];
   bool _isLoading = true;
+  bool _isLoadingCerts = false;
+  bool _isLoadingAttempts = false;
 
   @override
   void initState() {
@@ -29,26 +31,38 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
   }
 
   Future<void> _load() async {
-    setState(() => _isLoading = true);
+    // Phase 1: Load basic info from Hive cache instantly
     final users = HiveDatabase.instance.getUsers();
     final target = users.cast<Map<String, dynamic>?>().firstWhere(
       (u) => u?['username'] == widget.username,
       orElse: () => null,
     );
+
+    // Load cached profile, certificates, and attempts from Hive
     final saved = HiveDatabase.instance.getCandidateProfile(widget.username);
+    final cachedCerts = HiveDatabase.instance.getCachedCertificates(widget.username);
+    final cachedAttempts = HiveDatabase.instance.getCachedAttempts(widget.username);
+
     if (mounted) {
       setState(() {
         _candidateUser = target ?? {};
         _profile = saved;
+        if (cachedCerts.isNotEmpty) _candidateCertificates = cachedCerts;
+        if (cachedAttempts.isNotEmpty) _candidateAttempts = cachedAttempts;
         _isLoading = false;
+        // Start lazy loading heavy sections in background
+        _isLoadingCerts = cachedCerts.isEmpty;
+        _isLoadingAttempts = cachedAttempts.isEmpty;
       });
     }
 
+    final api = Provider.of<ApiClient>(context, listen: false);
+
+    // Phase 2: Fetch basic profile data (lightweight)
     try {
-      final api = Provider.of<ApiClient>(context, listen: false);
       final resp = await api.get('profile/data/${widget.username}/');
       if (mounted) {
-        final d = resp.data;
+        final d = resp.data is Map ? Map<String, dynamic>.from(resp.data) : {};
         final serverProfile = d['profile_data'] as Map? ?? {};
         if (serverProfile.isNotEmpty) {
           setState(() {
@@ -59,46 +73,67 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
             });
             _candidateUser['profile_score'] = d['profile_score'];
           });
+          HiveDatabase.instance.saveCandidateProfile(widget.username, _profile);
         }
       }
     } catch (_) {}
 
-    Map<String, dynamic>? profileRespData;
-    try {
-      final api = Provider.of<ApiClient>(context, listen: false);
-      final profileResp = await api.get('profile/${widget.username}/');
-      if (mounted) {
-        final d = profileResp.data;
-        profileRespData = d;
-        setState(() {
-          _candidateAttempts = (d['attempts'] as List?) ?? [];
-          _candidateUser.addAll(Map<String, dynamic>.from(d['user'] as Map? ?? {}));
-          final certs = d['certificates'] as List?;
-          if (certs != null && certs.isNotEmpty) {
-            _candidateCertificates = certs;
-          }
-        });
-      }
-    } catch (_) {}
+    // Phase 3: Fetch certificates in background (lazy load)
+    _loadCertificates(api);
 
+    // Phase 4: Fetch aptitude scores in background (lazy load)
+    _loadAttempts(api);
+  }
+
+  Future<void> _loadCertificates(ApiClient api) async {
+    if (!mounted) return;
     try {
-      final api = Provider.of<ApiClient>(context, listen: false);
       final certResp = await api.get('profile/certificates/${widget.username}/');
       if (mounted) {
+        final data = certResp.data is Map ? Map<String, dynamic>.from(certResp.data) : {};
+        final certs = data['certificates'] as List? ?? [];
         setState(() {
-          final certs = certResp.data['certificates'] as List?;
-          if (certs != null && certs.isNotEmpty) {
-            _candidateCertificates = certs;
+          _candidateCertificates = certs;
+          _isLoadingCerts = false;
+        });
+        HiveDatabase.instance.saveCachedCertificates(widget.username, certs);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingCerts = false);
+    }
+  }
+
+  Future<void> _loadAttempts(ApiClient api) async {
+    if (!mounted) return;
+    try {
+      final profileResp = await api.get('profile/${widget.username}/');
+      if (mounted) {
+        final d = profileResp.data is Map ? Map<String, dynamic>.from(profileResp.data) : {};
+        final attempts = (d['attempts'] as List?) ?? [];
+        final userData = d['user'] as Map?;
+        // Fallback: capture certificates from profile API if cert endpoint returned empty
+        final profileCerts = d['certificates'] as List? ?? [];
+        setState(() {
+          _candidateAttempts = attempts;
+          _isLoadingAttempts = false;
+          if (userData != null) {
+            _candidateUser.addAll(Map<String, dynamic>.from(userData));
+          }
+          // If the dedicated cert endpoint has not loaded certs yet (still loading or returned empty),
+          // use certs from the full profile response as fallback
+          if (_candidateCertificates.isEmpty && profileCerts.isNotEmpty) {
+            _candidateCertificates = profileCerts;
+            _isLoadingCerts = false;
+            HiveDatabase.instance.saveCachedCertificates(widget.username, profileCerts);
           }
         });
+        HiveDatabase.instance.saveCachedAttempts(widget.username, attempts);
+        if (userData != null) {
+          HiveDatabase.instance.saveCandidateProfile(widget.username, _profile);
+        }
       }
-    } catch (_) {}
-
-    if (_candidateCertificates.isEmpty && profileRespData != null) {
-      final certs = profileRespData['certificates'] as List?;
-      if (certs != null && certs.isNotEmpty) {
-        setState(() => _candidateCertificates = certs);
-      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingAttempts = false);
     }
   }
 
@@ -403,14 +438,27 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
   }
 
   Widget _buildCertificationsDisplay() {
-    if (_candidateCertificates.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).dividerColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Uploaded Certificates', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         const SizedBox(height: 12),
-        ..._candidateCertificates.map((c) {
+        if (_isLoadingCerts)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: SizedBox(width: 20, height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonPurple.withValues(alpha: 0.6))),
+            ),
+          )
+        else if (_candidateCertificates.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Center(child: Text('No certificates uploaded', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)))),
+          )
+        else
+          ..._candidateCertificates.map((c) {
           final cm = Map<String, dynamic>.from(c);
           final fileUrl = cm['file_url'] ?? '';
           final fileName = cm['title'] ?? 'Certificate';
@@ -490,7 +538,15 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
           const Text('Aptitude Scores', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         ]),
         const SizedBox(height: 12),
-        if (_candidateAttempts.isEmpty)
+        if (_isLoadingAttempts)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: SizedBox(width: 20, height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonPurple.withValues(alpha: 0.6))),
+            ),
+          )
+        else if (_candidateAttempts.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20),
             child: Center(child: Text('No Test Scores Available', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)))),
@@ -590,45 +646,29 @@ class _RecruiterCandidateViewState extends State<RecruiterCandidateView> {
           border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, -4))],
         ),
-        child: Row(children: [
-          Expanded(child: _actionBtn('Shortlist', Icons.bookmark_outline, AppTheme.neonPurple)),
-          const SizedBox(width: 8),
-          Expanded(child: _actionBtn('Schedule', Icons.calendar_today, AppTheme.neonBlue)),
-          const SizedBox(width: 8),
-          Expanded(child: _actionBtn('Message', Icons.chat_outlined, AppTheme.emeraldGreen)),
-        ]),
-      ),
-    );
-  }
-
-  Widget _actionBtn(String label, IconData icon, Color color) {
-    return SizedBox(
-      height: 40,
-      child: OutlinedButton.icon(
-        onPressed: () {
-          if (label == 'Message') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ChatDetailScreen(
-                  conversationId: DateTime.now().millisecondsSinceEpoch,
-                  otherUsername: widget.username,
+        child: SizedBox(
+          height: 44,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChatDetailScreen(
+                    conversationId: DateTime.now().millisecondsSinceEpoch,
+                    otherUsername: widget.username,
+                  ),
                 ),
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('$label action triggered'), backgroundColor: color, duration: const Duration(seconds: 1)),
-            );
-          }
-        },
-        icon: Icon(icon, size: 16),
-        label: Text(label, style: const TextStyle(fontSize: 11)),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: color,
-          side: BorderSide(color: color.withValues(alpha: 0.4)),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              );
+            },
+            icon: const Icon(Icons.chat_outlined, size: 18),
+            label: const Text('Message', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.emeraldGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+          ),
         ),
       ),
     );
